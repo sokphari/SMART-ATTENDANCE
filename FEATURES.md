@@ -1,16 +1,21 @@
-# Smart Attendance — Backend Feature Handoff
+# Smart Attendance — Feature Handoff
 
 Last updated: 2026-11-10
 
-This document summarizes the backend features that are complete and ready for team integration. The project is a Laravel 12 API with Sanctum authentication, PostgreSQL, and Docker.
+This document summarizes the features that are complete and ready for team integration.
 
-**Status:** Admin MVP, attendance engine, attendance corrections, and audit logs are complete. Full test suite is green: **190 tests / 822 assertions**.
+- `backend/` — Laravel 12 API with Sanctum authentication and PostgreSQL
+- `frontend/` — Next.js 16 application with a `/api` proxy to the backend
+
+**Status:** Admin MVP, attendance engine, attendance corrections, and audit logs are complete. Full backend test suite is green: **190 tests / 822 assertions**.
 
 ---
 
 ## Quick Start
 
 ```bash
+cp .env.example .env
+cp backend/.env.example backend/.env
 docker compose up -d --build
 docker compose exec app php artisan key:generate
 docker compose exec app php artisan migrate
@@ -18,9 +23,10 @@ docker compose exec app php artisan db:seed --class=AdminUserSeeder
 docker compose exec app php artisan db:seed --class=DepartmentSeeder
 ```
 
+- Frontend: `http://localhost:3000`
 - API base URL: `http://localhost:8001/api/v1`
 - Health check: `GET /api/v1/health`
-- Admin credentials come from `.env`:
+- Admin credentials come from `backend/.env`:
   - `ADMIN_EMAIL` (default: `admin@example.com`)
   - `ADMIN_PASSWORD` (default: `password`)
 

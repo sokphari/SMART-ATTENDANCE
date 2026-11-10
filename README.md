@@ -1,345 +1,121 @@
-# Smart Attendance System – Docker Setup Guide
+# Smart Attendance
 
-This guide explains how to set up the Laravel 12 project with Docker, Nginx, PHP 8.3, and PostgreSQL on Windows and Linux.
+Monorepo for the Smart Attendance platform:
 
-## 1. Requirements
+- `backend/` — Laravel 12 API with PostgreSQL and Sanctum
+- `frontend/` — Next.js 16 application
+- `compose.yaml` — Docker services for the backend API, database, and frontend
 
-| Windows | Linux (Ubuntu/Zorin) |
+## Services and URLs
+
+| Service | URL |
 |---|---|
-| Docker Desktop | Docker Engine |
-| WSL2 (for Docker Desktop) | Docker Compose Plugin |
-| Git for Windows | Git |
-| VS Code | VS Code |
+| Frontend | http://localhost:3000 |
+| Backend API | http://localhost:8001/api/v1 |
+| Backend health check | http://localhost:8001/api/v1/health |
+| Proxied health check through frontend | http://localhost:3000/api/v1/health |
 
-**Note:** You do not need to install PHP, Composer, or PostgreSQL locally. These are provided by the Docker containers.
+The frontend proxies `/api/*` to the backend container, so browser requests use the same origin and do not need CORS.
 
----
+## Quick Start
 
-## 2. Windows Setup (PowerShell)
-
-Open **PowerShell** or the VS Code PowerShell terminal.
-
-### Step 1: Verify Docker
-
-Make sure Docker Desktop is running.
-
-```powershell
-docker --version
-docker compose version
-```
-
-### Step 2: Clone the project
-
-```powershell
-git clone <YOUR_REPOSITORY_URL>
-cd laravel-docker
-```
-
-### Step 3: Create environment file
-
-```powershell
-Copy-Item .env.example .env
-```
-
-Open the environment file:
-
-```powershell
-code .env
-```
-
-Configure PostgreSQL:
-
-```dotenv
-DB_CONNECTION=pgsql
-DB_HOST=db
-DB_PORT=5432
-DB_DATABASE=smart_attendanc
-DB_USERNAME=laravel_user
-DB_PASSWORD=your_local_database_password
-```
-
-Replace the example password with your own strong local password.
-
-### Step 4: Build Docker containers
-
-```powershell
-docker compose up -d --build
-```
-
-Check containers:
-
-```powershell
-docker compose ps
-```
-
-### Step 5: Install Laravel dependencies
-
-```powershell
-docker compose exec app composer install
-```
-
-### Step 6: Generate application key
-
-```powershell
-docker compose exec app php artisan key:generate
-```
-
-### Step 7: Run migrations
-
-```powershell
-docker compose exec app php artisan config:clear
-docker compose exec app php artisan migrate
-```
-
-### Step 8: Verify database
-
-```powershell
-docker compose exec app php artisan db:show
-```
-
-### Step 9: Open project
-
-http://localhost:8000
-
----
-
-## 3. Linux Setup (Ubuntu / Zorin OS)
-
-Open your Linux terminal.
-
-### Step 1: Verify Docker
-
-```bash
-docker --version
-docker compose version
-```
-
-Make sure the Docker service is running:
-
-```bash
-sudo systemctl start docker
-```
-
-If Docker requires administrator permissions, use `sudo docker compose` or configure Docker's user permissions correctly.
-
-### Step 2: Clone the project
-
-```bash
-git clone <YOUR_REPOSITORY_URL>
-cd laravel-docker
-```
-
-### Step 3: Create environment file
+1. Create environment files:
 
 ```bash
 cp .env.example .env
+cp backend/.env.example backend/.env
 ```
 
-Open `.env`:
+2. Review the database credentials in both files. The `DB_*` values in the root `.env` must match `backend/.env`.
 
-```bash
-nano .env
-```
-
-Configure PostgreSQL:
-
-```dotenv
-DB_CONNECTION=pgsql
-DB_HOST=db
-DB_PORT=5432
-DB_DATABASE=smart_attendanc
-DB_USERNAME=laravel_user
-DB_PASSWORD=your_local_database_password
-```
-
-Save in Nano using `Ctrl + O`, Enter, then `Ctrl + X`.
-
-### Step 4: Build Docker containers
+3. Build and start the containers:
 
 ```bash
 docker compose up -d --build
 ```
 
-Check containers:
-
-```bash
-docker compose ps
-```
-
-### Step 5: Install Laravel dependencies
-
-```bash
-docker compose exec app composer install
-```
-
-### Step 6: Generate application key
+4. Generate the Laravel app key and prepare the database:
 
 ```bash
 docker compose exec app php artisan key:generate
-```
-
-### Step 7: Run migrations
-
-```bash
-docker compose exec app php artisan config:clear
 docker compose exec app php artisan migrate
+docker compose exec app php artisan db:seed --class=AdminUserSeeder
+docker compose exec app php artisan db:seed --class=DepartmentSeeder
 ```
 
-### Step 8: Verify database
+5. Open the frontend:
 
-```bash
-docker compose exec app php artisan db:show
+```text
+http://localhost:3000
 ```
 
-### Step 9: Open project
+The default admin credentials come from `backend/.env`:
 
-http://localhost:8000
+```dotenv
+ADMIN_EMAIL=admin@example.com
+ADMIN_PASSWORD=password
+```
 
----
+## Repository Structure
 
-## 4. Daily Development Commands (Windows and Linux)
+```text
+.
+├── backend/
+│   ├── app/                  # Laravel modules
+│   ├── database/             # migrations, factories, seeders
+│   ├── docker/
+│   │   ├── php/Dockerfile
+│   │   └── nginx/default.conf
+│   ├── routes/v1/            # API route files
+│   └── tests/                # backend feature tests
+├── frontend/
+│   ├── app/                  # Next.js App Router
+│   ├── public/
+│   ├── Dockerfile
+│   └── next.config.ts
+├── compose.yaml
+├── .env                      # Docker Compose database settings
+├── FEATURES.md               # backend feature handoff
+└── README.md
+```
 
-These commands work on both operating systems, provided Docker Compose is installed and accessible.
+## Common Commands
 
 | Task | Command |
 |---|---|
-| Start Docker services | `docker compose up -d` |
-| Stop Docker services | `docker compose down` |
-| Restart services | `docker compose restart` |
-| Rebuild application | `docker compose up -d --build` |
-| Check containers | `docker compose ps` |
+| Start services | `docker compose up -d` |
+| Stop services | `docker compose down` |
+| Rebuild all services | `docker compose up -d --build` |
 | View logs | `docker compose logs -f` |
+| Backend tests | `docker compose exec -T app php artisan test` |
+| Backend Pint check | `docker compose exec -T app ./vendor/bin/pint --test` |
 | Run migrations | `docker compose exec app php artisan migrate` |
 | Migration status | `docker compose exec app php artisan migrate:status` |
-| Run seeders | `docker compose exec app php artisan db:seed` |
-| Run Laravel tests | `docker compose exec app php artisan test` |
-| Open PHP shell | `docker compose exec app bash` |
+| Laravel shell | `docker compose exec app bash` |
+| Frontend shell | `docker compose exec frontend sh` |
+| PostgreSQL shell | `docker compose exec db psql -U laravel_user -d smart_attendanc` |
 
-## 5. PostgreSQL Commands (Both Operating Systems)
+## Environment Files
 
-Connect to PostgreSQL:
+The monorepo uses two environment files:
+
+- `.env` at the repository root: consumed by Docker Compose for database and port settings.
+- `backend/.env`: consumed by Laravel inside the backend container.
+
+Do not commit either `.env` file. Only `.env.example` files should be committed.
+
+To change exposed ports, update the root `.env`:
+
+```dotenv
+BACKEND_PORT=8001
+FRONTEND_PORT=3000
+```
+
+## Tests
 
 ```bash
-docker compose exec db psql -U laravel_user -d smart_attendanc
+docker compose exec -T app php artisan test
+docker compose exec -T app ./vendor/bin/pint --test
 ```
 
-Inside PostgreSQL:
-
-```sql
--- List all tables
-\dt
-
--- List all databases
-\l
-
--- List all roles
-\du
-
--- Exit PostgreSQL
-\q
-```
-
-PostgreSQL automatically creates the configured database during its first initialization with an empty Docker data volume.
-
-**Important:** If the volume already exists, changing the `POSTGRES_USER` or `POSTGRES_DB` environment variables will not recreate the user or database.
-
-## 6. Troubleshooting
-
-### Docker permission denied (Linux)
-
-Check that your user has permission to access Docker. If using Docker Engine, you can configure access with:
-
-```bash
-sudo usermod -aG docker $USER
-```
-
-Log out and log in again for the group membership to apply.
-
-Note: Membership in the Docker group grants root-equivalent privileges on the host.
-
-### PostgreSQL connection refused
-
-Verify the database container:
-
-```bash
-docker compose ps
-docker compose logs db
-```
-
-Make sure Laravel's `.env` contains `DB_HOST=db` when running inside Docker.
-
-### Port 8000 already in use
-
-Change the Nginx port mapping in `compose.yaml`:
-
-```yaml
-ports:
-  - "8001:80"
-```
-
-Then run:
-
-```bash
-docker compose up -d
-```
-
-Open http://localhost:8001.
-
-### Docker data safety
-
-Do not use:
-
-```bash
-docker compose down -v
-```
-
-unless you intentionally want to delete the project's persistent Docker volumes, including PostgreSQL data.
-
----
-
-## 7. Git Workflow
-
-These commands work on Windows PowerShell and Linux.
-
-```bash
-# Get latest changes
-git pull origin main
-
-# Create feature branch
-git switch -c feature/attendance
-
-# Stage changes
-git add .
-
-# Commit changes
-git commit -m "feat: implement attendance module"
-
-# Push feature branch
-git push -u origin feature/attendance
-```
-
-Create a Pull Request to merge your changes into the main branch.
-
-## 8. Before Pushing Code
-
-Make sure the following project files are committed:
-
-- `compose.yaml`
-- `docker/php/Dockerfile`
-- `docker/nginx/default.conf`
-- `.dockerignore`
-- `.env.example`
-- `composer.json`
-- `composer.lock`
-- `README.md`
-- Laravel source code and migrations
-
-Do not commit `.env`, actual database passwords, or database volumes.
-
----
-
-**Project:** Smart Attendance System  
-**Framework:** Laravel 12  
-**Database:** PostgreSQL  
-**Containerization:** Docker Compose  
-**Supported Development OS:** Windows / Linux
+For API endpoints, business rules, and completed modules, see [FEATURES.md](FEATURES.md).
