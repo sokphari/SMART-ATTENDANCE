@@ -66,6 +66,7 @@ class RequestUpdate extends FormRequest
             ],
             'year_level' => ['sometimes', 'required', 'integer', 'between:1,10'],
             'phone' => ['sometimes', 'nullable', 'string', 'max:30'],
+            'gender' => ['sometimes', 'nullable', 'string', 'in:male,female,other,prefer_not_to_say'],
         ];
     }
 }

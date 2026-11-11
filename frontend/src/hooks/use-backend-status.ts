@@ -2,10 +2,10 @@
 
 import { useEffect, useState } from "react";
 
-type Status = "checking" | "connected" | "unavailable";
+export type BackendStatusState = "checking" | "connected" | "unavailable";
 
-export function BackendStatus() {
-  const [status, setStatus] = useState<Status>("checking");
+export function useBackendStatus(): BackendStatusState {
+  const [status, setStatus] = useState<BackendStatusState>("checking");
 
   useEffect(() => {
     fetch("/api/v1/health")
@@ -24,14 +24,5 @@ export function BackendStatus() {
       });
   }, []);
 
-  return (
-    <div className={`status status-${status}`}>
-      <span className="status-dot" />
-      <span>
-        {status === "checking" && "Checking backend..."}
-        {status === "connected" && "Backend connected"}
-        {status === "unavailable" && "Backend unavailable"}
-      </span>
-    </div>
-  );
+  return status;
 }

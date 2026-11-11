@@ -12,7 +12,7 @@ use Illuminate\Support\Facades\DB;
 class StudentServices
 {
     /**
-     * @param  array{search?: string|null, department_id?: int|string|null, status?: string|null, year_level?: int|string|null, per_page?: int|string|null}  $filters
+     * @param  array{search?: string|null, department_id?: int|string|null, status?: string|null, year_level?: int|string|null, gender?: string|null, per_page?: int|string|null}  $filters
      */
     public function paginate(array $filters = []): LengthAwarePaginator
     {
@@ -36,6 +36,10 @@ class StudentServices
             ->when(
                 $filters['year_level'] ?? null,
                 fn ($query, $yearLevel) => $query->where('year_level', $yearLevel)
+            )
+            ->when(
+                $filters['gender'] ?? null,
+                fn ($query, string $gender) => $query->where('gender', $gender)
             )
             ->when(
                 $filters['status'] ?? null,
@@ -69,6 +73,7 @@ class StudentServices
                 'student_code' => $data['student_code'],
                 'year_level' => $data['year_level'],
                 'phone' => $data['phone'] ?? null,
+                'gender' => $data['gender'] ?? null,
             ]);
 
             return $student->load(['user', 'department']);
@@ -93,7 +98,7 @@ class StudentServices
 
             $profileData = array_intersect_key(
                 $data,
-                array_flip(['department_id', 'student_code', 'year_level', 'phone'])
+                array_flip(['department_id', 'student_code', 'year_level', 'phone', 'gender'])
             );
 
             if ($profileData !== []) {
