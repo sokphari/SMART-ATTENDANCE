@@ -3,6 +3,8 @@ import {
   BookOpen,
   Building2,
   CalendarClock,
+  CalendarDays,
+  CalendarRange,
   CheckCircle2,
   FilePenLine,
   GraduationCap,
@@ -62,6 +64,20 @@ export const ALL_NAV_ITEMS: NavItem[] = [
     endpoint: "/api/v1/admin/courses",
   },
   {
+    label: "Academic Years",
+    href: "/academic-years",
+    icon: CalendarRange,
+    description: "Manage academic years and their date ranges.",
+    endpoint: "/api/v1/admin/academic-years",
+  },
+  {
+    label: "Semesters",
+    href: "/semesters",
+    icon: CalendarDays,
+    description: "Manage semester dates within academic years.",
+    endpoint: "/api/v1/admin/semesters",
+  },
+  {
     label: "Class Sections",
     href: "/class-sections",
     icon: Layers,
@@ -119,7 +135,7 @@ export const NAV_SECTIONS: NavSection[] = [
   {
     label: "Academics",
     items: ALL_NAV_ITEMS.filter((item) =>
-      ["/departments", "/courses", "/class-sections", "/schedules"].includes(
+      ["/departments", "/courses", "/academic-years", "/semesters", "/class-sections", "/schedules"].includes(
         item.href,
       ),
     ),
