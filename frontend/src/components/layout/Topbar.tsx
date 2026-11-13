@@ -3,10 +3,11 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
-import { LogOut, Moon, PanelLeft, QrCode, Sun } from "lucide-react";
+import { LogOut, Moon, PanelLeft, QrCode, ScanLine, Search, Sun } from "lucide-react";
 import { findNavItem } from "@/config/nav";
 import type { AuthUser } from "@/types/auth";
 import { BackendStatus } from "@/components/shared/BackendStatus";
+import { NotificationBell } from "@/components/layout/NotificationBell";
 import { getInitials } from "@/lib/utils/name";
 
 type TopbarProps = {
@@ -27,6 +28,7 @@ export function Topbar({
   const pathname = usePathname();
   const current = findNavItem(pathname);
   const [profileOpen, setProfileOpen] = useState(false);
+  const [search, setSearch] = useState("");
 
   return (
     <header className="sticky top-0 z-30 flex h-16 shrink-0 items-center justify-between gap-3 border-b border-hairline bg-card/80 px-4 backdrop-blur-md lg:px-8">
@@ -58,9 +60,38 @@ export function Topbar({
             {current.label}
           </span>
         )}
+
+        <form
+          className="relative hidden xl:block"
+          onSubmit={(event) => event.preventDefault()}
+        >
+          <Search className="pointer-events-none absolute top-1/2 left-3 size-3.5 -translate-y-1/2 text-muted" />
+          <input
+            aria-label="Global search"
+            value={search}
+            onChange={(event) => setSearch(event.target.value)}
+            placeholder="Search workspace"
+            className="h-9 w-52 rounded-control border border-hairline bg-card pl-9 pr-3 text-xs text-ink outline-none transition focus:border-brand-400 focus:ring-4 focus:ring-brand-100"
+          />
+        </form>
       </div>
 
       <div className="flex items-center gap-3">
+        <select
+          aria-label="Academic term"
+          defaultValue="2026-2027-s1"
+          className="hidden h-9 rounded-control border border-hairline bg-card px-2 text-xs font-semibold text-muted outline-none lg:block"
+        >
+          <option value="2026-2027-s1">Sem 1 · 2026–2027</option>
+          <option value="2026-2027-s2">Sem 2 · 2026–2027</option>
+        </select>
+        <Link
+          href="/attendance"
+          className="hidden h-9 items-center gap-1.5 rounded-control bg-brand-600 px-3 text-xs font-bold text-white transition hover:bg-brand-700 md:flex"
+        >
+          <ScanLine className="size-3.5" />
+          Quick Scan
+        </Link>
         <BackendStatus />
         <button
           type="button"
@@ -71,6 +102,7 @@ export function Topbar({
         >
           {darkMode ? <Sun className="size-4" /> : <Moon className="size-4" />}
         </button>
+        <NotificationBell />
         {user && (
           <div className="relative">
             <button

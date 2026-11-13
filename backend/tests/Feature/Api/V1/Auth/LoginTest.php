@@ -14,6 +14,12 @@ class LoginTest extends TestCase
 {
     use RefreshDatabase;
 
+    protected function setUp(): void
+    {
+        parent::setUp();
+        \Illuminate\Support\Facades\RateLimiter::clear('admin@example.com|127.0.0.1');
+    }
+
     private function attemptLogin(string $email, string $password): TestResponse
     {
         return $this->postJson('/api/v1/auth/login', [

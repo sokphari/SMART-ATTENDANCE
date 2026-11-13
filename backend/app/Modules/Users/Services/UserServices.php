@@ -3,6 +3,7 @@
 namespace App\Modules\Users\Services;
 
 use App\Enums\AccountStatus;
+use App\Models\AuditLog;
 use App\Models\User;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
@@ -80,9 +81,21 @@ class UserServices
      */
     public function login(array $data, ?string $ip = null): array
     {
-        $throttleKey = $this->loginThrottleKey($data['email'], $ip ?? request()->ip());
+        $clientIp = $ip ?? request()->ip();
+        $throttleKey = $this->loginThrottleKey($data['email'], $clientIp);
 
         if (RateLimiter::tooManyAttempts($throttleKey, self::LOGIN_MAX_ATTEMPTS)) {
+            AuditLog::create([
+                'user_id' => null,
+                'action' => 'auth.login_throttled',
+                'entity_type' => User::class,
+                'entity_id' => null,
+                'old_values' => ['email' => $data['email']],
+                'new_values' => ['reason' => 'Too many login attempts (rate limit exceeded)'],
+                'ip_address' => $clientIp,
+                'created_at' => now(),
+            ]);
+
             $this->throwTooManyLoginAttempts($throttleKey);
         }
 
@@ -91,12 +104,37 @@ class UserServices
         if (! $user || ! Hash::check($data['password'], $user->password)) {
             RateLimiter::hit($throttleKey, self::LOGIN_DECAY_SECONDS);
 
+            AuditLog::create([
+                'user_id' => $user?->id,
+                'action' => 'auth.login_failed',
+                'entity_type' => User::class,
+                'entity_id' => $user?->id,
+                'old_values' => ['email' => $data['email']],
+                'new_values' => ['reason' => $user ? 'Incorrect password' : 'User account not found'],
+                'ip_address' => $clientIp,
+                'created_at' => now(),
+            ]);
+
             throw ValidationException::withMessages([
                 'email' => [__('auth.failed')],
             ]);
         }
 
         if (! $user->isActive()) {
+            AuditLog::create([
+                'user_id' => $user->id,
+                'action' => 'auth.login_denied',
+                'entity_type' => User::class,
+                'entity_id' => $user->id,
+                'old_values' => [
+                    'email' => $user->email,
+                    'status' => $user->status instanceof AccountStatus ? $user->status->value : (string) $user->status,
+                ],
+                'new_values' => ['reason' => 'Account is not active'],
+                'ip_address' => $clientIp,
+                'created_at' => now(),
+            ]);
+
             throw new AuthorizationException('This account is not active.');
         }
 
@@ -104,11 +142,39 @@ class UserServices
 
         $token = $user->createToken($data['device_name'] ?? 'api-token')->plainTextToken;
 
+        AuditLog::create([
+            'user_id' => $user->id,
+            'action' => 'auth.login_success',
+            'entity_type' => User::class,
+            'entity_id' => $user->id,
+            'new_values' => [
+                'email' => $user->email,
+                'name' => $user->name,
+                'role' => $user->role instanceof \App\Enums\UserRole ? $user->role->value : (string) $user->role,
+            ],
+            'ip_address' => $clientIp,
+            'created_at' => now(),
+        ]);
+
         return ['user' => $user, 'token' => $token];
     }
 
     public function logout(User $user): void
     {
+        AuditLog::create([
+            'user_id' => $user->id,
+            'action' => 'auth.logout',
+            'entity_type' => User::class,
+            'entity_id' => $user->id,
+            'new_values' => [
+                'email' => $user->email,
+                'name' => $user->name,
+                'role' => $user->role instanceof \App\Enums\UserRole ? $user->role->value : (string) $user->role,
+            ],
+            'ip_address' => request()->ip(),
+            'created_at' => now(),
+        ]);
+
         $token = $user->currentAccessToken();
 
         if ($token instanceof PersonalAccessToken) {

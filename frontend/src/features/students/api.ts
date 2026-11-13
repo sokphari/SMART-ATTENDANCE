@@ -1,4 +1,5 @@
 import { apiFetch } from "@/lib/api/client";
+import { revalidateStudents } from "@/app/actions/revalidate";
 import type { DepartmentOption, Paginated, Student, StudentInput } from "./types";
 
 const STUDENTS_URL = "/api/v1/admin/students";
@@ -16,11 +17,17 @@ export function fetchDepartments() {
 }
 
 export function createStudent(input: StudentInput) {
-  return apiFetch<{ data: Student }>(STUDENTS_URL, { method: "POST", body: input });
+  return apiFetch<{ data: Student }>(STUDENTS_URL, { method: "POST", body: input }).then(async (result) => {
+    await revalidateStudents();
+    return result;
+  });
 }
 
 export function updateStudent(id: number, input: Partial<StudentInput>) {
-  return apiFetch<{ data: Student }>(`${STUDENTS_URL}/${id}`, { method: "PUT", body: input });
+  return apiFetch<{ data: Student }>(`${STUDENTS_URL}/${id}`, { method: "PUT", body: input }).then(async (result) => {
+    await revalidateStudents();
+    return result;
+  });
 }
 
 export function fetchStudentAttendance(id: number) {

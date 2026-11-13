@@ -20,6 +20,7 @@ type ApiOptions = {
   method?: "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
   body?: unknown;
   auth?: boolean;
+  cache?: RequestCache;
 };
 
 export async function apiFetch<T = unknown>(
@@ -41,6 +42,7 @@ export async function apiFetch<T = unknown>(
       method,
       headers,
       body: body === undefined ? undefined : JSON.stringify(body),
+      cache: options.cache ?? "no-store",
     });
   } catch {
     throw new ApiError(

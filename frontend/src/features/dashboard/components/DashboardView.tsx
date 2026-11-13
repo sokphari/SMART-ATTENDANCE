@@ -6,12 +6,9 @@ import { useRouter } from "next/navigation";
 import {
   AlertTriangle,
   ArrowUpRight,
-  BookOpen,
   Building2,
-  CalendarClock,
   CheckCircle2,
   GraduationCap,
-  Layers,
   RotateCw,
   Users,
 } from "lucide-react";
@@ -80,15 +77,7 @@ export function DashboardView() {
         }
       />
 
-      {loading && (
-        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-          {Array.from({ length: 8 }).map((_, index) => (
-            <Card key={index} className="h-36 animate-pulse" />
-          ))}
-        </div>
-      )}
-
-      {!loading && error && (
+      {error && (
         <Card>
           <EmptyState
             icon={AlertTriangle}
@@ -102,9 +91,9 @@ export function DashboardView() {
         </Card>
       )}
 
-      {!loading && summary && (
+      {summary && !error && (
         <div className="animate-fade-up">
-          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
             <StatCard
               icon={GraduationCap}
               label="Students"
@@ -120,12 +109,6 @@ export function DashboardView() {
               trend={summary.trends.teachers_last_30_days}
             />
             <StatCard
-              icon={Layers}
-              label="Class sections"
-              value={summary.counts.class_sections.total}
-              hint={`${summary.counts.class_sections.active.toLocaleString()} active`}
-            />
-            <StatCard
               icon={CheckCircle2}
               label="Enrollments"
               value={summary.counts.enrollments.total}
@@ -134,24 +117,12 @@ export function DashboardView() {
             />
           </div>
 
-          <div className="mt-4 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-            <StatCard
-              icon={BookOpen}
-              label="Courses"
-              value={summary.counts.courses.total}
-              hint={`${summary.counts.courses.active.toLocaleString()} active`}
-            />
+          <div className="mt-4 grid gap-4 sm:grid-cols-2">
             <StatCard
               icon={Building2}
               label="Departments"
               value={summary.counts.departments.total}
               hint={`${summary.counts.departments.active.toLocaleString()} active`}
-            />
-            <StatCard
-              icon={CalendarClock}
-              label="Class schedules"
-              value={summary.counts.class_schedules.total}
-              hint={`${summary.trends.schedules_last_30_days.toLocaleString()} added in 30 days`}
             />
             <StatCard
               icon={ArrowUpRight}

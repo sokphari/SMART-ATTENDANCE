@@ -1,8 +1,8 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Activity, ArrowDownToLine, ArrowUpFromLine, BookOpen, Clock3, FileClock, GraduationCap, Plus, Search, ShieldCheck, UserRound } from "lucide-react";
+import { ArrowDownToLine, BookOpen, GraduationCap, Plus, Search, UserRound } from "lucide-react";
 import { ApiError } from "@/lib/api/client";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
@@ -11,33 +11,25 @@ import { Input } from "@/components/ui/Input";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { getStoredUser } from "@/lib/api/session";
 import { fetchDepartments, fetchStudents } from "../api";
-import type { DepartmentOption, Student } from "../types";
+import type { DepartmentOption, Paginated, Student } from "../types";
 import { StudentActionsMenu } from "./StudentActionsMenu";
 
-const futureModules = [
-  { title: "Class enrollment", detail: "Manage classes and course enrollment", icon: BookOpen },
-  { title: "Attendance history", detail: "Review attendance records by student", icon: Clock3 },
-  { title: "Attendance correction", detail: "Review and process correction requests", icon: Activity },
-  { title: "Import students", detail: "Bulk upload student records from CSV", icon: ArrowUpFromLine },
-  { title: "Audit history", detail: "Track changes made to student records", icon: FileClock },
-  { title: "Student account", detail: "Manage sign-in access and credentials", icon: ShieldCheck },
-];
-
-export function StudentsView() {
+export function StudentsView({ initialData }: { initialData?: Paginated<Student> | null }) {
   const router = useRouter();
-  const [students, setStudents] = useState<Student[]>([]);
+  const [students, setStudents] = useState<Student[]>(initialData?.data ?? []);
   const [departments, setDepartments] = useState<DepartmentOption[]>([]);
   const [search, setSearch] = useState("");
   const [departmentId, setDepartmentId] = useState("");
   const [status, setStatus] = useState("");
   const [gender, setGender] = useState("");
   const [page, setPage] = useState(1);
-  const [lastPage, setLastPage] = useState(1);
-  const [total, setTotal] = useState(0);
-  const [loading, setLoading] = useState(true);
+  const [lastPage, setLastPage] = useState(initialData?.meta?.last_page ?? 1);
+  const [total, setTotal] = useState(initialData?.meta?.total ?? 0);
+  const [loading, setLoading] = useState(initialData === undefined || initialData === null);
   const [error, setError] = useState("");
   const [canManage, setCanManage] = useState(false);
   const [feedback, setFeedback] = useState<{ message: string; kind: "success" | "error" } | null>(null);
+  const initialDataUsed = useRef(initialData !== undefined && initialData !== null);
 
   const loadStudents = useCallback(async () => {
     setLoading(true);
@@ -59,7 +51,13 @@ export function StudentsView() {
     }
   }, [departmentId, gender, page, search, status]);
 
-  useEffect(() => { void loadStudents(); }, [loadStudents]);
+  useEffect(() => {
+    if (initialDataUsed.current && page === 1 && !search && !departmentId && !status && !gender) {
+      initialDataUsed.current = false;
+      return;
+    }
+    void loadStudents();
+  }, [departmentId, gender, loadStudents, page, search, status]);
   useEffect(() => { setCanManage(getStoredUser()?.role === "admin"); }, []);
   useEffect(() => {
     fetchDepartments().then((result) => setDepartments(result.data)).catch(() => setDepartments([]));
@@ -107,10 +105,6 @@ export function StudentsView() {
         </table></div>
         <div className="flex items-center justify-between border-t border-hairline px-4 py-3 text-sm text-muted"><span>Page {page} of {lastPage}</span><div className="flex gap-2"><Button variant="secondary" size="sm" disabled={page <= 1 || loading} onClick={() => setPage((value) => value - 1)}>Previous</Button><Button variant="secondary" size="sm" disabled={page >= lastPage || loading} onClick={() => setPage((value) => value + 1)}>Next</Button></div></div>
       </Card>
-
-      <section className="mt-8"><div className="mb-3"><h2 className="font-display text-lg font-bold">Student tools</h2><p className="mt-1 text-sm text-muted">Export is available now. Additional workflows can connect here as their APIs are added.</p></div>
-        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">{futureModules.map(({ title, detail, icon: Icon }) => <Card key={title} className="flex items-start gap-3 p-4"><span className="rounded-control bg-brand-50 p-2 text-brand-600"><Icon className="size-4" /></span><div className="min-w-0 flex-1"><p className="text-sm font-semibold">{title}</p><p className="mt-1 text-xs leading-relaxed text-muted">{detail}</p></div><Badge>Coming soon</Badge></Card>)}</div>
-      </section>
     </>
   );
 }

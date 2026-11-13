@@ -15,6 +15,7 @@ import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { ApiError } from "@/lib/api/client";
 import { getToken, setSession } from "@/lib/api/session";
+import { setAuthCookie } from "@/app/actions/auth";
 import { login } from "../api";
 
 const HIGHLIGHTS = [
@@ -57,6 +58,7 @@ export function LoginForm() {
     try {
       const payload = await login(email, password);
       setSession(payload.token, payload.data);
+      await setAuthCookie(payload.token);
       router.replace("/dashboard");
     } catch (caught) {
       setError(

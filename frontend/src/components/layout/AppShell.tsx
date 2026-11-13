@@ -9,6 +9,7 @@ import { Topbar } from "./Topbar";
 import { logout } from "@/features/auth/api";
 import { clearSession, getStoredUser, getToken } from "@/lib/api/session";
 import type { AuthUser } from "@/types/auth";
+import { clearAuthCookie } from "@/app/actions/auth";
 
 const SIDEBAR_KEY = "sa_sidebar_collapsed";
 const THEME_KEY = "sa_theme";
@@ -59,6 +60,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       // Session is cleared locally regardless of the API result.
     }
     clearSession();
+    await clearAuthCookie();
     router.replace("/login");
   }, [router]);
 
