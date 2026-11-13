@@ -1,47 +1,57 @@
+
 package com.rupp.teacher
 
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.activity.enableEdgeToEdge
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
-import com.rupp.teacher.ui.theme.TeacherTheme
+import androidx.lifecycle.ViewModelProvider
+import com.rupp.teacher.core.network.ApiClient
+import com.rupp.teacher.core.storage.TokenManager
+import com.rupp.teacher.core.theme.SmartAttendanceTheme
+import com.rupp.teacher.data.remote.api.AuthApi
+import com.rupp.teacher.data.remote.api.TeacherApi
+import com.rupp.teacher.data.repository.AuthRepositoryImpl
+import com.rupp.teacher.data.repository.TeacherRepositoryImpl
+import com.rupp.teacher.presentation.auth.login.LoginViewModel
+import com.rupp.teacher.presentation.auth.login.LoginViewModelFactory
+import com.rupp.teacher.presentation.teacher.dashboard.TeacherViewModelFactory
+
 
 class MainActivity : ComponentActivity() {
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
+
+        val retrofit = ApiClient.getInstance(applicationContext)
+
+        val authApi = retrofit.create(AuthApi::class.java)
+
+        val tokenManager = TokenManager(applicationContext)
+
+        val repository = AuthRepositoryImpl(
+            authApi = authApi,
+            tokenManager = tokenManager
+        )
+
+        val teacherApi = retrofit.create(TeacherApi::class.java)
+
+        val teacherRepository = TeacherRepositoryImpl(
+            teacherApi = teacherApi
+        )
+
+        val teacherViewModelFactory = TeacherViewModelFactory(
+            repository = teacherRepository
+        )
+
+        val factory = LoginViewModelFactory(repository)
+        val loginViewModel = ViewModelProvider(this, factory)
+            .get(LoginViewModel::class.java)
+
         setContent {
-            TeacherTheme {
-                Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    Greeting(
-                        name = "Android",
-                        modifier = Modifier.padding(innerPadding)
-                    )
-                }
-            }
+            SmartAttendanceApp(
+                loginViewModel = loginViewModel,
+                teacherViewModelFactory = teacherViewModelFactory
+            )
         }
-    }
-}
-
-@Composable
-fun Greeting(name: String, modifier: Modifier = Modifier) {
-    Text(
-        text = "Hello $name!",
-        modifier = modifier
-    )
-}
-
-@Preview(showBackground = true)
-@Composable
-fun GreetingPreview() {
-    TeacherTheme {
-        Greeting("Android")
     }
 }
