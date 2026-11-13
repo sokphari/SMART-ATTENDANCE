@@ -122,3 +122,4 @@ docker compose exec -T app ./vendor/bin/pint --test
 ```
 
 For API endpoints, business rules, and completed modules, see [FEATURES.md](FEATURES.md).
+For the Android teacher-role scope and recommended backend contract, see [TEACHER_BACKEND_HANDOFF.md](TEACHER_BACKEND_HANDOFF.md).

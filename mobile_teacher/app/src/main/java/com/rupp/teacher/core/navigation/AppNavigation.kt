@@ -4,13 +4,15 @@ package com.rupp.teacher.core.navigation
 import android.widget.Toast
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.LocalContext
+import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.rememberNavController
 import com.rupp.teacher.domain.model.User
 import com.rupp.teacher.presentation.auth.login.LoginViewModel
 import com.rupp.teacher.presentation.teacher.dashboard.TeacherViewModelFactory
 import com.rupp.teacher.presentation.shared.model.UserRole
-
+import androidx.navigation.NavGraph.Companion.findStartDestination
+import com.rupp.teacher.presentation.teacher.navigation.teacherNavigation
 object AppRoutes {
     const val AUTH_GRAPH = "auth_graph"
     const val LOGIN = "login"
@@ -76,7 +78,17 @@ fun AppNavigation(
             }
         )
 
-        teacherNavigation(teacherViewModelFactory)
+        teacherNavigation(
+            viewModelFactory = teacherViewModelFactory,
+            onLogout = {
+                navController.navigate(AppRoutes.AUTH_GRAPH) {
+                    popUpTo(navController.graph.findStartDestination().id) {
+                        inclusive = true
+                    }
+                    launchSingleTop = true
+                }
+            }
+        )
 
         studentNavigation()
     }
