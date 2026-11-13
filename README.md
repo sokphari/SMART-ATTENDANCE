@@ -69,7 +69,10 @@ ADMIN_PASSWORD=password
 │   ├── routes/v1/            # API route files
 │   └── tests/                # backend feature tests
 ├── frontend/
-│   ├── app/                  # Next.js App Router
+│   ├── src/                  # Next.js source: app routes, features, components, lib
+│   │   ├── app/               # App Router (thin routes and layouts)
+│   │   ├── features/          # One folder per domain module
+│   │   └── components/        # Layout shell, UI primitives, shared widgets
 │   ├── public/
 │   ├── Dockerfile
 │   └── next.config.ts

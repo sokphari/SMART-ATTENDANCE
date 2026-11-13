@@ -21,6 +21,7 @@ class Student extends Model
         'student_code',
         'year_level',
         'phone',
+        'gender',
     ];
 
     /**

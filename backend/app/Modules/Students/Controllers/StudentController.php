@@ -19,7 +19,7 @@ class StudentController extends Controller
     public function index(Request $request): AnonymousResourceCollection
     {
         $students = $this->students->paginate(
-            $request->only(['search', 'department_id', 'status', 'year_level', 'per_page'])
+            $request->only(['search', 'department_id', 'status', 'year_level', 'gender', 'per_page'])
         );
 
         return StudentResource::collection($students);
