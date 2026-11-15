@@ -27,6 +27,7 @@ export function Topbar({
 }: TopbarProps) {
   const pathname = usePathname();
   const current = findNavItem(pathname);
+  const isTeacher = user?.role?.toLowerCase() === "teacher";
   const [profileOpen, setProfileOpen] = useState(false);
   const [search, setSearch] = useState("");
 
@@ -77,21 +78,21 @@ export function Topbar({
       </div>
 
       <div className="flex items-center gap-3">
-        <select
+        {!isTeacher && <select
           aria-label="Academic term"
           defaultValue="2026-2027-s1"
           className="hidden h-9 rounded-control border border-hairline bg-card px-2 text-xs font-semibold text-muted outline-none lg:block"
         >
           <option value="2026-2027-s1">Sem 1 · 2026–2027</option>
           <option value="2026-2027-s2">Sem 2 · 2026–2027</option>
-        </select>
-        <Link
+        </select>}
+        {!isTeacher && <Link
           href="/attendance"
           className="hidden h-9 items-center gap-1.5 rounded-control bg-brand-600 px-3 text-xs font-bold text-white transition hover:bg-brand-700 md:flex"
         >
           <ScanLine className="size-3.5" />
           Quick Scan
-        </Link>
+        </Link>}
         <BackendStatus />
         <button
           type="button"

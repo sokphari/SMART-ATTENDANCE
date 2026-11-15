@@ -6,7 +6,9 @@ use App\Http\Controllers\Controller;
 use App\Models\AttendanceSession;
 use App\Models\Teacher;
 use App\Modules\Attendance\Requests\RequestOpenSession;
+use App\Modules\Attendance\Requests\RequestManualAttendance;
 use App\Modules\Attendance\Resources\AttendanceSessionResource;
+use App\Modules\Attendance\Resources\TeacherSessionAttendanceResource;
 use App\Modules\Attendance\Services\AttendanceSessionServices;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -42,6 +44,37 @@ class TeacherAttendanceSessionController extends Controller
         );
     }
 
+    public function attendance(Request $request, AttendanceSession $attendanceSession): JsonResponse
+    {
+        $filters = $request->validate([
+            'status' => ['sometimes', 'nullable', 'in:present,late,absent,excused,unmarked'],
+            'search' => ['sometimes', 'nullable', 'string', 'max:100'],
+            'per_page' => ['sometimes', 'integer', 'min:1', 'max:100'],
+        ]);
+        $teacher = $this->teacher($request);
+        $records = $this->sessions->attendanceForTeacher($attendanceSession, $teacher, $filters);
+        $payload = TeacherSessionAttendanceResource::collection($records)->response()->getData(true);
+        $payload['summary'] = $this->sessions->fullAttendanceSummary($attendanceSession);
+
+        return response()->json($payload);
+    }
+
+    public function manualAttendance(RequestManualAttendance $request, AttendanceSession $attendanceSession): JsonResponse
+    {
+        $teacher = $this->teacher($request);
+        $session = $this->sessions->markAttendanceManually(
+            $attendanceSession,
+            $teacher,
+            $request->user(),
+            $request->validated()
+        );
+
+        return response()->json([
+            'data' => new AttendanceSessionResource($session),
+            'summary' => $this->sessions->fullAttendanceSummary($session),
+        ]);
+    }
+
     public function qrToken(Request $request, AttendanceSession $attendanceSession): JsonResponse
     {
         $token = $this->sessions->generateQrToken(
@@ -61,7 +94,7 @@ class TeacherAttendanceSessionController extends Controller
 
         return response()->json([
             'data' => new AttendanceSessionResource($session),
-            'summary' => $this->sessions->summary($session),
+            'summary' => $this->sessions->fullAttendanceSummary($session),
         ]);
     }
 

@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { QrCode } from "lucide-react";
-import { NAV_SECTIONS } from "@/config/nav";
+import { NAV_SECTIONS, TEACHER_NAV_SECTIONS } from "@/config/nav";
 import { getInitials } from "@/lib/utils/name";
 import type { AuthUser } from "@/types/auth";
 import { cx } from "@/lib/utils/cx";
@@ -15,6 +15,7 @@ type SidebarProps = {
 
 export function Sidebar({ collapsed, user }: SidebarProps) {
   const pathname = usePathname();
+  const sections = user?.role?.toLowerCase() === "teacher" ? TEACHER_NAV_SECTIONS : NAV_SECTIONS;
 
   const isActive = (href: string) =>
     pathname === href || pathname.startsWith(`${href}/`);
@@ -49,7 +50,7 @@ export function Sidebar({ collapsed, user }: SidebarProps) {
       </div>
 
       <nav className="flex-1 space-y-6 overflow-y-auto overflow-x-hidden px-3 py-5">
-        {NAV_SECTIONS.map((section) => (
+        {sections.map((section) => (
           <div key={section.label}>
             {!collapsed && (
               <p className="mb-2 px-3 text-[11px] font-bold tracking-[0.08em] text-slate-400 uppercase">

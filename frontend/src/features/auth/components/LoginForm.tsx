@@ -14,7 +14,7 @@ import {
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { ApiError } from "@/lib/api/client";
-import { getToken, setSession } from "@/lib/api/session";
+import { getStoredUser, getToken, setSession } from "@/lib/api/session";
 import { setAuthCookie } from "@/app/actions/auth";
 import { login } from "../api";
 
@@ -46,7 +46,7 @@ export function LoginForm() {
 
   useEffect(() => {
     if (getToken()) {
-      router.replace("/dashboard");
+      router.replace(getStoredUser()?.role?.toLowerCase() === "teacher" ? "/teacher/dashboard" : "/dashboard");
     }
   }, [router]);
 
@@ -59,7 +59,7 @@ export function LoginForm() {
       const payload = await login(email, password);
       setSession(payload.token, payload.data);
       await setAuthCookie(payload.token);
-      router.replace("/dashboard");
+      router.replace(payload.data.role?.toLowerCase() === "teacher" ? "/teacher/dashboard" : "/dashboard");
     } catch (caught) {
       setError(
         caught instanceof ApiError

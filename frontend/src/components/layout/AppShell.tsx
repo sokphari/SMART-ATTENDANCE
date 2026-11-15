@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState, type ReactNode } from "react";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { QrCode } from "lucide-react";
 import { BottomTabBar } from "./BottomTabBar";
 import { Sidebar } from "./Sidebar";
@@ -16,6 +16,7 @@ const THEME_KEY = "sa_theme";
 
 export function AppShell({ children }: { children: ReactNode }) {
   const router = useRouter();
+  const pathname = usePathname();
   const [ready, setReady] = useState(false);
   const [user, setUser] = useState<AuthUser | null>(null);
   const [collapsed, setCollapsed] = useState(false);
@@ -27,7 +28,8 @@ export function AppShell({ children }: { children: ReactNode }) {
       return;
     }
 
-    setUser(getStoredUser());
+    const storedUser = getStoredUser();
+    setUser(storedUser);
     setCollapsed(window.localStorage.getItem(SIDEBAR_KEY) === "1");
     const storedTheme = window.localStorage.getItem(THEME_KEY);
     const useDarkMode = storedTheme === "dark";
@@ -35,6 +37,19 @@ export function AppShell({ children }: { children: ReactNode }) {
     setDarkMode(useDarkMode);
     setReady(true);
   }, [router]);
+
+  useEffect(() => {
+    if (!ready || !user) return;
+    const isTeacher = user.role?.toLowerCase() === "teacher";
+    const isTeacherPath = pathname === "/teacher" || pathname.startsWith("/teacher/");
+    if (isTeacher && !isTeacherPath) router.replace("/teacher/dashboard");
+    if (!isTeacher && isTeacherPath) router.replace("/dashboard");
+  }, [pathname, ready, router, user]);
+
+  const roleBlockedRoute = ready && user && (
+    (user.role?.toLowerCase() === "teacher" && !pathname.startsWith("/teacher")) ||
+    (user.role?.toLowerCase() !== "teacher" && pathname.startsWith("/teacher"))
+  );
 
   const toggleSidebar = useCallback(() => {
     setCollapsed((previous) => {
@@ -64,7 +79,7 @@ export function AppShell({ children }: { children: ReactNode }) {
     router.replace("/login");
   }, [router]);
 
-  if (!ready) {
+  if (!ready || roleBlockedRoute) {
     return (
       <div className="flex min-h-dvh items-center justify-center bg-canvas">
         <div className="animate-pulse-ring flex size-12 items-center justify-center rounded-panel bg-gradient-to-br from-brand-500 to-indigo-600 text-white shadow-lift">
@@ -91,7 +106,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           {children}
         </main>
       </div>
-      <BottomTabBar />
+      <BottomTabBar role={user?.role ?? null} />
     </div>
   );
 }

@@ -14,14 +14,19 @@ use App\Models\ClassSection;
 use App\Models\Enrollment;
 use App\Models\Teacher;
 use App\Models\TeacherAssignment;
+use App\Models\User;
+use App\Modules\AuditLogs\Services\AuditLogServices;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Carbon;
+use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
 class AttendanceSessionServices
 {
+    public function __construct(private readonly AuditLogServices $auditLogs) {}
+
     /**
      * @param  array{status?: string|null, class_section_id?: int|string|null, date_from?: string|null, date_to?: string|null, per_page?: int|string|null}  $filters
      */
@@ -177,22 +182,24 @@ class AttendanceSessionServices
     {
         $this->ensureOwnedBy($session, $teacher);
 
-        if ($session->status !== AttendanceSessionStatus::Open) {
-            abort(409, 'The attendance session is not open.');
-        }
+        return DB::transaction(function () use ($session, $teacher): AttendanceSession {
+            $lockedSession = AttendanceSession::query()->lockForUpdate()->findOrFail($session->id);
+            $this->ensureOwnedBy($lockedSession, $teacher);
+            if ($lockedSession->status !== AttendanceSessionStatus::Open) {
+                abort(409, 'The attendance session is not open.');
+            }
 
-        DB::transaction(function () use ($session): void {
-            $existingStudentIds = $session->attendances()->pluck('student_id')->all();
+            $existingStudentIds = $lockedSession->attendances()->pluck('student_id')->all();
 
             $missingStudentIds = Enrollment::query()
-                ->where('class_section_id', $session->class_section_id)
+                ->where('class_section_id', $lockedSession->class_section_id)
                 ->where('status', EnrollmentStatus::Enrolled->value)
                 ->whereNotIn('student_id', $existingStudentIds)
                 ->pluck('student_id');
 
             foreach ($missingStudentIds as $studentId) {
                 Attendance::create([
-                    'attendance_session_id' => $session->id,
+                    'attendance_session_id' => $lockedSession->id,
                     'student_id' => $studentId,
                     'status' => AttendanceStatus::Absent->value,
                     'verification_method' => VerificationMethod::System->value,
@@ -206,13 +213,133 @@ class AttendanceSessionServices
                 ]);
             }
 
-            $session->update([
+            $lockedSession->update([
                 'status' => AttendanceSessionStatus::Closed->value,
                 'closed_at' => now(),
             ]);
-        });
 
-        return $session->refresh()->load($this->relations());
+            return $lockedSession->refresh()->load($this->relations());
+        });
+    }
+
+    /** @param array{status?: string|null, search?: string|null, per_page?: int|string|null} $filters */
+    public function attendanceForTeacher(AttendanceSession $session, Teacher $teacher, array $filters = []): LengthAwarePaginator
+    {
+        $this->ensureOwnedBy($session, $teacher);
+
+        $query = Enrollment::query()
+            ->where('class_section_id', $session->class_section_id)
+            ->where('status', EnrollmentStatus::Enrolled->value)
+            ->with(['student' => function ($student) use ($session): void {
+                $student->with(['user', 'department']);
+                $student->with(['attendances' => fn ($attendance) => $attendance->where('attendance_session_id', $session->id)->with('markedBy')]);
+            }])
+            ->when($filters['search'] ?? null, function ($query, string $search): void {
+                $query->whereHas('student', fn ($student) => $student
+                    ->where('student_code', 'ilike', "%{$search}%")
+                    ->orWhereHas('user', fn ($user) => $user
+                        ->where('name', 'ilike', "%{$search}%")
+                        ->orWhere('email', 'ilike', "%{$search}%")));
+            });
+
+        if (($filters['status'] ?? null) === 'unmarked') {
+            $query->whereDoesntHave('student.attendances', fn ($attendance) => $attendance->where('attendance_session_id', $session->id));
+        } elseif (! empty($filters['status'])) {
+            $query->whereHas('student.attendances', fn ($attendance) => $attendance
+                ->where('attendance_session_id', $session->id)
+                ->where('status', $filters['status']));
+        }
+
+        return $query->orderBy('student_id')
+            ->paginate((int) ($filters['per_page'] ?? 50))
+            ->withQueryString();
+    }
+
+    /** @param array{records: list<array{student_id: int, status: string, remarks?: string|null}>} $data */
+    public function markAttendanceManually(AttendanceSession $session, Teacher $teacher, User $actor, array $data): AttendanceSession
+    {
+        $this->ensureOwnedBy($session, $teacher);
+
+        if (! $session->isOpen()) {
+            abort(409, 'Attendance for a closed session cannot be changed.');
+        }
+
+        return DB::transaction(function () use ($session, $teacher, $actor, $data): AttendanceSession {
+            $lockedSession = AttendanceSession::query()->lockForUpdate()->findOrFail($session->id);
+            $this->ensureOwnedBy($lockedSession, $teacher);
+
+            if (! $lockedSession->isOpen()) {
+                abort(409, 'Attendance for a closed session cannot be changed.');
+            }
+
+            $studentIds = array_column($data['records'], 'student_id');
+            $enrolledIds = Enrollment::query()
+                ->where('class_section_id', $lockedSession->class_section_id)
+                ->where('status', EnrollmentStatus::Enrolled->value)
+                ->whereIn('student_id', $studentIds)
+                ->pluck('student_id')
+                ->all();
+
+            if (count($enrolledIds) !== count(array_unique($studentIds))) {
+                throw ValidationException::withMessages([
+                    'records' => 'Every student must be actively enrolled in this class section.',
+                ]);
+            }
+
+            $existingIds = Attendance::query()
+                ->where('attendance_session_id', $lockedSession->id)
+                ->whereIn('student_id', $studentIds)
+                ->pluck('student_id')
+                ->all();
+
+            if ($existingIds !== []) {
+                abort(409, 'One or more students already have an attendance record. Refresh the roster before trying again.');
+            }
+
+            try {
+                foreach ($data['records'] as $record) {
+                    $attendance = Attendance::create([
+                        'attendance_session_id' => $lockedSession->id,
+                        'student_id' => $record['student_id'],
+                        'status' => $record['status'],
+                        'verification_method' => VerificationMethod::Manual->value,
+                        'checked_in_at' => now(),
+                        'marked_by' => $actor->id,
+                        'remarks' => $record['remarks'] ?? null,
+                    ]);
+
+                    $this->auditLogs->record(
+                        'attendance.manual_marked',
+                        'attendance',
+                        $attendance->id,
+                        ['status' => 'unmarked'],
+                        [
+                            'status' => $record['status'],
+                            'student_id' => $record['student_id'],
+                            'attendance_session_id' => $lockedSession->id,
+                            'remarks' => $record['remarks'] ?? null,
+                        ]
+                    );
+                }
+            } catch (UniqueConstraintViolationException) {
+                abort(409, 'An attendance record was added concurrently. Refresh the roster and try again.');
+            }
+
+            return $this->loadRelations($lockedSession->refresh());
+        });
+    }
+
+    /** @return array{present: int, late: int, absent: int, excused: int, unmarked: int, total: int} */
+    public function fullAttendanceSummary(AttendanceSession $session): array
+    {
+        $marked = $this->summary($session);
+        $enrolledCount = Enrollment::query()
+            ->where('class_section_id', $session->class_section_id)
+            ->where('status', EnrollmentStatus::Enrolled->value)
+            ->count();
+        $unmarked = max(0, $enrolledCount - $marked['total']);
+
+        return [...$marked, 'unmarked' => $unmarked, 'total' => $enrolledCount];
     }
 
     /**

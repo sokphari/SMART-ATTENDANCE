@@ -1,0 +1,143 @@
+export type TeacherSchedule = {
+  id: number;
+  day_of_week: number;
+  start_time: string;
+  end_time: string;
+  effective_from: string | null;
+  effective_until: string | null;
+  classroom: { id: number; room_code: string; building: string | null; floor: string | null } | null;
+};
+
+export type TeacherClassSection = {
+  id: number;
+  section_code: string;
+  status: "active" | "inactive";
+  capacity: number;
+  enrolled_count: number;
+  course: { id: number; code: string; name: string; department: string | null };
+  semester: { id: number; name: string; start_date: string; end_date: string; academic_year: string | null };
+  schedules?: TeacherSchedule[];
+};
+
+export type TeacherRosterStudent = {
+  id: number;
+  student_code: string;
+  name: string;
+  email: string | null;
+  enrollment_status: "enrolled";
+};
+
+export type ApiPage<T> = {
+  data: T[];
+  links?: { next: string | null; prev: string | null };
+  meta?: { current_page: number; last_page: number; per_page: number; total: number };
+};
+
+export type ApiResource<T> = { data: T };
+
+export type TeacherAttendanceSession = {
+  id: number;
+  class_section_id: number;
+  class_section: {
+    id: number;
+    section_code: string;
+    course?: { course_code?: string; name?: string; code?: string };
+    semester?: { name: string };
+  };
+  class_schedule_id: number | null;
+  classroom_id: number;
+  classroom?: { room_code: string; building?: string | null; floor?: string | null };
+  session_date: string;
+  starts_at: string;
+  late_after: string;
+  closes_at: string;
+  closed_at: string | null;
+  status: "scheduled" | "open" | "closed" | "cancelled";
+};
+
+export type SessionAttendanceStatus = "present" | "late" | "absent" | "excused" | "unmarked";
+
+export type SessionAttendance = {
+  student_id: number;
+  student_code: string;
+  name: string;
+  email: string | null;
+  enrollment_status: "enrolled";
+  status: SessionAttendanceStatus;
+  verification_method: "dynamic_qr" | "manual" | "system" | null;
+  checked_in_at: string | null;
+  remarks: string | null;
+  marked_by: string | null;
+};
+
+export type AttendanceSummary = {
+  present: number;
+  late: number;
+  absent: number;
+  excused: number;
+  unmarked: number;
+  total: number;
+};
+
+export type ManualAttendanceRecord = {
+  student_id: number;
+  status: Exclude<SessionAttendanceStatus, "unmarked">;
+  remarks?: string;
+};
+
+export type SessionAttendancePage = ApiPage<SessionAttendance> & {
+  summary: AttendanceSummary;
+};
+
+export type TeacherDashboardData = {
+  date: string;
+  timezone: string;
+  summary: {
+    classes_today: number;
+    open_sessions: number;
+    awaiting_closure: number;
+    attendance_last_7_days: Pick<AttendanceSummary, "present" | "late" | "absent" | "excused">;
+  };
+  today_schedule: Array<{
+    id: number;
+    class_section_id: number;
+    course_code: string;
+    class_name: string;
+    section_code: string;
+    semester: string;
+    start_time: string;
+    end_time: string;
+    classroom: string;
+    building: string | null;
+  }>;
+  open_sessions: Array<{
+    id: number;
+    class_section_id: number;
+    class_name: string;
+    course_code: string;
+    section_code: string;
+    session_date: string;
+    starts_at: string;
+    closes_at: string;
+    classroom: string;
+    awaiting_closure: boolean;
+    attendance: Pick<AttendanceSummary, "present" | "late" | "absent" | "excused">;
+  }>;
+};
+
+export type TeacherAttendanceReport = {
+  total: number;
+  by_status: { present: number; late: number; absent: number; excused: number };
+  attendance_rate: number;
+  by_section: Array<{
+    class_section_id: number;
+    section_code: string;
+    course_code: string;
+    total: number;
+    present: number;
+    late: number;
+    absent: number;
+    excused: number;
+    attendance_rate: number;
+  }>;
+};

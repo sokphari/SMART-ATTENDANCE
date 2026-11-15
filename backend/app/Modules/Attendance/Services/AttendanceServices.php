@@ -4,12 +4,50 @@ namespace App\Modules\Attendance\Services;
 
 use App\Enums\AttendanceStatus;
 use App\Models\Attendance;
+use App\Models\Teacher;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Support\Facades\DB;
 
 class AttendanceServices
 {
+    /** @param array{search?: string|null, class_section_id?: int|string|null, status?: string|null, date_from?: string|null, date_to?: string|null, per_page?: int|string|null} $filters */
+    public function paginateForTeacher(Teacher $teacher, array $filters = []): LengthAwarePaginator
+    {
+        return Attendance::query()
+            ->with([
+                'attendanceSession.classSection.course.department',
+                'attendanceSession.teacher.user',
+                'attendanceSession.classroom',
+                'student.user',
+                'student.department',
+                'markedBy',
+            ])
+            ->whereHas('attendanceSession.classSection.teacherAssignments', fn ($query) => $query->where('teacher_id', $teacher->id))
+            ->when($filters['search'] ?? null, function ($query, string $search): void {
+                $term = '%'.strtolower($search).'%';
+                $query->whereHas('student', function ($query) use ($term): void {
+                    $query->whereRaw('LOWER(student_code) LIKE ?', [$term])
+                        ->orWhereHas('user', fn ($user) => $user
+                            ->whereRaw('LOWER(name) LIKE ?', [$term])
+                            ->orWhereRaw('LOWER(email) LIKE ?', [$term]));
+                });
+            })
+            ->when($filters['class_section_id'] ?? null, fn ($query, $id) => $query->whereHas(
+                'attendanceSession', fn ($session) => $session->where('class_section_id', $id)
+            ))
+            ->when($filters['status'] ?? null, fn ($query, string $status) => $query->where('status', $status))
+            ->when($filters['date_from'] ?? null, fn ($query, string $date) => $query->whereHas(
+                'attendanceSession', fn ($session) => $session->whereDate('session_date', '>=', $date)
+            ))
+            ->when($filters['date_to'] ?? null, fn ($query, string $date) => $query->whereHas(
+                'attendanceSession', fn ($session) => $session->whereDate('session_date', '<=', $date)
+            ))
+            ->orderByDesc('id')
+            ->paginate((int) ($filters['per_page'] ?? 15))
+            ->withQueryString();
+    }
+
     /**
      * @param  array{search?: string|null, class_section_id?: int|string|null, attendance_session_id?: int|string|null, student_id?: int|string|null, status?: string|null, date_from?: string|null, date_to?: string|null, per_page?: int|string|null}  $filters
      */
@@ -152,6 +190,12 @@ class AttendanceServices
         ];
     }
 
+    /** @param array{class_section_id?: int|string|null, date_from?: string|null, date_to?: string|null} $filters */
+    public function reportForTeacher(Teacher $teacher, array $filters = []): array
+    {
+        return $this->report([...$filters, 'teacher_id' => $teacher->id]);
+    }
+
     /**
      * @param  array{class_section_id?: int|string|null, semester_id?: int|string|null, date_from?: string|null, date_to?: string|null}  $filters
      */
@@ -194,7 +238,13 @@ class AttendanceServices
                     '<=',
                     $dateTo
                 )
-            );
+            )
+            ->when($filters['teacher_id'] ?? null, fn ($query, $teacherId) => $query->whereExists(
+                fn ($assignment) => $assignment->selectRaw('1')
+                    ->from('teacher_assignments')
+                    ->whereColumn('teacher_assignments.class_section_id', 'class_sections.id')
+                    ->where('teacher_assignments.teacher_id', $teacherId)
+            ));
     }
 
     private function attendanceRate(int $present, int $late, int $total): float

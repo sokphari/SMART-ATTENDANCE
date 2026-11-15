@@ -6,6 +6,7 @@ import {
   CalendarDays,
   CalendarRange,
   CheckCircle2,
+  ClipboardList,
   FilePenLine,
   GraduationCap,
   LayoutDashboard,
@@ -121,6 +122,48 @@ export const ALL_NAV_ITEMS: NavItem[] = [
   },
 ];
 
+export const TEACHER_NAV_ITEMS: NavItem[] = [
+  {
+    label: "Teacher dashboard",
+    href: "/teacher/dashboard",
+    icon: LayoutDashboard,
+    description: "Your assigned classes and attendance activity.",
+  },
+  {
+    label: "My classes",
+    href: "/teacher/classes",
+    icon: BookOpen,
+    description: "Sections, rosters, schedules, and classrooms assigned to you.",
+    endpoint: "/api/v1/teacher/class-sections",
+  },
+  {
+    label: "Attendance sessions",
+    href: "/teacher/attendance-sessions",
+    icon: ClipboardList,
+    description: "Open sessions, mark attendance, and review class records.",
+    endpoint: "/api/v1/teacher/attendance-sessions",
+  },
+  {
+    label: "Attendance history",
+    href: "/teacher/attendance-history",
+    icon: CheckCircle2,
+    description: "Review attendance records for your assigned sections.",
+    endpoint: "/api/v1/teacher/attendance",
+  },
+  {
+    label: "Attendance reports",
+    href: "/teacher/reports/attendance",
+    icon: BarChart3,
+    description: "Review attendance totals and rates for your classes.",
+    endpoint: "/api/v1/teacher/reports/attendance",
+  },
+];
+
+export const TEACHER_NAV_SECTIONS: NavSection[] = [
+  { label: "Overview", items: TEACHER_NAV_ITEMS.slice(0, 1) },
+  { label: "Teaching", items: TEACHER_NAV_ITEMS.slice(1) },
+];
+
 export const NAV_SECTIONS: NavSection[] = [
   {
     label: "Overview",
@@ -159,6 +202,8 @@ export const MOBILE_TABS: NavItem[] = ALL_NAV_ITEMS.filter((item) =>
 
 export function findNavItem(pathname: string): NavItem | undefined {
   return ALL_NAV_ITEMS.find(
+    (item) => pathname === item.href || pathname.startsWith(`${item.href}/`),
+  ) ?? TEACHER_NAV_ITEMS.find(
     (item) => pathname === item.href || pathname.startsWith(`${item.href}/`),
   );
 }

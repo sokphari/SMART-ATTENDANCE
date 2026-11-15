@@ -4,12 +4,15 @@ import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { LayoutGrid, X } from "lucide-react";
-import { ALL_NAV_ITEMS, MOBILE_TABS } from "@/config/nav";
+import { ALL_NAV_ITEMS, MOBILE_TABS, TEACHER_NAV_ITEMS } from "@/config/nav";
 import { cx } from "@/lib/utils/cx";
 
-export function BottomTabBar() {
+export function BottomTabBar({ role }: { role: string | null }) {
   const pathname = usePathname();
   const [moreOpen, setMoreOpen] = useState(false);
+  const isTeacher = role?.toLowerCase() === "teacher";
+  const tabs = isTeacher ? TEACHER_NAV_ITEMS.slice(0, 3) : MOBILE_TABS;
+  const moreItems = isTeacher ? TEACHER_NAV_ITEMS : ALL_NAV_ITEMS;
 
   const isActive = (href: string) =>
     pathname === href || pathname.startsWith(`${href}/`);
@@ -39,7 +42,7 @@ export function BottomTabBar() {
               </button>
             </div>
             <div className="grid max-h-[50vh] grid-cols-2 gap-2 overflow-y-auto">
-              {ALL_NAV_ITEMS.map((item) => (
+              {moreItems.map((item) => (
                 <Link
                   key={item.href}
                   href={item.href}
@@ -64,8 +67,8 @@ export function BottomTabBar() {
         className="fixed inset-x-0 bottom-0 z-40 border-t border-hairline bg-card/90 backdrop-blur-lg lg:hidden"
         style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
       >
-        <div className="mx-auto grid max-w-lg grid-cols-5">
-          {MOBILE_TABS.map((tab) => {
+        <div className={`mx-auto grid max-w-lg ${isTeacher ? "grid-cols-3" : "grid-cols-5"}`}>
+          {tabs.map((tab) => {
             const active = isActive(tab.href);
 
             return (
@@ -81,18 +84,18 @@ export function BottomTabBar() {
                 <tab.icon
                   className={cx("size-5", active && "drop-shadow-sm")}
                 />
-                {tab.label}
+                {isTeacher && tab.label === "Teacher dashboard" ? "Home" : isTeacher && tab.label === "Attendance sessions" ? "Attendance" : tab.label}
               </Link>
             );
           })}
-          <button
+          {!isTeacher && <button
             type="button"
             onClick={() => setMoreOpen(true)}
             className="flex cursor-pointer flex-col items-center gap-1 py-2.5 text-[11px] font-bold text-slate-500 transition-colors duration-200"
           >
             <LayoutGrid className="size-5" />
             More
-          </button>
+          </button>}
         </div>
       </nav>
     </>
