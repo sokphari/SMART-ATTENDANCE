@@ -1,7 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-import useSWR from "swr";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import {
   AlertCircle,
@@ -30,17 +29,39 @@ export function NotificationBell() {
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
   const [category, setCategory] = useState<NotificationCategory>("all");
   const [lastReadTime, setLastReadTime] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  const { data, isLoading, mutate } = useSWR<NotificationResponse>(
-    "/api/v1/notifications?limit=30",
-    () => apiFetch<NotificationResponse>("/api/v1/notifications?limit=30"),
-    {
-      refreshInterval: 30_000,
-      revalidateOnFocus: true,
-      keepPreviousData: true,
-    },
-  );
+  const fetchNotifications = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      const response = await apiFetch<NotificationResponse>(
+        "/api/v1/notifications?limit=30",
+      );
+      setNotifications(response.data ?? []);
+      setLoadError(null);
+    } catch (error) {
+      setLoadError(
+        error instanceof Error ? error.message : "Unable to load notifications.",
+      );
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    void fetchNotifications();
+    const interval = window.setInterval(() => void fetchNotifications(), 30_000);
+    const refreshOnFocus = () => {
+      if (document.visibilityState === "visible") void fetchNotifications();
+    };
+    document.addEventListener("visibilitychange", refreshOnFocus);
+    return () => {
+      window.clearInterval(interval);
+      document.removeEventListener("visibilitychange", refreshOnFocus);
+    };
+  }, [fetchNotifications]);
 
   // Initialize last read time from localStorage
   useEffect(() => {
@@ -51,14 +72,6 @@ export function NotificationBell() {
       }
     }
   }, []);
-
-  useEffect(() => {
-    setNotifications(data?.data ?? []);
-  }, [data]);
-
-  const fetchNotifications = async () => {
-    await mutate();
-  };
 
   // Close on outside click
   useEffect(() => {
@@ -235,7 +248,25 @@ export function NotificationBell() {
 
           {/* List Content */}
           <div className="max-h-80 overflow-y-auto divide-y divide-hairline">
-            {filteredNotifications.length === 0 ? (
+            {loadError && notifications.length === 0 ? (
+              <div className="px-4 py-8 text-center">
+                <p className="text-sm font-semibold text-slate-700 dark:text-slate-300">
+                  Notifications could not be loaded
+                </p>
+                <p className="mt-1 text-xs text-slate-500">{loadError}</p>
+                <button
+                  type="button"
+                  onClick={() => void fetchNotifications()}
+                  className="mt-3 rounded-lg bg-brand-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-brand-700"
+                >
+                  Try again
+                </button>
+              </div>
+            ) : isLoading && notifications.length === 0 ? (
+              <div className="px-4 py-10 text-center text-sm text-slate-500">
+                Loading notifications…
+              </div>
+            ) : filteredNotifications.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-10 px-4 text-center">
                 <span className="flex size-10 items-center justify-center rounded-full bg-slate-100 text-slate-400 dark:bg-slate-800 dark:text-slate-500 mb-2">
                   <CheckCircle2 className="size-5" />
