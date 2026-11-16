@@ -7,6 +7,8 @@ use App\Enums\VerificationMethod;
 use App\Models\Attendance;
 use App\Models\AttendanceCorrection;
 use App\Models\User;
+use App\Models\Teacher;
+use App\Enums\AttendanceSessionStatus;
 use App\Modules\AuditLogs\Services\AuditLogServices;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\UniqueConstraintViolationException;
@@ -43,6 +45,41 @@ class AttendanceCorrectionServices
             ->orderByDesc('id')
             ->paginate((int) ($filters['per_page'] ?? 15))
             ->withQueryString();
+    }
+
+    /** @param array{status?: string|null, per_page?: int|string|null} $filters */
+    public function paginateForTeacher(Teacher $teacher, User $requester, array $filters = []): LengthAwarePaginator
+    {
+        return AttendanceCorrection::query()
+            ->with($this->relations())
+            ->where('requested_by', $requester->id)
+            ->whereHas('attendance.attendanceSession.classSection.teacherAssignments', fn ($query) => $query->where('teacher_id', $teacher->id))
+            ->when($filters['status'] ?? null, fn ($query, string $status) => $query->where('status', $status))
+            ->orderByDesc('id')
+            ->paginate((int) ($filters['per_page'] ?? 15))
+            ->withQueryString();
+    }
+
+    /** @param array{attendance_id: int|string, requested_status: string, reason: string} $data */
+    public function createForTeacher(array $data, User $requester, Teacher $teacher): AttendanceCorrection
+    {
+        $attendance = Attendance::query()
+            ->with('attendanceSession')
+            ->whereKey($data['attendance_id'])
+            ->whereHas('attendanceSession.classSection.teacherAssignments', fn ($query) => $query->where('teacher_id', $teacher->id))
+            ->firstOrFail();
+
+        if ($attendance->attendanceSession->status !== AttendanceSessionStatus::Closed) {
+            abort(409, 'Correction requests can only be made after the attendance session is closed.');
+        }
+
+        if ($attendance->status->value === $data['requested_status']) {
+            throw ValidationException::withMessages([
+                'requested_status' => 'Choose a status different from the current attendance status.',
+            ]);
+        }
+
+        return $this->create($data, $requester);
     }
 
     /**

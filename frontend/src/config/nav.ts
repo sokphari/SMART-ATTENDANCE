@@ -13,6 +13,7 @@ import {
   Layers,
   ScrollText,
   Users,
+  UserRound,
   type LucideIcon,
 } from "lucide-react";
 
@@ -151,11 +152,25 @@ export const TEACHER_NAV_ITEMS: NavItem[] = [
     endpoint: "/api/v1/teacher/attendance",
   },
   {
+    label: "Corrections",
+    href: "/teacher/corrections",
+    icon: FilePenLine,
+    description: "Request and track corrections to closed session records.",
+    endpoint: "/api/v1/teacher/attendance-corrections",
+  },
+  {
     label: "Attendance reports",
     href: "/teacher/reports/attendance",
     icon: BarChart3,
     description: "Review attendance totals and rates for your classes.",
     endpoint: "/api/v1/teacher/reports/attendance",
+  },
+  {
+    label: "My profile",
+    href: "/teacher/profile",
+    icon: UserRound,
+    description: "View your signed-in teacher account details.",
+    endpoint: "/api/v1/auth/me",
   },
 ];
 

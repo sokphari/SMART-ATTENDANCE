@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
-import { LogOut, Moon, PanelLeft, QrCode, ScanLine, Search, Sun } from "lucide-react";
+import { LogOut, Moon, PanelLeft, QrCode, ScanLine, Search, Sun, UserRound } from "lucide-react";
 import { findNavItem } from "@/config/nav";
 import type { AuthUser } from "@/types/auth";
 import { BackendStatus } from "@/components/shared/BackendStatus";
@@ -139,6 +139,15 @@ export function Topbar({
                       {user.role ?? "user"}
                     </p>
                   </div>
+                  {isTeacher && <Link
+                    href="/teacher/profile"
+                    role="menuitem"
+                    onClick={() => setProfileOpen(false)}
+                    className="mt-1 flex w-full items-center gap-2.5 rounded-control px-3 py-2.5 text-sm font-semibold text-ink transition-colors hover:bg-canvas"
+                  >
+                    <UserRound className="size-4" />
+                    My profile
+                  </Link>}
                   <button
                     type="button"
                     role="menuitem"

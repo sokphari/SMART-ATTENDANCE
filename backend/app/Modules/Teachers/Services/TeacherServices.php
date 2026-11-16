@@ -6,11 +6,14 @@ use App\Enums\AccountStatus;
 use App\Enums\UserRole;
 use App\Models\Teacher;
 use App\Models\User;
+use App\Modules\AuditLogs\Services\AuditLogServices;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
 
 class TeacherServices
 {
+    public function __construct(private readonly AuditLogServices $auditLogs) {}
+
     /**
      * @param  array{search?: string|null, department_id?: int|string|null, status?: string|null, per_page?: int|string|null}  $filters
      */
@@ -94,6 +97,45 @@ class TeacherServices
             if ($profileData !== []) {
                 $teacher->fill($profileData)->save();
             }
+
+            return $teacher->refresh()->load(['user', 'department']);
+        });
+    }
+
+    /** @param array{name?: string, email?: string, phone?: string|null} $data */
+    public function updateOwnProfile(Teacher $teacher, array $data): Teacher
+    {
+        return DB::transaction(function () use ($teacher, $data): Teacher {
+            $user = $teacher->user;
+            $oldValues = [
+                'name' => $user->name,
+                'email' => $user->email,
+                'phone' => $teacher->phone,
+            ];
+
+            $userData = array_intersect_key($data, array_flip(['name', 'email']));
+            if (isset($userData['email']) && $userData['email'] !== $user->email) {
+                $user->email_verified_at = null;
+            }
+            if ($userData !== []) {
+                $user->fill($userData)->save();
+            }
+            if (array_key_exists('phone', $data)) {
+                $teacher->phone = $data['phone'];
+                $teacher->save();
+            }
+
+            $this->auditLogs->record(
+                'teacher.profile_updated',
+                'teacher',
+                $teacher->id,
+                $oldValues,
+                [
+                    'name' => $user->name,
+                    'email' => $user->email,
+                    'phone' => $teacher->phone,
+                ]
+            );
 
             return $teacher->refresh()->load(['user', 'department']);
         });

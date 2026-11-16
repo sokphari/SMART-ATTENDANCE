@@ -141,3 +141,36 @@ export type TeacherAttendanceReport = {
     attendance_rate: number;
   }>;
 };
+
+export type TeacherProfile = {
+  id: number;
+  teacher_code: string;
+  phone: string | null;
+  department: { id: number; name: string; code: string } | null;
+  user: {
+    id: number;
+    name: string;
+    email: string;
+    role: string | null;
+    status: string | null;
+    email_verified_at: string | null;
+    created_at: string;
+    updated_at: string;
+  };
+};
+
+export type TeacherCorrection = {
+  id: number;
+  attendance_id: number;
+  attendance: import("@/features/attendance/types").AttendanceRecord | null;
+  requested_by: number;
+  requester: { id: number; name: string; email: string; role: string | null; status: string | null } | null;
+  reviewed_by: number | null;
+  reviewer: { id: number; name: string; email: string; role: string | null; status: string | null } | null;
+  reason: string;
+  requested_status: "present" | "late" | "absent" | "excused";
+  status: "pending" | "approved" | "rejected";
+  reviewed_at: string | null;
+  review_note: string | null;
+  created_at: string;
+};

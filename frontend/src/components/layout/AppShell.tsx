@@ -39,6 +39,15 @@ export function AppShell({ children }: { children: ReactNode }) {
   }, [router]);
 
   useEffect(() => {
+    const handleUserUpdated = (event: Event) => {
+      const updatedUser = (event as CustomEvent<AuthUser>).detail;
+      if (updatedUser) setUser(updatedUser);
+    };
+    window.addEventListener("smart-attendance:user-updated", handleUserUpdated);
+    return () => window.removeEventListener("smart-attendance:user-updated", handleUserUpdated);
+  }, []);
+
+  useEffect(() => {
     if (!ready || !user) return;
     const isTeacher = user.role?.toLowerCase() === "teacher";
     const isTeacherPath = pathname === "/teacher" || pathname.startsWith("/teacher/");

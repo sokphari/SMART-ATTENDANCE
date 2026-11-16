@@ -24,6 +24,11 @@ export function setSession(token: string, user: AuthUser): void {
   window.localStorage.setItem(USER_KEY, JSON.stringify(user));
 }
 
+export function updateStoredUser(user: AuthUser): void {
+  window.localStorage.setItem(USER_KEY, JSON.stringify(user));
+  window.dispatchEvent(new CustomEvent("smart-attendance:user-updated", { detail: user }));
+}
+
 export function clearSession(): void {
   window.localStorage.removeItem(TOKEN_KEY);
   window.localStorage.removeItem(USER_KEY);

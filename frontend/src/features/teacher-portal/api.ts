@@ -1,9 +1,35 @@
 import { apiFetch } from "@/lib/api/client";
 import type { AttendanceRecord, Paginated, SectionOption } from "@/features/attendance/types";
-import type { ApiPage, ApiResource, ManualAttendanceRecord, SessionAttendancePage, TeacherAttendanceReport, TeacherAttendanceSession, TeacherClassSection, TeacherDashboardData, TeacherRosterStudent, TeacherSchedule } from "./types";
+import type { ApiPage, ApiResource, ManualAttendanceRecord, SessionAttendancePage, TeacherAttendanceReport, TeacherAttendanceSession, TeacherClassSection, TeacherCorrection, TeacherDashboardData, TeacherProfile, TeacherRosterStudent, TeacherSchedule } from "./types";
 
 export function getTeacherDashboard() {
   return apiFetch<ApiResource<TeacherDashboardData>>("/api/v1/teacher/dashboard");
+}
+
+export function getTeacherProfile() {
+  return apiFetch<ApiResource<TeacherProfile>>("/api/v1/teacher/profile");
+}
+
+export function updateTeacherProfile(payload: { name: string; email: string; phone: string | null }) {
+  return apiFetch<ApiResource<TeacherProfile>>("/api/v1/teacher/profile", {
+    method: "PATCH",
+    body: payload,
+  });
+}
+
+export function getTeacherCorrections(filters: { status?: string; page?: number; per_page?: number } = {}) {
+  const query = new URLSearchParams();
+  if (filters.status) query.set("status", filters.status);
+  query.set("page", String(filters.page ?? 1));
+  query.set("per_page", String(filters.per_page ?? 15));
+  return apiFetch<ApiPage<TeacherCorrection>>(`/api/v1/teacher/attendance-corrections?${query}`);
+}
+
+export function requestTeacherCorrection(payload: { attendance_id: number; requested_status: TeacherCorrection["requested_status"]; reason: string }) {
+  return apiFetch<ApiResource<TeacherCorrection>>("/api/v1/teacher/attendance-corrections", {
+    method: "POST",
+    body: payload,
+  });
 }
 
 export function getTeacherAttendance(params: URLSearchParams) {
