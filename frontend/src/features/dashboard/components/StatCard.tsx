@@ -12,7 +12,7 @@ type StatCardProps = {
 
 export function StatCard({ icon: Icon, label, value, hint, trend }: StatCardProps) {
   return (
-    <Card className="p-5 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lift">
+    <Card className="p-5 transition-all duration-300">
       <div className="flex items-start justify-between">
         <span className="flex size-10 items-center justify-center rounded-control bg-brand-50 text-brand-600">
           <Icon className="size-5" />

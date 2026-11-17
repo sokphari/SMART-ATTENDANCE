@@ -7,12 +7,13 @@ import { LayoutGrid, X } from "lucide-react";
 import { ALL_NAV_ITEMS, MOBILE_TABS, TEACHER_NAV_ITEMS } from "@/config/nav";
 import { cx } from "@/lib/utils/cx";
 
-export function BottomTabBar({ role }: { role: string | null }) {
+export function BottomTabBar({ role, teacherModules = [] }: { role: string | null; teacherModules?: string[] }) {
   const pathname = usePathname();
   const [moreOpen, setMoreOpen] = useState(false);
   const isTeacher = role?.toLowerCase() === "teacher";
-  const tabs = isTeacher ? TEACHER_NAV_ITEMS.slice(0, 3) : MOBILE_TABS;
-  const moreItems = isTeacher ? TEACHER_NAV_ITEMS : ALL_NAV_ITEMS;
+  const allowedTeacherItems = TEACHER_NAV_ITEMS.filter((item) => item.permissionKey && teacherModules.includes(item.permissionKey));
+  const tabs = isTeacher ? allowedTeacherItems.slice(0, 3) : MOBILE_TABS;
+  const moreItems = isTeacher ? allowedTeacherItems : ALL_NAV_ITEMS;
 
   const isActive = (href: string) =>
     pathname === href || pathname.startsWith(`${href}/`);
@@ -88,7 +89,7 @@ export function BottomTabBar({ role }: { role: string | null }) {
               </Link>
             );
           })}
-          {!isTeacher && <button
+          {(!isTeacher || allowedTeacherItems.length > tabs.length) && <button
             type="button"
             onClick={() => setMoreOpen(true)}
             className="flex cursor-pointer flex-col items-center gap-1 py-2.5 text-[11px] font-bold text-slate-500 transition-colors duration-200"

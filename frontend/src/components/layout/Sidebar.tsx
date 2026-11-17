@@ -11,11 +11,17 @@ import { cx } from "@/lib/utils/cx";
 type SidebarProps = {
   collapsed: boolean;
   user: AuthUser | null;
+  teacherModules?: string[];
 };
 
-export function Sidebar({ collapsed, user }: SidebarProps) {
+export function Sidebar({ collapsed, user, teacherModules = [] }: SidebarProps) {
   const pathname = usePathname();
-  const sections = user?.role?.toLowerCase() === "teacher" ? TEACHER_NAV_SECTIONS : NAV_SECTIONS;
+  const sections = user?.role?.toLowerCase() === "teacher"
+    ? TEACHER_NAV_SECTIONS.map((section) => ({
+        ...section,
+        items: section.items.filter((item) => item.permissionKey && teacherModules.includes(item.permissionKey)),
+      })).filter((section) => section.items.length > 0)
+    : NAV_SECTIONS;
 
   const isActive = (href: string) =>
     pathname === href || pathname.startsWith(`${href}/`);

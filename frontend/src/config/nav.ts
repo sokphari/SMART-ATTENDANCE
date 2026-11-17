@@ -12,6 +12,7 @@ import {
   LayoutDashboard,
   Layers,
   ScrollText,
+  ShieldCheck,
   Users,
   UserRound,
   type LucideIcon,
@@ -23,6 +24,7 @@ export type NavItem = {
   icon: LucideIcon;
   description: string;
   endpoint?: string;
+  permissionKey?: string;
 };
 
 export type NavSection = {
@@ -121,6 +123,20 @@ export const ALL_NAV_ITEMS: NavItem[] = [
     description: "Every correction action, tracked end to end.",
     endpoint: "/api/v1/admin/audit-logs",
   },
+  {
+    label: "Users & accounts",
+    href: "/users",
+    icon: Users,
+    description: "Manage login accounts and teacher access status.",
+    endpoint: "/api/v1/admin/users",
+  },
+  {
+    label: "Roles & permissions",
+    href: "/roles-permissions",
+    icon: ShieldCheck,
+    description: "Control which modules teacher accounts can access.",
+    endpoint: "/api/v1/admin/role-permissions",
+  },
 ];
 
 export const TEACHER_NAV_ITEMS: NavItem[] = [
@@ -129,6 +145,7 @@ export const TEACHER_NAV_ITEMS: NavItem[] = [
     href: "/teacher/dashboard",
     icon: LayoutDashboard,
     description: "Your assigned classes and attendance activity.",
+    permissionKey: "dashboard",
   },
   {
     label: "My classes",
@@ -136,6 +153,7 @@ export const TEACHER_NAV_ITEMS: NavItem[] = [
     icon: BookOpen,
     description: "Sections, rosters, schedules, and classrooms assigned to you.",
     endpoint: "/api/v1/teacher/class-sections",
+    permissionKey: "classes",
   },
   {
     label: "Attendance sessions",
@@ -143,6 +161,7 @@ export const TEACHER_NAV_ITEMS: NavItem[] = [
     icon: ClipboardList,
     description: "Open sessions, mark attendance, and review class records.",
     endpoint: "/api/v1/teacher/attendance-sessions",
+    permissionKey: "attendance_sessions",
   },
   {
     label: "Attendance history",
@@ -150,6 +169,7 @@ export const TEACHER_NAV_ITEMS: NavItem[] = [
     icon: CheckCircle2,
     description: "Review attendance records for your assigned sections.",
     endpoint: "/api/v1/teacher/attendance",
+    permissionKey: "attendance_history",
   },
   {
     label: "Corrections",
@@ -157,6 +177,7 @@ export const TEACHER_NAV_ITEMS: NavItem[] = [
     icon: FilePenLine,
     description: "Request and track corrections to closed session records.",
     endpoint: "/api/v1/teacher/attendance-corrections",
+    permissionKey: "corrections",
   },
   {
     label: "Attendance reports",
@@ -164,6 +185,7 @@ export const TEACHER_NAV_ITEMS: NavItem[] = [
     icon: BarChart3,
     description: "Review attendance totals and rates for your classes.",
     endpoint: "/api/v1/teacher/reports/attendance",
+    permissionKey: "attendance_reports",
   },
   {
     label: "My profile",
@@ -171,6 +193,7 @@ export const TEACHER_NAV_ITEMS: NavItem[] = [
     icon: UserRound,
     description: "View your signed-in teacher account details.",
     endpoint: "/api/v1/auth/me",
+    permissionKey: "profile",
   },
 ];
 
@@ -187,7 +210,7 @@ export const NAV_SECTIONS: NavSection[] = [
   {
     label: "People",
     items: ALL_NAV_ITEMS.filter((item) =>
-      ["/students", "/teachers"].includes(item.href),
+      ["/students", "/teachers", "/users", "/roles-permissions"].includes(item.href),
     ),
   },
   {

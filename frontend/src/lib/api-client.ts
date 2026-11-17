@@ -8,10 +8,20 @@ export type ServerApiOptions = {
   noStore?: boolean;
 };
 
-const backendUrl =
-  process.env.BACKEND_INTERNAL_URL ??
-  process.env.API_PROXY_URL ??
-  "http://localhost:8001";
+function isHttpUrl(value: string | undefined): value is string {
+  if (!value?.trim()) return false;
+  try {
+    const url = new URL(value.trim());
+    return (url.protocol === "http:" || url.protocol === "https:") && Boolean(url.hostname);
+  } catch {
+    return false;
+  }
+}
+
+const backendUrl = [
+  process.env.BACKEND_INTERNAL_URL,
+  process.env.API_PROXY_URL,
+].find(isHttpUrl)?.trim().replace(/\/+$/, "") ?? "http://localhost:8001";
 
 /** Server-side API client for App Router Server Components and Actions. */
 export async function apiClient<T>(

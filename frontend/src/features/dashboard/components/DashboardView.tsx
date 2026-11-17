@@ -193,13 +193,13 @@ export function DashboardView() {
                 if (!item) return null;
 
                 return (
-                  <Link key={item.href} href={item.href} className="group">
-                    <Card className="h-full p-5 transition-all duration-300 group-hover:-translate-y-0.5 group-hover:shadow-lift">
+                  <Link key={item.href} href={item.href}>
+                    <Card className="h-full p-5 transition-all duration-300">
                       <div className="flex items-center justify-between">
                         <span className="flex size-10 items-center justify-center rounded-control bg-brand-50 text-brand-600">
                           <item.icon className="size-5" />
                         </span>
-                        <ArrowUpRight className="size-5 text-slate-300 transition-colors duration-200 group-hover:text-brand-600" />
+                        <ArrowUpRight className="size-5 text-slate-300 transition-colors duration-200" />
                       </div>
                       <p className="font-display mt-4 font-bold">
                         {item.label}

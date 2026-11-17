@@ -10,6 +10,8 @@ import { logout } from "@/features/auth/api";
 import { clearSession, getStoredUser, getToken } from "@/lib/api/session";
 import type { AuthUser } from "@/types/auth";
 import { clearAuthCookie } from "@/app/actions/auth";
+import { TEACHER_NAV_ITEMS } from "@/config/nav";
+import { fetchTeacherPermissions } from "@/features/users/api";
 
 const SIDEBAR_KEY = "sa_sidebar_collapsed";
 const THEME_KEY = "sa_theme";
@@ -21,10 +23,15 @@ export function AppShell({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [collapsed, setCollapsed] = useState(false);
   const [darkMode, setDarkMode] = useState(false);
+  const [teacherModules, setTeacherModules] = useState<string[]>([]);
+  const isTeacherPath = pathname === "/teacher" || pathname.startsWith("/teacher/");
 
   useEffect(() => {
     if (!getToken()) {
-      router.replace("/login");
+      // This layout is already mounted without a valid client session. Use a
+      // full navigation so an interrupted App Router transition cannot leave
+      // the loading shell on screen indefinitely.
+      window.location.replace("/login");
       return;
     }
 
@@ -35,7 +42,14 @@ export function AppShell({ children }: { children: ReactNode }) {
     const useDarkMode = storedTheme === "dark";
     document.documentElement.classList.toggle("dark", useDarkMode);
     setDarkMode(useDarkMode);
-    setReady(true);
+    if (storedUser?.role?.toLowerCase() === "teacher") {
+      fetchTeacherPermissions()
+        .then(({ data }) => setTeacherModules(Object.keys(data).filter((key) => data[key])))
+        .catch(() => setTeacherModules([]))
+        .finally(() => setReady(true));
+    } else {
+      setReady(true);
+    }
   }, [router]);
 
   useEffect(() => {
@@ -50,14 +64,30 @@ export function AppShell({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (!ready || !user) return;
     const isTeacher = user.role?.toLowerCase() === "teacher";
-    const isTeacherPath = pathname === "/teacher" || pathname.startsWith("/teacher/");
     if (isTeacher && !isTeacherPath) router.replace("/teacher/dashboard");
     if (!isTeacher && isTeacherPath) router.replace("/dashboard");
-  }, [pathname, ready, router, user]);
+    if (isTeacher) {
+      const currentModule = TEACHER_NAV_ITEMS.find((item) => pathname === item.href || pathname.startsWith(`${item.href}/`));
+      if (currentModule?.permissionKey && !teacherModules.includes(currentModule.permissionKey)) {
+        const availableModule = TEACHER_NAV_ITEMS.find((item) => item.permissionKey && teacherModules.includes(item.permissionKey));
+        if (availableModule) router.replace(availableModule.href);
+      }
+    }
+  }, [isTeacherPath, pathname, ready, router, teacherModules, user]);
+
+  const isTeacher = user?.role?.toLowerCase() === "teacher";
+  const noTeacherModules = ready && isTeacher && teacherModules.length === 0;
+  const currentTeacherModule = isTeacher
+    ? TEACHER_NAV_ITEMS.find((item) => pathname === item.href || pathname.startsWith(`${item.href}/`))
+    : undefined;
+  const noAccessRedirectPending = Boolean(
+    isTeacher && teacherModules.length > 0 && currentTeacherModule?.permissionKey && !teacherModules.includes(currentTeacherModule.permissionKey),
+  );
 
   const roleBlockedRoute = ready && user && (
-    (user.role?.toLowerCase() === "teacher" && !pathname.startsWith("/teacher")) ||
-    (user.role?.toLowerCase() !== "teacher" && pathname.startsWith("/teacher"))
+    (user.role?.toLowerCase() === "teacher" && !isTeacherPath) ||
+    (user.role?.toLowerCase() !== "teacher" && isTeacherPath) ||
+    noAccessRedirectPending
   );
 
   const toggleSidebar = useCallback(() => {
@@ -98,9 +128,13 @@ export function AppShell({ children }: { children: ReactNode }) {
     );
   }
 
+  if (noTeacherModules) {
+    return <div className="flex min-h-dvh items-center justify-center bg-canvas px-5"><div className="max-w-lg rounded-panel border border-hairline bg-card p-8 text-center shadow-soft"><h1 className="font-display text-xl font-bold">Teacher access is disabled</h1><p className="mt-2 text-sm leading-relaxed text-muted">An administrator has turned off all teacher modules. Contact your administrator to restore access.</p><button type="button" onClick={() => void handleLogout()} className="mt-5 rounded-control bg-brand-600 px-4 py-2 text-sm font-semibold text-white hover:bg-brand-700">Sign out</button></div></div>;
+  }
+
   return (
     <div className="min-h-dvh">
-      <Sidebar collapsed={collapsed} user={user} />
+      <Sidebar collapsed={collapsed} user={user} teacherModules={teacherModules} />
       <div
         className={`flex min-h-dvh flex-col transition-[padding] duration-300 ease-out ${collapsed ? "lg:pl-[76px]" : "lg:pl-64"}`}
       >
@@ -115,7 +149,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           {children}
         </main>
       </div>
-      <BottomTabBar role={user?.role ?? null} />
+      <BottomTabBar role={user?.role ?? null} teacherModules={teacherModules} />
     </div>
   );
 }

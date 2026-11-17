@@ -3,7 +3,7 @@
 use App\Modules\Attendance\Controllers\TeacherAttendanceSessionController;
 use Illuminate\Support\Facades\Route;
 
-Route::middleware(['auth:sanctum', 'role:teacher'])
+Route::middleware(['auth:sanctum', 'role:teacher', 'teacher.module:attendance_sessions'])
     ->prefix('teacher')
     ->group(function (): void {
         Route::get('attendance-sessions', [TeacherAttendanceSessionController::class, 'index']);
