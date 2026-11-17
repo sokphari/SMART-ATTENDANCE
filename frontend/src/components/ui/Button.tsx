@@ -15,6 +15,7 @@ const BUTTON_SIZES = {
   sm: "h-9 px-3.5 text-sm",
   md: "h-11 px-5 text-sm",
   lg: "h-12 px-6 text-base",
+  icon: "size-9 shrink-0 p-0",
 } as const;
 
 type ButtonProps = ComponentProps<"button"> & {

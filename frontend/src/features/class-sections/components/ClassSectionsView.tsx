@@ -10,6 +10,8 @@ import {
   Pencil,
   Plus,
   Search,
+  ToggleLeft,
+  ToggleRight,
   Trash2,
   Users,
   X,
@@ -166,7 +168,9 @@ export function ClassSectionsView() {
           </span>
           <div>
             <p className="text-sm text-muted">Active on this page</p>
-            <p className="font-display mt-1 text-2xl font-bold">{activeCount}</p>
+            <p className="font-display mt-1 text-2xl font-bold">
+              {activeCount}
+            </p>
           </div>
         </Card>
         <Card className="flex min-h-28 items-center gap-4 p-5">
@@ -341,43 +345,59 @@ export function ClassSectionsView() {
                     <td className="px-5 py-4 text-muted">
                       {section.course?.department?.name ?? "—"}
                     </td>
-                    <td className="relative px-5 py-3 text-right">
-                      <div className="relative inline-block text-left">
+
+                    <td className="px-5 py-3 text-right">
+                      <div className="flex items-center justify-end gap-2">
+                        {/* Edit */}
                         <Button
-                          variant="ghost"
-                          size="sm"
+                          type="button"
+                          variant="secondary"
+                          size="icon"
                           onClick={() =>
-                            setActionMenuId(
-                              actionMenuId === section.id ? null : section.id,
-                            )
+                            router.push(`/class-sections/${section.id}/edit`)
                           }
-                          aria-label="Actions"
+                          aria-label={`Edit section ${section.name}`}
+                          title="Edit section"
+                          className="
+                        border-blue-500/20
+                        bg-blue-500/10 text-blue-400
+                        shadow-none
+                        hover:border-blue-500/30
+                        hover:bg-blue-500/20
+                        hover:text-blue-300
+      "
                         >
-                          <MoreVertical className="size-4" />
+                          <Pencil className="size-4" />
                         </Button>
-                        {actionMenuId === section.id && (
-                          <div className="absolute right-0 z-50 mt-1 w-44 rounded-panel border border-hairline bg-card py-1 shadow-lift">
-                            <button
-                              type="button"
-                              onClick={() => {
-                                setActionMenuId(null);
-                                router.push(`/class-sections/${section.id}/edit`);
-                              }}
-                              className="flex w-full items-center gap-2 px-3 py-2 text-xs font-semibold text-ink hover:bg-canvas"
-                            >
-                              <Pencil className="size-3.5 text-muted" />
-                              Edit section
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => handleDelete(section)}
-                              className="flex w-full items-center gap-2 px-3 py-2 text-xs font-semibold text-danger hover:bg-danger-soft"
-                            >
-                              <Trash2 className="size-3.5" />
-                              Deactivate
-                            </button>
-                          </div>
-                        )}
+
+                        {/* Activate / Deactivate */}
+                        <Button
+                          type="button"
+                          variant="secondary"
+                          size="icon"
+                          onClick={() => handleToggleStatus(section)}
+                          aria-label={
+                            section.status === "active"
+                              ? "Deactivate section"
+                              : "Reactivate section"
+                          }
+                          title={
+                            section.status === "active"
+                              ? "Deactivate section"
+                              : "Reactivate section"
+                          }
+                          className={
+                            section.status === "active"
+                              ? "border-green-500/20 bg-green-500/10 text-green-400 shadow-none hover:bg-green-500/20 hover:text-green-300"
+                              : "border-red-500/20 bg-red-500/10 text-red-400 shadow-none hover:bg-red-500/20 hover:text-red-300"
+                          }
+                        >
+                          {section.status === "active" ? (
+                            <ToggleRight className="size-5" />
+                          ) : (
+                            <ToggleLeft className="size-5" />
+                          )}
+                        </Button>
                       </div>
                     </td>
                   </tr>

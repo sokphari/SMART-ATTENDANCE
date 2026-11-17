@@ -21,11 +21,7 @@ import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Input } from "@/components/ui/Input";
 import { PageHeader } from "@/components/ui/PageHeader";
-import {
-  deleteSchedule,
-  fetchClassroomOptions,
-  fetchSchedules,
-} from "../api";
+import { deleteSchedule, fetchClassroomOptions, fetchSchedules } from "../api";
 import type { ClassroomOption, ClassSchedule } from "../types";
 
 const DAYS: Record<number, string> = {
@@ -331,7 +327,9 @@ export function SchedulesView() {
                       {slot.classroom?.building && (
                         <div className="text-xs text-muted">
                           {slot.classroom.building}
-                          {slot.classroom.floor ? `, Fl ${slot.classroom.floor}` : ""}
+                          {slot.classroom.floor
+                            ? `, Fl ${slot.classroom.floor}`
+                            : ""}
                         </div>
                       )}
                     </td>
@@ -351,43 +349,50 @@ export function SchedulesView() {
                         ? `${slot.effective_from} to ${slot.effective_until}`
                         : "Full semester"}
                     </td>
-                    <td className="relative px-5 py-3 text-right">
-                      <div className="relative inline-block text-left">
+
+                    <td className="px-5 py-3 text-right">
+                      <div className="flex items-center justify-end gap-2">
+                        {/* Edit Schedule Slot */}
                         <Button
-                          variant="ghost"
-                          size="sm"
+                          type="button"
+                          variant="secondary"
+                          size="icon"
                           onClick={() =>
-                            setActionMenuId(
-                              actionMenuId === slot.id ? null : slot.id,
-                            )
+                            router.push(`/schedules/${slot.id}/edit`)
                           }
-                          aria-label="Actions"
+                          aria-label="Edit schedule slot"
+                          title="Edit slot"
+                          className="
+                        border-blue-500/20
+                        bg-blue-500/10 text-blue-400
+                        shadow-none
+                        hover:border-blue-500/30
+                        hover:bg-blue-500/20
+                        hover:text-blue-300
+                      "
                         >
-                          <MoreVertical className="size-4" />
+                          <Pencil className="size-4" />
                         </Button>
-                        {actionMenuId === slot.id && (
-                          <div className="absolute right-0 z-50 mt-1 w-44 rounded-panel border border-hairline bg-card py-1 shadow-lift">
-                            <button
-                              type="button"
-                              onClick={() => {
-                                setActionMenuId(null);
-                                router.push(`/schedules/${slot.id}/edit`);
-                              }}
-                              className="flex w-full items-center gap-2 px-3 py-2 text-xs font-semibold text-ink hover:bg-canvas"
-                            >
-                              <Pencil className="size-3.5 text-muted" />
-                              Edit slot
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => handleDelete(slot)}
-                              className="flex w-full items-center gap-2 px-3 py-2 text-xs font-semibold text-danger hover:bg-danger-soft"
-                            >
-                              <Trash2 className="size-3.5" />
-                              Delete slot
-                            </button>
-                          </div>
-                        )}
+
+                        {/* Delete Schedule Slot */}
+                        <Button
+                          type="button"
+                          variant="secondary"
+                          size="icon"
+                          onClick={() => handleDelete(slot)}
+                          aria-label="Delete schedule slot"
+                          title="Delete slot"
+                          className="
+                        border-red-500/20
+                        bg-red-500/10 text-red-400
+                        shadow-none
+                        hover:border-red-500/30
+                        hover:bg-red-500/20
+                        hover:text-red-300
+      "
+                        >
+                          <Trash2 className="size-4" />
+                        </Button>
                       </div>
                     </td>
                   </tr>

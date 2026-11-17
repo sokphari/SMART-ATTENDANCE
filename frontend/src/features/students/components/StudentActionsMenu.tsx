@@ -3,7 +3,7 @@
 import { forwardRef, useEffect, useLayoutEffect, useRef, useState, type ComponentProps, type ElementType, type KeyboardEvent } from "react";
 import { useRouter } from "next/navigation";
 import { createPortal } from "react-dom";
-import { Archive, BookOpen, CalendarClock, Ellipsis, Eye, Pencil, ShieldCheck, UserRoundCheck, UserRoundX } from "lucide-react";
+import { Archive, BookOpen, CalendarClock, Ellipsis, ShieldCheck, UserRoundCheck, UserRoundX } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { ApiError } from "@/lib/api/client";
 import { updateStudent } from "../api";
@@ -108,13 +108,12 @@ export function StudentActionsMenu({ student, canManage, onStudentUpdated, onFee
       {open && typeof document !== "undefined" && createPortal(<>
         <button type="button" aria-label="Close actions menu" className="fixed inset-0 z-[60] cursor-default" onClick={() => closeMenu(false)} />
         <div ref={menuRef} id={menuId} role="menu" aria-label={`Student actions for ${student.user?.name ?? student.student_code}`} style={menuPosition ? { top: menuPosition.top, right: menuPosition.right, maxHeight: menuPosition.maxHeight } : { top: 8, right: 8 }} className="fixed z-[70] w-56 overflow-y-auto rounded-panel border border-hairline bg-card p-1.5 shadow-lift">
-          <MenuItem ref={firstItemRef} icon={Eye} onClick={() => { closeMenu(false); router.push(`/students/${student.id}`); }}>View Profile</MenuItem>
-          <MenuItem icon={Pencil} onClick={() => { closeMenu(false); router.push(`/students/${student.id}/edit`); }}>Edit Student</MenuItem>
-          <MenuItem icon={BookOpen} onClick={() => { closeMenu(false); router.push(`/students/${student.id}/enrollments`); }}>Class Enrollment</MenuItem>
+          <MenuItem ref={firstItemRef} icon={BookOpen} onClick={() => { closeMenu(false); router.push(`/students/${student.id}/enrollments`); }}>Class Enrollment</MenuItem>
           <MenuItem icon={CalendarClock} onClick={() => { closeMenu(false); router.push(`/students/${student.id}?tab=attendance`); }}>Attendance History</MenuItem>
           <MenuItem icon={ShieldCheck} onClick={() => { closeMenu(false); router.push(`/students/${student.id}?tab=account`); }}>Manage Account</MenuItem>
           <div className="my-1 border-t border-hairline" />
           <MenuItem icon={isActive ? UserRoundX : UserRoundCheck} onClick={() => { closeMenu(false); setConfirmAction(isActive ? "suspend" : "reactivate"); }}>{isActive ? "Suspend Student" : "Reactivate Student"}</MenuItem>
+          <div className="my-1 border-t border-hairline" />
           <button type="button" role="menuitem" disabled title="Archive requires a dedicated backend endpoint; DELETE currently only deactivates the account." className="flex min-h-11 w-full cursor-not-allowed items-center gap-3 rounded-control px-3 text-left text-sm font-medium text-muted opacity-55" onClick={() => undefined}><Archive className="size-4" />Archive Student <span className="ml-auto text-[10px]">Unavailable</span></button>
         </div>
       </>, document.body)}
