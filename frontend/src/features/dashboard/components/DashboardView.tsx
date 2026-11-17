@@ -93,7 +93,7 @@ export function DashboardView() {
 
       {summary && !error && (
         <div className="animate-fade-up">
-          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
             <StatCard
               icon={GraduationCap}
               label="Students"
@@ -115,9 +115,6 @@ export function DashboardView() {
               hint={`${summary.counts.enrollments.enrolled.toLocaleString()} currently enrolled`}
               trend={summary.trends.enrollments_last_30_days}
             />
-          </div>
-
-          <div className="mt-4 grid gap-4 sm:grid-cols-2">
             <StatCard
               icon={Building2}
               label="Departments"
