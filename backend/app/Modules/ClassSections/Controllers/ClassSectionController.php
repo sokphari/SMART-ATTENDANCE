@@ -19,7 +19,7 @@ class ClassSectionController extends Controller
     public function index(Request $request): AnonymousResourceCollection
     {
         $classSections = $this->classSections->paginate(
-            $request->only(['search', 'course_id', 'semester_id', 'status', 'per_page'])
+            $request->only(['search', 'course_id', 'semester_id', 'department_id', 'status', 'per_page'])
         );
 
         return ClassSectionResource::collection($classSections);

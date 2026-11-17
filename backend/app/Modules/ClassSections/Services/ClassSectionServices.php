@@ -15,7 +15,13 @@ class ClassSectionServices
     public function paginate(array $filters = []): LengthAwarePaginator
     {
         return ClassSection::query()
-            ->with(['course.department', 'semester'])
+            ->with([
+                'course.department',
+                'semester',
+                'teacherAssignments.teacher.user',
+                'classSchedules.classroom',
+            ])
+            ->withCount('enrollments')
             ->when($filters['search'] ?? null, function ($query, string $search): void {
                 $term = '%'.strtolower($search).'%';
 
@@ -30,6 +36,10 @@ class ClassSectionServices
             ->when(
                 $filters['course_id'] ?? null,
                 fn ($query, $courseId) => $query->where('course_id', $courseId)
+            )
+            ->when(
+                $filters['department_id'] ?? null,
+                fn ($query, $deptId) => $query->whereHas('course', fn ($q) => $q->where('department_id', $deptId))
             )
             ->when(
                 $filters['semester_id'] ?? null,

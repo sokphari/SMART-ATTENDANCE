@@ -8,8 +8,8 @@ import {
   CheckCircle2,
   ClipboardList,
   FilePenLine,
+  Gauge,
   GraduationCap,
-  LayoutDashboard,
   Layers,
   ScrollText,
   ShieldCheck,
@@ -36,7 +36,7 @@ export const ALL_NAV_ITEMS: NavItem[] = [
   {
     label: "Dashboard",
     href: "/dashboard",
-    icon: LayoutDashboard,
+    icon: Gauge,
     description: "Live snapshot of people, classes, and attendance.",
   },
   {
@@ -143,7 +143,7 @@ export const TEACHER_NAV_ITEMS: NavItem[] = [
   {
     label: "Teacher dashboard",
     href: "/teacher/dashboard",
-    icon: LayoutDashboard,
+    icon: Gauge,
     description: "Your assigned classes and attendance activity.",
     permissionKey: "dashboard",
   },

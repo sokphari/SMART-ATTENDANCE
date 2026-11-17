@@ -21,6 +21,20 @@ export type ClassSection = {
   section_code: string;
   capacity: number;
   status: "active" | "inactive" | "pending_setup";
+  enrolled_count?: number;
+  teachers?: {
+    id?: number;
+    name: string;
+    code?: string;
+    role?: string;
+  }[];
+  schedules?: {
+    id: number;
+    day_of_week: number | string;
+    start_time: string;
+    end_time: string;
+    room?: string;
+  }[];
   created_at: string;
   updated_at: string;
 };

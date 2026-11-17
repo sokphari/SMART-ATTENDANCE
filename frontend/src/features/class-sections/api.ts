@@ -64,3 +64,9 @@ export function fetchSemestersOptions() {
   );
 }
 
+export function fetchDepartmentsOptions() {
+  return apiFetch<Paginated<{ id: number; name: string; code: string }>>(
+    "/api/v1/admin/departments?per_page=100",
+  );
+}
+

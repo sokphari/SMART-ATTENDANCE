@@ -41,12 +41,19 @@ export function LoginForm() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [rememberMe, setRememberMe] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<ApiError | null>(null);
 
   useEffect(() => {
     if (getToken()) {
       router.replace(getStoredUser()?.role?.toLowerCase() === "teacher" ? "/teacher/dashboard" : "/dashboard");
+    } else if (typeof window !== "undefined") {
+      const savedEmail = localStorage.getItem("smart_attendance_remember_email");
+      if (savedEmail) {
+        setEmail(savedEmail);
+        setRememberMe(true);
+      }
     }
   }, [router]);
 
@@ -56,9 +63,17 @@ export function LoginForm() {
     setError(null);
 
     try {
+      if (typeof window !== "undefined") {
+        if (rememberMe) {
+          localStorage.setItem("smart_attendance_remember_email", email);
+        } else {
+          localStorage.removeItem("smart_attendance_remember_email");
+        }
+      }
+
       const payload = await login(email, password);
       setSession(payload.token, payload.data);
-      await setAuthCookie(payload.token);
+      await setAuthCookie(payload.token, rememberMe);
       router.replace(payload.data.role?.toLowerCase() === "teacher" ? "/teacher/dashboard" : "/dashboard");
     } catch (caught) {
       setError(
@@ -191,6 +206,26 @@ export function LoginForm() {
                   </button>
                 }
               />
+
+              <div className="flex items-center justify-between pt-0.5">
+                <label
+                  htmlFor="remember-me"
+                  className="group flex cursor-pointer select-none items-center gap-2.5"
+                >
+                  <input
+                    type="checkbox"
+                    name="remember"
+                    id="remember-me"
+                    checked={rememberMe}
+                    onChange={(event) => setRememberMe(event.target.checked)}
+                    className="size-4 cursor-pointer rounded border-hairline bg-card text-brand-600 accent-brand-600 transition-colors focus:ring-2 focus:ring-brand-500/20 focus:ring-offset-0"
+                  />
+                  <span className="text-sm font-medium text-slate-700 transition-colors group-hover:text-slate-900 dark:text-slate-300 dark:group-hover:text-white">
+                    Remember me
+                  </span>
+                </label>
+              </div>
+
               <Button type="submit" className="w-full" loading={loading}>
                 Sign in
               </Button>

@@ -23,6 +23,28 @@ class ClassSectionResource extends JsonResource
             'section_code' => $this->section_code,
             'capacity' => $this->capacity,
             'status' => $this->status?->value,
+            'enrolled_count' => $this->enrollments_count ?? 0,
+            'teachers' => $this->whenLoaded('teacherAssignments', function () {
+                return $this->teacherAssignments->map(function ($assignment) {
+                    return [
+                        'id' => $assignment->teacher?->id,
+                        'name' => $assignment->teacher?->user?->name ?? 'Unassigned',
+                        'code' => $assignment->teacher?->teacher_code,
+                        'role' => $assignment->role ?? 'Primary',
+                    ];
+                });
+            }),
+            'schedules' => $this->whenLoaded('classSchedules', function () {
+                return $this->classSchedules->map(function ($sched) {
+                    return [
+                        'id' => $sched->id,
+                        'day_of_week' => $sched->day_of_week,
+                        'start_time' => substr((string) $sched->start_time, 0, 5),
+                        'end_time' => substr((string) $sched->end_time, 0, 5),
+                        'room' => $sched->classroom?->name ?? $sched->classroom?->room_number ?? 'Room TBD',
+                    ];
+                });
+            }),
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,
         ];
