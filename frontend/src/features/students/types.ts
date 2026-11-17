@@ -8,6 +8,17 @@ export type Student = {
   year_level: number;
   phone: string | null;
   gender: string | null;
+  current_enrollment?: {
+    id: number;
+    class_section_id: number;
+    section_code: string | null;
+    section_status: string | null;
+    course_name: string | null;
+    department_name: string | null;
+    semester_name: string | null;
+    academic_year: string | null;
+    needs_setup: boolean;
+  } | null;
   created_at: string;
   updated_at: string;
 };

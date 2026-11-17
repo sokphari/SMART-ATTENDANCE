@@ -20,7 +20,7 @@ export type ClassSection = {
   } | null;
   section_code: string;
   capacity: number;
-  status: "active" | "inactive";
+  status: "active" | "inactive" | "pending_setup";
   created_at: string;
   updated_at: string;
 };
@@ -30,7 +30,7 @@ export type ClassSectionInput = {
   semester_id: number;
   section_code: string;
   capacity: number;
-  status?: "active" | "inactive";
+  status?: "active" | "inactive" | "pending_setup";
 };
 
 export type CourseOption = {

@@ -2,8 +2,19 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState } from "react";
-import { LogOut, Moon, PanelLeft, QrCode, ScanLine, Search, Sun, UserRound } from "lucide-react";
+import { useCallback, useEffect, useState } from "react";
+import {
+  LogOut,
+  Moon,
+  PanelLeft,
+  QrCode,
+  ScanLine,
+  Search,
+  Sun,
+  UserRound,
+  Maximize,
+  Minimize,
+} from "lucide-react";
 import { findNavItem } from "@/config/nav";
 import type { AuthUser } from "@/types/auth";
 import { BackendStatus } from "@/components/shared/BackendStatus";
@@ -30,6 +41,43 @@ export function Topbar({
   const isTeacher = user?.role?.toLowerCase() === "teacher";
   const [profileOpen, setProfileOpen] = useState(false);
   const [search, setSearch] = useState("");
+
+  const [isFullscreen, setIsFullscreen] = useState(false);
+
+  const toggleFullscreen = useCallback(async () => {
+    try {
+      if (document.fullscreenElement) {
+        await document.exitFullscreen();
+      } else {
+        await document.documentElement.requestFullscreen();
+      }
+    } catch (error) {
+      console.error("Unable to toggle fullscreen:", error);
+    }
+  }, []);
+
+  useEffect(() => {
+    const syncFullscreen = () => {
+      setIsFullscreen(Boolean(document.fullscreenElement));
+    };
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.ctrlKey && event.shiftKey && event.code === "KeyF") {
+        event.preventDefault();
+        void toggleFullscreen();
+      }
+    };
+
+    syncFullscreen();
+
+    document.addEventListener("fullscreenchange", syncFullscreen);
+    window.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      document.removeEventListener("fullscreenchange", syncFullscreen);
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [toggleFullscreen]);
 
   return (
     <header className="sticky top-0 z-30 flex h-16 shrink-0 items-center justify-between gap-3 border-b border-hairline bg-card/80 px-4 backdrop-blur-md lg:px-8">
@@ -78,21 +126,25 @@ export function Topbar({
       </div>
 
       <div className="flex items-center gap-3">
-        {!isTeacher && <select
-          aria-label="Academic term"
-          defaultValue="2026-2027-s1"
-          className="hidden h-9 rounded-control border border-hairline bg-card px-2 text-xs font-semibold text-muted outline-none lg:block"
-        >
-          <option value="2026-2027-s1">Sem 1 · 2026–2027</option>
-          <option value="2026-2027-s2">Sem 2 · 2026–2027</option>
-        </select>}
-        {!isTeacher && <Link
-          href="/attendance"
-          className="hidden h-9 items-center gap-1.5 rounded-control bg-brand-600 px-3 text-xs font-bold text-white transition hover:bg-brand-700 md:flex"
-        >
-          <ScanLine className="size-3.5" />
-          Quick Scan
-        </Link>}
+        {!isTeacher && (
+          <select
+            aria-label="Academic term"
+            defaultValue="2026-2027-s1"
+            className="hidden h-9 rounded-control border border-hairline bg-card px-2 text-xs font-semibold text-muted outline-none lg:block"
+          >
+            <option value="2026-2027-s1">Sem 1 · 2026–2027</option>
+            <option value="2026-2027-s2">Sem 2 · 2026–2027</option>
+          </select>
+        )}
+        {!isTeacher && (
+          <Link
+            href="/attendance"
+            className="hidden h-9 items-center gap-1.5 rounded-control bg-brand-600 px-3 text-xs font-bold text-white transition hover:bg-brand-700 md:flex"
+          >
+            <ScanLine className="size-3.5" />
+            Quick Scan
+          </Link>
+        )}
         <BackendStatus />
         <button
           type="button"
@@ -103,6 +155,35 @@ export function Topbar({
         >
           {darkMode ? <Sun className="size-4" /> : <Moon className="size-4" />}
         </button>
+
+        {/* Fullscreen Toggle */}
+        <button
+          type="button"
+          onClick={() => void toggleFullscreen()}
+          aria-label={isFullscreen ? "Exit fullscreen" : "Enter fullscreen"}
+          aria-pressed={isFullscreen}
+          title={
+            isFullscreen
+              ? "Exit fullscreen (Esc)"
+              : "Fullscreen (Ctrl + Shift + F)"
+          }
+          className="
+          flex size-9 cursor-pointer items-center justify-center
+          rounded-control border border-hairline
+          bg-card text-slate-500
+          transition-colors duration-200
+          hover:bg-brand-50 hover:text-brand-700
+          focus-visible:outline-none
+          focus-visible:ring-2 focus-visible:ring-brand-500
+        "
+        >
+          {isFullscreen ? (
+            <Minimize className="size-4" />
+          ) : (
+            <Maximize className="size-4" />
+          )}
+        </button>
+
         <NotificationBell />
         {user && (
           <div className="relative">
@@ -139,15 +220,17 @@ export function Topbar({
                       {user.role ?? "user"}
                     </p>
                   </div>
-                  {isTeacher && <Link
-                    href="/teacher/profile"
-                    role="menuitem"
-                    onClick={() => setProfileOpen(false)}
-                    className="mt-1 flex w-full items-center gap-2.5 rounded-control px-3 py-2.5 text-sm font-semibold text-ink transition-colors hover:bg-canvas"
-                  >
-                    <UserRound className="size-4" />
-                    My profile
-                  </Link>}
+                  {isTeacher && (
+                    <Link
+                      href="/teacher/profile"
+                      role="menuitem"
+                      onClick={() => setProfileOpen(false)}
+                      className="mt-1 flex w-full items-center gap-2.5 rounded-control px-3 py-2.5 text-sm font-semibold text-ink transition-colors hover:bg-canvas"
+                    >
+                      <UserRound className="size-4" />
+                      My profile
+                    </Link>
+                  )}
                   <button
                     type="button"
                     role="menuitem"

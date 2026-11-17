@@ -150,6 +150,13 @@ class NotificationController extends Controller
                     $title = 'Attendance Update';
                     $message = "Attendance event: {$action}";
                 }
+            } elseif ($action === 'students.registration_section_created') {
+                $level = 'warning';
+                $title = 'Class Section Needs Setup';
+                $section = $newValues['section_code'] ?? 'new section';
+                $course = $newValues['course'] ?? 'a course';
+                $department = $newValues['department'] ?? 'a department';
+                $message = "Registration created section {$section} for {$course} in {$department}. Assign a teacher and schedule before classes begin.";
             }
 
             return [

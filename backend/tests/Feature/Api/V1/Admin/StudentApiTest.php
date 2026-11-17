@@ -5,6 +5,10 @@ namespace Tests\Feature\Api\V1\Admin;
 use App\Enums\AccountStatus;
 use App\Enums\UserRole;
 use App\Models\Department;
+use App\Models\AcademicYear;
+use App\Models\ClassSection;
+use App\Models\Course;
+use App\Models\Semester;
 use App\Models\Student;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -64,6 +68,10 @@ class StudentApiTest extends TestCase
     {
         $this->actingAsAdmin();
         $department = Department::factory()->create();
+        $year = AcademicYear::factory()->active()->create();
+        $semester = Semester::factory()->create(['academic_year_id' => $year->id, 'status' => 'active']);
+        $course = Course::factory()->create(['department_id' => $department->id]);
+        ClassSection::factory()->create(['course_id' => $course->id, 'semester_id' => $semester->id, 'capacity' => 20]);
 
         $this->postJson('/api/v1/admin/students', [
             'name' => 'Sok Dara',
@@ -90,6 +98,7 @@ class StudentApiTest extends TestCase
             'student_code' => 'STU-1001',
             'department_id' => $department->id,
         ]);
+        $this->assertDatabaseHas('enrollments', ['student_id' => Student::query()->where('student_code', 'STU-1001')->value('id'), 'status' => 'enrolled']);
     }
 
     public function test_create_student_validates_duplicate_email(): void

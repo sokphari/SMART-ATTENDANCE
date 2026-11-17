@@ -26,6 +26,7 @@ import {
   deleteClassSection,
   fetchClassSections,
   fetchSemestersOptions,
+  updateClassSection,
 } from "../api";
 import type { ClassSection, SemesterOption } from "../types";
 
@@ -129,6 +130,18 @@ export function ClassSectionsView() {
     }
   }
 
+  async function handleToggleStatus(section: ClassSection) {
+    const nextStatus = section.status === "active" ? "inactive" : "active";
+    setActionMenuId(null);
+    try {
+      await updateClassSection(section.id, { status: nextStatus });
+      setItems((prev) => prev.map((item) => item.id === section.id ? { ...item, status: nextStatus } : item));
+      setFeedback({ message: nextStatus === "active" ? "Section activated." : "Section deactivated.", kind: "success" });
+    } catch (caught) {
+      setFeedback({ message: caught instanceof ApiError ? caught.message : "Could not update section status.", kind: "error" });
+    }
+  }
+
   const activeCount = useMemo(
     () => items.filter((item) => item.status === "active").length,
     [items],
@@ -229,6 +242,7 @@ export function ClassSectionsView() {
             <option value="">All statuses</option>
             <option value="active">Active</option>
             <option value="inactive">Inactive</option>
+            <option value="pending_setup">Needs setup</option>
           </select>
         </div>
 
@@ -335,11 +349,9 @@ export function ClassSectionsView() {
                     </td>
                     <td className="px-5 py-4">
                       <Badge
-                        tone={
-                          section.status === "active" ? "success" : "neutral"
-                        }
+                        tone={section.status === "active" ? "success" : section.status === "pending_setup" ? "warning" : "neutral"}
                       >
-                        {section.status}
+                        {section.status === "pending_setup" ? "Needs setup" : section.status}
                       </Badge>
                     </td>
                     <td className="px-5 py-4 text-muted">
@@ -356,7 +368,7 @@ export function ClassSectionsView() {
                           onClick={() =>
                             router.push(`/class-sections/${section.id}/edit`)
                           }
-                          aria-label={`Edit section ${section.name}`}
+                          aria-label={`Edit section ${section.section_code}`}
                           title="Edit section"
                           className="
                         border-blue-500/20
@@ -379,12 +391,12 @@ export function ClassSectionsView() {
                           aria-label={
                             section.status === "active"
                               ? "Deactivate section"
-                              : "Reactivate section"
+                              : section.status === "pending_setup" ? "Activate section after setup" : "Reactivate section"
                           }
                           title={
                             section.status === "active"
                               ? "Deactivate section"
-                              : "Reactivate section"
+                              : section.status === "pending_setup" ? "Activate section after setup" : "Reactivate section"
                           }
                           className={
                             section.status === "active"

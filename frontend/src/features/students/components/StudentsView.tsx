@@ -19,9 +19,17 @@ import { Card } from "@/components/ui/Card";
 import { Input } from "@/components/ui/Input";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { getStoredUser } from "@/lib/api/session";
+import { generateStudentRegistrationLink } from "../api";
+
 import { fetchDepartments, fetchStudents } from "../api";
 import type { DepartmentOption, Paginated, Student } from "../types";
 import { StudentActionsMenu } from "./StudentActionsMenu";
+import { QrCode } from "lucide-react";
+
+import {
+  StudentRegistrationQR,
+  type RegistrationLink,
+} from "./StudentRegistrationQR";
 
 export function StudentsView({
   initialData,
@@ -51,29 +59,66 @@ export function StudentsView({
     initialData !== undefined && initialData !== null,
   );
 
-  const loadStudents = useCallback(async () => {
-    setLoading(true);
-    setError("");
-    const params = new URLSearchParams({ page: String(page), per_page: "10" });
-    if (search.trim()) params.set("search", search.trim());
-    if (departmentId) params.set("department_id", departmentId);
-    if (status) params.set("status", status);
-    if (gender) params.set("gender", gender);
-    try {
-      const result = await fetchStudents(params);
-      setStudents(result.data);
-      setTotal(result.meta?.total ?? result.data.length);
-      setLastPage(result.meta?.last_page ?? 1);
-    } catch (caught) {
-      setError(
-        caught instanceof ApiError
-          ? caught.message
-          : "Could not load students.",
-      );
-    } finally {
-      setLoading(false);
+  const [qrOpen, setQrOpen] = useState(false);
+
+  const loadStudents = useCallback(
+    async (silent = false) => {
+      if (!silent) setLoading(true);
+
+      setError("");
+
+      const params = new URLSearchParams({
+        page: String(page),
+        per_page: "10",
+      });
+
+      if (search.trim()) {
+        params.set("search", search.trim());
+      }
+      if (departmentId) {
+        params.set("department_id", departmentId);
+      }
+      if (status) {
+        params.set("status", status);
+      }
+      if (gender) {
+        params.set("gender", gender);
+      }
+
+      try {
+        const result = await fetchStudents(params);
+
+        setStudents(result.data);
+        setTotal(result.meta?.total ?? result.data.length);
+        setLastPage(result.meta?.last_page ?? 1);
+      } catch (caught) {
+        if (!silent) {
+          setError(
+            caught instanceof ApiError
+              ? caught.message
+              : "Could not load students.",
+          );
+        }
+      } finally {
+        if (!silent) setLoading(false);
+      }
+    },
+    [departmentId, gender, page, search, status],
+  );
+
+
+useEffect(() => {
+  if (!canManage) return;
+
+  const interval = window.setInterval(() => {
+    if (document.visibilityState === "visible") {
+      void loadStudents(true);
     }
-  }, [departmentId, gender, page, search, status]);
+  }, 10000);
+
+  return () => window.clearInterval(interval);
+}, [canManage, loadStudents]);
+
 
   useEffect(() => {
     if (
@@ -149,6 +194,7 @@ export function StudentsView({
         description="Manage student records, profiles, departments, and account status."
         actions={
           <div className="flex flex-wrap gap-2">
+            {canManage && <Button variant="secondary" size="sm" onClick={() => setQrOpen(true)}><QrCode className="size-4" /> QR registration</Button>}
             <Button variant="secondary" size="sm" onClick={exportCsv}>
               <ArrowDownToLine className="size-4" />
               Export current page
@@ -283,6 +329,17 @@ export function StudentsView({
             </button>
           </p>
         )}
+        {canManage && (
+          <StudentRegistrationQR
+            open={qrOpen}
+            onClose={() => setQrOpen(false)}
+            onGenerate={generateStudentRegistrationLink}
+            onRegistered={() => {
+              setFeedback({ message: "A student completed QR registration. Refreshing the student list…", kind: "success" });
+              void loadStudents(true);
+            }}
+          />
+        )}
         <div className="overflow-x-auto">
           <table className="w-full min-w-[760px] text-left text-sm">
             <thead className="bg-canvas text-xs font-bold tracking-wide text-muted uppercase">
@@ -371,7 +428,9 @@ export function StudentsView({
                             type="button"
                             aria-label={`View profile for ${student.user?.name ?? student.student_code}`}
                             title="View profile"
-                            onClick={() => router.push(`/students/${student.id}`)}
+                            onClick={() =>
+                              router.push(`/students/${student.id}`)
+                            }
                             className="flex size-10 touch-manipulation items-center justify-center rounded-control border border-hairline bg-card text-muted transition-colors hover:border-brand-300 hover:bg-brand-50 hover:text-brand-700 focus-visible:outline-2 focus-visible:outline-brand-500"
                           >
                             <Eye className="size-4.5" />
@@ -380,7 +439,9 @@ export function StudentsView({
                             type="button"
                             aria-label={`Edit ${student.user?.name ?? student.student_code}`}
                             title="Edit student"
-                            onClick={() => router.push(`/students/${student.id}/edit`)}
+                            onClick={() =>
+                              router.push(`/students/${student.id}/edit`)
+                            }
                             className="flex size-10 touch-manipulation items-center justify-center rounded-control border border-hairline bg-card text-brand-600 transition-colors hover:border-brand-300 hover:bg-brand-50 hover:text-brand-700 focus-visible:outline-2 focus-visible:outline-brand-500"
                           >
                             <Pencil className="size-4.5" />

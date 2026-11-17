@@ -5,6 +5,7 @@ namespace App\Modules\ClassSections\Services;
 use App\Enums\ClassSectionStatus;
 use App\Models\ClassSection;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Validation\ValidationException;
 
 class ClassSectionServices
 {
@@ -64,6 +65,20 @@ class ClassSectionServices
      */
     public function update(ClassSection $classSection, array $data): ClassSection
     {
+        $nextStatus = $data['status'] ?? null;
+        if ($classSection->status === ClassSectionStatus::PendingSetup
+            && $nextStatus === ClassSectionStatus::Active->value) {
+            $missing = [];
+            if (! $classSection->teacherAssignments()->exists()) $missing[] = 'Assign a teacher';
+            if (! $classSection->classSchedules()->exists()) $missing[] = 'Add a class schedule';
+
+            if ($missing !== []) {
+                throw ValidationException::withMessages([
+                    'status' => [implode(' and ', $missing).' before activating this section.'],
+                ]);
+            }
+        }
+
         $classSection->fill($data);
         $classSection->save();
 

@@ -24,6 +24,24 @@ class StudentResource extends JsonResource
             'year_level' => $this->year_level,
             'phone' => $this->phone,
             'gender' => $this->gender,
+            'current_enrollment' => $this->whenLoaded('enrollments', function (): ?array {
+                $enrollment = $this->enrollments->first();
+                if (! $enrollment) {
+                    return null;
+                }
+
+                return [
+                    'id' => $enrollment->id,
+                    'class_section_id' => $enrollment->class_section_id,
+                    'section_code' => $enrollment->classSection?->section_code,
+                    'section_status' => $enrollment->classSection?->status?->value,
+                    'course_name' => $enrollment->classSection?->course?->name,
+                    'department_name' => $enrollment->classSection?->course?->department?->name,
+                    'semester_name' => $enrollment->classSection?->semester?->name,
+                    'academic_year' => $enrollment->classSection?->semester?->academicYear?->name,
+                    'needs_setup' => (bool) $this->getAttribute('registration_section_created'),
+                ];
+            }),
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,
         ];

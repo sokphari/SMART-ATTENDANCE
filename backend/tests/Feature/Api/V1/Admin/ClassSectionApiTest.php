@@ -162,6 +162,18 @@ class ClassSectionApiTest extends TestCase
             ->assertJsonPath('data.capacity', 55);
     }
 
+    public function test_pending_setup_section_cannot_be_activated_before_teacher_and_schedule_setup(): void
+    {
+        $this->actingAsAdmin();
+        $section = ClassSection::factory()->create(['status' => ClassSectionStatus::PendingSetup]);
+
+        $this->putJson("/api/v1/admin/class-sections/{$section->id}", [
+            'status' => ClassSectionStatus::Active->value,
+        ])->assertUnprocessable()->assertJsonValidationErrors('status');
+
+        $this->assertSame(ClassSectionStatus::PendingSetup, $section->fresh()->status);
+    }
+
     public function test_admin_can_deactivate_class_section(): void
     {
         $this->actingAsAdmin();

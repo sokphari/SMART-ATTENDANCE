@@ -3,8 +3,11 @@
 namespace App\Modules\Enrollments\Services;
 
 use App\Enums\EnrollmentStatus;
+use App\Models\ClassSection;
 use App\Models\Enrollment;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 
 class EnrollmentServices
 {
@@ -53,12 +56,35 @@ class EnrollmentServices
      */
     public function create(array $data): Enrollment
     {
-        $enrollment = Enrollment::create([
-            'class_section_id' => $data['class_section_id'],
-            'student_id' => $data['student_id'],
-            'enrollment_date' => $data['enrollment_date'] ?? now()->toDateString(),
-            'status' => $data['status'] ?? EnrollmentStatus::Enrolled->value,
-        ]);
+        $enrollment = DB::transaction(function () use ($data): Enrollment {
+            $section = ClassSection::query()->whereKey($data['class_section_id'])->lockForUpdate()->firstOrFail();
+            $status = $data['status'] ?? EnrollmentStatus::Enrolled->value;
+
+            if ($status === EnrollmentStatus::Enrolled->value) {
+                $alreadyEnrolled = Enrollment::query()
+                    ->where('class_section_id', $section->id)
+                    ->where('student_id', $data['student_id'])
+                    ->where('status', EnrollmentStatus::Enrolled->value)
+                    ->exists();
+                $enrolledCount = Enrollment::query()
+                    ->where('class_section_id', $section->id)
+                    ->where('status', EnrollmentStatus::Enrolled->value)
+                    ->count();
+
+                if (! $alreadyEnrolled && $enrolledCount >= $section->capacity) {
+                    throw ValidationException::withMessages([
+                        'class_section_id' => ['This class section has reached its enrollment capacity.'],
+                    ]);
+                }
+            }
+
+            return Enrollment::create([
+                'class_section_id' => $section->id,
+                'student_id' => $data['student_id'],
+                'enrollment_date' => $data['enrollment_date'] ?? now()->toDateString(),
+                'status' => $status,
+            ]);
+        });
 
         return $enrollment->load($this->relations());
     }

@@ -69,3 +69,80 @@ export function fetchClassSections() {
 export function createEnrollment(input: { student_id: number; class_section_id: number }) {
   return apiFetch<{ data: StudentEnrollment }>("/api/v1/admin/enrollments", { method: "POST", body: input });
 }
+
+
+export type RegistrationLinkResponse = {
+  id: number;
+  url: string;
+  expires_at: string;
+  status: "active" | "used" | "revoked" | "expired";
+};
+
+const REGISTRATION_LINKS_URL = "/api/v1/admin/student-registration-links";
+
+export function generateStudentRegistrationLink() {
+  return apiFetch<{ data: RegistrationLinkResponse }>(REGISTRATION_LINKS_URL, {
+    method: "POST",
+    body: {},
+  }).then((result) => result.data);
+}
+
+export function fetchStudentRegistrationLink(id: number) {
+  return apiFetch<{ data: Pick<RegistrationLinkResponse, "status" | "expires_at"> }>(
+    `${REGISTRATION_LINKS_URL}/${id}`,
+  ).then((result) => result.data);
+}
+
+export function revokeStudentRegistrationLink(id: number) {
+  return apiFetch<{ data: Pick<RegistrationLinkResponse, "status" | "expires_at"> }>(
+    `${REGISTRATION_LINKS_URL}/${id}/revoke`,
+    { method: "POST", body: {} },
+  ).then((result) => result.data);
+}
+
+export type StudentRegistrationDepartment = { id: number; name: string; code: string };
+export type PublicRegistrationState = {
+  status: "active" | "used" | "revoked" | "expired";
+  expires_at: string;
+  used_at: string | null;
+  revoked_at: string | null;
+};
+
+export function fetchPublicRegistrationState(token: string) {
+  return apiFetch<{ data: PublicRegistrationState }>(
+    `/api/v1/student-registrations/${encodeURIComponent(token)}`,
+    { auth: false },
+  ).then((result) => result.data);
+}
+
+export function fetchPublicRegistrationDepartments(token: string) {
+  return apiFetch<{ data: StudentRegistrationDepartment[] }>(
+    `/api/v1/student-registrations/${encodeURIComponent(token)}/departments`,
+    { auth: false },
+  ).then((result) => result.data);
+}
+
+export type StudentRegistrationInput = {
+  first_name: string;
+  last_name: string;
+  gender: "male" | "female";
+  department_id: number;
+  year_level: number;
+  phone: string;
+  email: string;
+  password: string;
+  password_confirmation: string;
+};
+
+export type StudentRegistrationResult = {
+  student: Student;
+  enrollment: Student["current_enrollment"];
+  section_created: boolean;
+};
+
+export function submitStudentRegistration(token: string, input: StudentRegistrationInput) {
+  return apiFetch<{ data: StudentRegistrationResult; message: string }>(
+    `/api/v1/student-registrations/${encodeURIComponent(token)}`,
+    { method: "POST", auth: false, body: input },
+  ).then((result) => result.data);
+}

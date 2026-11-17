@@ -3,14 +3,20 @@
 namespace App\Modules\Students\Services;
 
 use App\Enums\AccountStatus;
+use App\Enums\EnrollmentStatus;
 use App\Enums\UserRole;
 use App\Models\Student;
+use App\Models\Department;
 use App\Models\User;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
 
 class StudentServices
 {
+    public function __construct(private readonly StudentClassAllocationService $allocation) {}
+
     /**
      * @param  array{search?: string|null, department_id?: int|string|null, status?: string|null, year_level?: int|string|null, gender?: string|null, per_page?: int|string|null}  $filters
      */
@@ -59,6 +65,17 @@ class StudentServices
     public function create(array $data): Student
     {
         return DB::transaction(function () use ($data): Student {
+            $department = Department::query()
+                ->whereKey($data['department_id'])
+                ->lockForUpdate()
+                ->first();
+
+            if (! $department?->isActive()) {
+                throw ValidationException::withMessages([
+                    'department_id' => ['Choose an active department.'],
+                ]);
+            }
+
             $user = User::create([
                 'name' => $data['name'],
                 'email' => $data['email'],
@@ -76,7 +93,17 @@ class StudentServices
                 'gender' => $data['gender'] ?? null,
             ]);
 
-            return $student->load(['user', 'department']);
+            if (($data['status'] ?? AccountStatus::Active->value) === AccountStatus::Active->value) {
+                $allocation = $this->allocation->allocate($student, $department);
+                $student->setAttribute('registration_section_created', $allocation['created_section']);
+            }
+
+            return $student->load([
+                'user',
+                'department',
+                'enrollments' => fn ($query) => $query->where('status', EnrollmentStatus::Enrolled->value)
+                    ->with(['classSection.course.department', 'classSection.semester.academicYear']),
+            ]);
         });
     }
 
@@ -112,5 +139,14 @@ class StudentServices
     public function deactivate(Student $student): void
     {
         $student->user->update(['status' => AccountStatus::Inactive->value]);
+    }
+
+    public function generateStudentCode(): string
+    {
+        do {
+            $code = 'STU-'.now()->format('Y').'-'.Str::upper(Str::random(6));
+        } while (Student::query()->where('student_code', $code)->exists());
+
+        return $code;
     }
 }
