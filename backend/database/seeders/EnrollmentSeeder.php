@@ -3,10 +3,12 @@
 namespace Database\Seeders;
 
 use App\Enums\EnrollmentStatus;
+use App\Enums\ClassSectionStatus;
 use App\Models\ClassSection;
 use App\Models\Course;
 use App\Models\Enrollment;
 use App\Models\Student;
+use App\Models\Semester;
 use Illuminate\Database\Seeder;
 
 class EnrollmentSeeder extends Seeder
@@ -17,7 +19,16 @@ class EnrollmentSeeder extends Seeder
     public function run(): void
     {
         $courses = Course::pluck('id', 'course_code');
-        $sections = ClassSection::where('section_code', 'A')->pluck('id', 'course_id');
+        $semester = Semester::query()->where('status', 'active')->orderBy('start_date')->first()
+            ?? Semester::query()->where('status', 'upcoming')->orderBy('start_date')->first();
+        if (! $semester) {
+            $this->command?->error('No active or upcoming semester is available for demo enrollments.');
+            return;
+        }
+        $sections = ClassSection::where('semester_id', $semester->id)
+            ->where('status', ClassSectionStatus::Active->value)
+            ->where('section_code', 'A')
+            ->pluck('id', 'course_id');
         $students = Student::pluck('id', 'student_code');
 
         $deptCourseMap = [
@@ -47,7 +58,7 @@ class EnrollmentSeeder extends Seeder
                         'student_id' => $studentId,
                     ],
                     [
-                        'enrollment_date' => '2025-01-02',
+                        'enrollment_date' => now()->toDateString(),
                         'status' => EnrollmentStatus::Enrolled,
                     ],
                 );
@@ -67,7 +78,7 @@ class EnrollmentSeeder extends Seeder
                             'student_id' => $studentId,
                         ],
                         [
-                            'enrollment_date' => '2025-01-02',
+                            'enrollment_date' => now()->toDateString(),
                             'status' => EnrollmentStatus::Enrolled,
                         ],
                     );

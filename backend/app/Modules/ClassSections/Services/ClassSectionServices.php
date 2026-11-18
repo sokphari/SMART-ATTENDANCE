@@ -17,9 +17,10 @@ class ClassSectionServices
         return ClassSection::query()
             ->with([
                 'course.department',
-                'semester',
+                'semester.academicYear',
                 'teacherAssignments.teacher.user',
                 'classSchedules.classroom',
+                'classSchedules.timeSlot.studyPeriod',
             ])
             ->withCount('enrollments')
             ->when($filters['search'] ?? null, function ($query, string $search): void {
@@ -67,7 +68,7 @@ class ClassSectionServices
             'status' => $data['status'] ?? ClassSectionStatus::Active->value,
         ]);
 
-        return $classSection->load(['course.department', 'semester']);
+        return $classSection->load(['course.department', 'semester.academicYear']);
     }
 
     /**
@@ -92,7 +93,7 @@ class ClassSectionServices
         $classSection->fill($data);
         $classSection->save();
 
-        return $classSection->refresh()->load(['course.department', 'semester']);
+        return $classSection->refresh()->load(['course.department', 'semester.academicYear']);
     }
 
     public function deactivate(ClassSection $classSection): void

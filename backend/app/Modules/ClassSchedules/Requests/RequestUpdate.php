@@ -3,14 +3,11 @@
 namespace App\Modules\ClassSchedules\Requests;
 
 use App\Models\ClassSchedule;
-use App\Modules\ClassSchedules\Requests\Concerns\ValidatesScheduleConflicts;
 use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Validation\Validator;
+use Illuminate\Validation\Rule;
 
 class RequestUpdate extends FormRequest
 {
-    use ValidatesScheduleConflicts;
-
     public function authorize(): bool
     {
         return true;
@@ -59,28 +56,13 @@ class RequestUpdate extends FormRequest
         return [
             'class_section_id' => ['sometimes', 'required', 'integer', 'exists:class_sections,id'],
             'classroom_id' => ['sometimes', 'required', 'integer', 'exists:classrooms,id'],
+            'time_slot_id' => ['sometimes', 'nullable', 'integer', 'exists:schedule_time_slots,id'],
             'day_of_week' => ['sometimes', 'required', 'integer', 'between:1,7'],
-            'start_time' => ['sometimes', 'required', 'date_format:H:i:s'],
-            'end_time' => ['sometimes', 'required', 'date_format:H:i:s'],
+            'start_time' => ['required_without:time_slot_id', 'date_format:H:i:s'],
+            'end_time' => ['required_without:time_slot_id', 'date_format:H:i:s'],
             'effective_from' => ['sometimes', 'nullable', 'date'],
             'effective_until' => ['sometimes', 'nullable', 'date'],
-        ];
-    }
-
-    /**
-     * @return array<int, callable>
-     */
-    public function after(): array
-    {
-        return [
-            function (Validator $validator): void {
-                $classSchedule = $this->route('class_schedule');
-
-                $this->validateSchedule(
-                    $validator,
-                    $classSchedule instanceof ClassSchedule ? $classSchedule->getKey() : null
-                );
-            },
+            'status' => ['sometimes', Rule::in(['active', 'inactive'])],
         ];
     }
 }

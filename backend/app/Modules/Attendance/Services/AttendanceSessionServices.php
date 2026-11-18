@@ -61,6 +61,12 @@ class AttendanceSessionServices
      */
     public function open(Teacher $teacher, array $data): AttendanceSession
     {
+        return DB::transaction(fn () => $this->openLocked($teacher, $data), 3);
+    }
+
+    /** @param array<string, mixed> $data */
+    private function openLocked(Teacher $teacher, array $data): AttendanceSession
+    {
         $classSection = ClassSection::findOrFail($data['class_section_id']);
 
         if (! $classSection->isActive()) {
@@ -81,11 +87,42 @@ class AttendanceSessionServices
         $classSchedule = null;
 
         if (($data['class_schedule_id'] ?? null) !== null) {
-            $classSchedule = ClassSchedule::findOrFail($data['class_schedule_id']);
+            $classSchedule = ClassSchedule::query()->whereKey($data['class_schedule_id'])->lockForUpdate()->firstOrFail();
 
             if ($classSchedule->class_section_id !== $classSection->id) {
                 throw ValidationException::withMessages([
                     'class_schedule_id' => 'The selected schedule does not belong to the class section.',
+                ]);
+            }
+
+            $sessionDate = Carbon::parse($data['session_date'], 'Asia/Phnom_Penh')->toDateString();
+            $weekday = Carbon::parse($sessionDate, 'Asia/Phnom_Penh')->dayOfWeekIso;
+            $semester = $classSection->semester()->firstOrFail();
+            if ($classSchedule->status?->value !== 'active'
+                || $classSchedule->day_of_week !== $weekday
+                || $sessionDate < $semester->start_date->toDateString()
+                || $sessionDate > $semester->end_date->toDateString()
+                || ($classSchedule->effective_from && $sessionDate < $classSchedule->effective_from->toDateString())
+                || ($classSchedule->effective_until && $sessionDate > $classSchedule->effective_until->toDateString())) {
+                throw ValidationException::withMessages([
+                    'class_schedule_id' => 'The selected schedule is not active for this date and weekday.',
+                ]);
+            }
+
+            if (isset($data['classroom_id']) && (int) $data['classroom_id'] !== (int) $classSchedule->classroom_id) {
+                throw ValidationException::withMessages([
+                    'classroom_id' => 'The classroom must match the selected class schedule.',
+                ]);
+            }
+
+            $duplicateScheduleSession = AttendanceSession::query()
+                ->where('class_schedule_id', $classSchedule->id)
+                ->whereDate('session_date', $sessionDate)
+                ->where('status', '!=', AttendanceSessionStatus::Cancelled->value)
+                ->exists();
+            if ($duplicateScheduleSession) {
+                throw ValidationException::withMessages([
+                    'class_schedule_id' => 'An attendance session already exists for this schedule and date.',
                 ]);
             }
         }

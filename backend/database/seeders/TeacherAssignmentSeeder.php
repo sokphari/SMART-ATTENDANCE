@@ -6,6 +6,7 @@ use App\Models\ClassSection;
 use App\Models\Course;
 use App\Models\Teacher;
 use App\Models\TeacherAssignment;
+use App\Models\Semester;
 use Illuminate\Database\Seeder;
 
 class TeacherAssignmentSeeder extends Seeder
@@ -30,7 +31,14 @@ class TeacherAssignmentSeeder extends Seeder
 
         $teachers = Teacher::whereIn('teacher_code', array_keys($mapping))->pluck('id', 'teacher_code');
         $courses = Course::whereIn('course_code', array_values($mapping))->pluck('id', 'course_code');
+        $semester = Semester::query()->where('status', 'active')->orderBy('start_date')->first()
+            ?? Semester::query()->where('status', 'upcoming')->orderBy('start_date')->first();
+        if (! $semester) {
+            $this->command?->error('No active or upcoming semester is available for demo teacher assignments.');
+            return;
+        }
         $sections = ClassSection::whereIn('course_id', $courses->values())
+            ->where('semester_id', $semester->id)
             ->where('section_code', 'A')
             ->pluck('id', 'course_id');
 

@@ -9,52 +9,35 @@ use Illuminate\Database\Seeder;
 
 class SemesterSeeder extends Seeder
 {
-    /**
-     * Seed semesters for the active academic year (2024-2025).
-     */
+    /** Seed two semesters in every seeded academic year with date-based statuses. */
     public function run(): void
     {
-        $year = AcademicYear::where('name', '2024-2025')->first();
+        $today = now()->toDateString();
+        $years = AcademicYear::query()->orderBy('start_date')->get();
 
-        if (! $year) {
-            $year = AcademicYear::create([
-                'name' => '2024-2025',
-                'start_date' => '2024-09-01',
-                'end_date' => '2025-06-30',
-                'status' => AcademicPeriodStatus::Active,
-            ]);
+        foreach ($years as $year) {
+            $startYear = (int) substr($year->name, 0, 4);
+            $definitions = [
+                ['name' => 'Semester 1', 'start_date' => sprintf('%04d-09-01', $startYear), 'end_date' => sprintf('%04d-12-31', $startYear)],
+                ['name' => 'Semester 2', 'start_date' => sprintf('%04d-01-01', $startYear + 1), 'end_date' => sprintf('%04d-06-30', $startYear + 1)],
+            ];
+
+            foreach ($definitions as $definition) {
+                $status = $today < $definition['start_date']
+                    ? AcademicPeriodStatus::Upcoming
+                    : ($today > $definition['end_date'] ? AcademicPeriodStatus::Completed : AcademicPeriodStatus::Active);
+
+                Semester::updateOrCreate(
+                    ['academic_year_id' => $year->id, 'name' => $definition['name']],
+                    [
+                        'start_date' => $definition['start_date'],
+                        'end_date' => $definition['end_date'],
+                        'status' => $status,
+                    ],
+                );
+            }
         }
 
-        $semesters = [
-            [
-                'name' => 'Semester 1',
-                'start_date' => '2024-09-01',
-                'end_date' => '2024-12-31',
-                'status' => AcademicPeriodStatus::Completed,
-            ],
-            [
-                'name' => 'Semester 2',
-                'start_date' => '2025-01-01',
-                'end_date' => '2025-06-30',
-                'status' => AcademicPeriodStatus::Active,
-            ],
-        ];
-
-        foreach ($semesters as $data) {
-            Semester::updateOrCreate(
-                [
-                    'academic_year_id' => $year->id,
-                    'name' => $data['name'],
-                ],
-                [
-                    'start_date' => $data['start_date'],
-                    'end_date' => $data['end_date'],
-                    'status' => $data['status'],
-                ],
-            );
-        }
-
-        $this->command?->info('Seeded ' . count($semesters) . ' semesters for academic year ' . $year->name);
+        $this->command?->info('Seeded two date-aligned semesters for each academic year.');
     }
 }
-

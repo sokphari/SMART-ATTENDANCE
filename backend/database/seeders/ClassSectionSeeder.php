@@ -3,7 +3,6 @@
 namespace Database\Seeders;
 
 use App\Enums\ClassSectionStatus;
-use App\Models\AcademicYear;
 use App\Models\ClassSection;
 use App\Models\Course;
 use App\Models\Semester;
@@ -12,17 +11,18 @@ use Illuminate\Database\Seeder;
 class ClassSectionSeeder extends Seeder
 {
     /**
-     * Seed 10 class sections (one per course in the active semester).
+     * Seed demo sections in the active semester (or nearest upcoming term).
      */
     public function run(): void
     {
-        $year = AcademicYear::where('name', '2024-2025')->first();
-        $semester = Semester::where('academic_year_id', $year?->id)
-            ->where('name', 'Semester 2')
-            ->first();
+        $semester = Semester::query()
+            ->where('status', 'active')
+            ->orderBy('start_date')
+            ->first()
+            ?? Semester::query()->where('status', 'upcoming')->orderBy('start_date')->first();
 
         if (! $semester) {
-            $this->command?->error('Active semester "Semester 2" not found.');
+            $this->command?->error('No active or upcoming semester is available for demo sections.');
             return;
         }
 
@@ -47,7 +47,7 @@ class ClassSectionSeeder extends Seeder
                 ],
                 [
                     'capacity' => 35,
-                    'status' => ClassSectionStatus::Active,
+                    'status' => ClassSectionStatus::PendingSetup,
                 ],
             );
             $count++;

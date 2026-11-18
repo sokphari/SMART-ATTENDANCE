@@ -89,7 +89,7 @@ export const ALL_NAV_ITEMS: NavItem[] = [
     endpoint: "/api/v1/admin/class-sections",
   },
   {
-    label: "Schedules",
+    label: "Class Timetable",
     href: "/schedules",
     icon: CalendarClock,
     description: "Weekly timetables with conflict validation.",

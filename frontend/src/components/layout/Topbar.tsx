@@ -20,6 +20,8 @@ import type { AuthUser } from "@/types/auth";
 import { BackendStatus } from "@/components/shared/BackendStatus";
 import { NotificationBell } from "@/components/layout/NotificationBell";
 import { getInitials } from "@/lib/utils/name";
+import { chooseInitialSemester, fetchSemesterOptions, MANUAL_SEMESTER_SELECTION_KEY, SELECTED_SEMESTER_KEY } from "@/features/schedules/api";
+import type { SemesterOption } from "@/features/schedules/types";
 
 type TopbarProps = {
   user: AuthUser | null;
@@ -41,6 +43,8 @@ export function Topbar({
   const isTeacher = user?.role?.toLowerCase() === "teacher";
   const [profileOpen, setProfileOpen] = useState(false);
   const [search, setSearch] = useState("");
+  const [semesters, setSemesters] = useState<SemesterOption[]>([]);
+  const [selectedSemesterId, setSelectedSemesterId] = useState("");
 
   const [isFullscreen, setIsFullscreen] = useState(false);
 
@@ -78,6 +82,20 @@ export function Topbar({
       window.removeEventListener("keydown", handleKeyDown);
     };
   }, [toggleFullscreen]);
+
+  useEffect(() => {
+    if (isTeacher) return;
+    fetchSemesterOptions().then(({ data }) => {
+      setSemesters(data);
+      const chosen = chooseInitialSemester(data);
+      if (chosen) {
+        const value = String(chosen.id);
+        setSelectedSemesterId(value);
+        window.localStorage.setItem(SELECTED_SEMESTER_KEY, value);
+        window.dispatchEvent(new CustomEvent("sa-semester-change", { detail: { semesterId: Number(value) } }));
+      }
+    }).catch(() => setSemesters([]));
+  }, [isTeacher]);
 
   return (
     <header className="sticky top-0 z-30 flex h-16 shrink-0 items-center justify-between gap-3 border-b border-hairline bg-card/80 px-4 backdrop-blur-md lg:px-8">
@@ -129,11 +147,22 @@ export function Topbar({
         {!isTeacher && (
           <select
             aria-label="Academic term"
-            defaultValue="2026-2027-s1"
+            value={selectedSemesterId}
+            onChange={(event) => {
+              const value = event.target.value;
+              setSelectedSemesterId(value);
+              window.localStorage.setItem(SELECTED_SEMESTER_KEY, value);
+              window.localStorage.setItem(MANUAL_SEMESTER_SELECTION_KEY, "true");
+              window.dispatchEvent(new CustomEvent("sa-semester-change", { detail: { semesterId: Number(value) } }));
+            }}
             className="hidden h-9 rounded-control border border-hairline bg-card px-2 text-xs font-semibold text-muted outline-none lg:block"
           >
-            <option value="2026-2027-s1">Sem 1 · 2026–2027</option>
-            <option value="2026-2027-s2">Sem 2 · 2026–2027</option>
+            {semesters.length === 0 && <option value="">No semesters</option>}
+            {semesters.map((semester) => (
+              <option key={semester.id} value={semester.id}>
+                {semester.name} · {semester.academic_year?.name ?? `${semester.start_date}–${semester.end_date}`}
+              </option>
+            ))}
           </select>
         )}
         {!isTeacher && (

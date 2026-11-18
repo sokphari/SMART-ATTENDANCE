@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\ClassScheduleStatus;
 use Database\Factories\ClassScheduleFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -18,11 +19,13 @@ class ClassSchedule extends Model
     protected $fillable = [
         'class_section_id',
         'classroom_id',
+        'time_slot_id',
         'day_of_week',
         'start_time',
         'end_time',
         'effective_from',
         'effective_until',
+        'status',
     ];
 
     /**
@@ -34,6 +37,7 @@ class ClassSchedule extends Model
             'day_of_week' => 'integer',
             'effective_from' => 'date',
             'effective_until' => 'date',
+            'status' => ClassScheduleStatus::class,
         ];
     }
 
@@ -45,5 +49,10 @@ class ClassSchedule extends Model
     public function classroom(): BelongsTo
     {
         return $this->belongsTo(Classroom::class);
+    }
+
+    public function timeSlot(): BelongsTo
+    {
+        return $this->belongsTo(ScheduleTimeSlot::class, 'time_slot_id');
     }
 }

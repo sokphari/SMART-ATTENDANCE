@@ -34,6 +34,8 @@ export type ClassSection = {
     start_time: string;
     end_time: string;
     room?: string;
+    period?: string | null;
+    status?: "active" | "inactive";
   }[];
   created_at: string;
   updated_at: string;

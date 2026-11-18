@@ -34,7 +34,13 @@ class ClassSectionController extends Controller
 
     public function show(ClassSection $classSection): ClassSectionResource
     {
-        $classSection->load(['course.department', 'semester']);
+        $classSection->load([
+            'course.department',
+            'semester.academicYear',
+            'teacherAssignments.teacher.user',
+            'classSchedules.classroom',
+            'classSchedules.timeSlot.studyPeriod',
+        ])->loadCount(['enrollments as enrolled_count' => fn ($query) => $query->where('status', 'enrolled')]);
 
         return new ClassSectionResource($classSection);
     }

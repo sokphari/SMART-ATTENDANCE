@@ -20,6 +20,24 @@ export function fetchClassSection(id: number) {
   return apiFetch<{ data: ClassSection }>(`${CLASS_SECTIONS_URL}/${id}`);
 }
 
+export type ClassSectionRosterEnrollment = {
+  id: number;
+  student_id: number;
+  enrollment_date: string;
+  status: string;
+  student: {
+    id: number;
+    student_code: string;
+    user?: { name: string; email: string } | null;
+    department?: { name: string } | null;
+  };
+};
+
+export function fetchClassSectionEnrollments(id: number, page = 1) {
+  const params = new URLSearchParams({ class_section_id: String(id), status: "enrolled", page: String(page), per_page: "20" });
+  return apiFetch<Paginated<ClassSectionRosterEnrollment>>(`/api/v1/admin/enrollments?${params}`);
+}
+
 export function createClassSection(input: ClassSectionInput) {
   return apiFetch<{ data: ClassSection }>(CLASS_SECTIONS_URL, {
     method: "POST",

@@ -8,6 +8,7 @@ use App\Enums\VerificationMethod;
 use App\Models\Attendance;
 use App\Models\AttendanceSession;
 use App\Models\Classroom;
+use App\Models\ClassSchedule;
 use App\Models\ClassSection;
 use App\Models\Enrollment;
 use App\Models\Student;
@@ -129,6 +130,34 @@ class TeacherAttendanceSessionApiTest extends TestCase
         $this->postJson('/api/v1/teacher/attendance-sessions', $payload)
             ->assertStatus(422)
             ->assertJsonValidationErrors('class_section_id');
+    }
+
+    public function test_teacher_cannot_create_a_duplicate_session_for_a_scheduled_meeting(): void
+    {
+        [$teacher, $classSection, $classroom] = $this->assignedTeacher();
+        $schedule = ClassSchedule::factory()->create([
+            'class_section_id' => $classSection->id,
+            'classroom_id' => $classroom->id,
+            'day_of_week' => 1,
+            'start_time' => '07:30:00',
+            'end_time' => '09:00:00',
+        ]);
+        $payload = [
+            'class_section_id' => $classSection->id,
+            'class_schedule_id' => $schedule->id,
+            'session_date' => '2025-03-03',
+            'starts_at' => '2025-03-03T07:30:00+07:00',
+            'late_after' => '2025-03-03T07:45:00+07:00',
+            'closes_at' => '2025-03-03T09:00:00+07:00',
+        ];
+
+        $sessionId = $this->postJson('/api/v1/teacher/attendance-sessions', $payload)
+            ->assertCreated()->json('data.id');
+        AttendanceSession::query()->whereKey($sessionId)->update(['status' => AttendanceSessionStatus::Closed->value]);
+
+        $this->postJson('/api/v1/teacher/attendance-sessions', $payload)
+            ->assertStatus(422)
+            ->assertJsonValidationErrors('class_schedule_id');
     }
 
     public function test_teacher_can_generate_and_rotate_qr_token(): void

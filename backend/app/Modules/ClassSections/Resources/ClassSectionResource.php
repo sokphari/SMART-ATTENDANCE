@@ -41,7 +41,10 @@ class ClassSectionResource extends JsonResource
                         'day_of_week' => $sched->day_of_week,
                         'start_time' => substr((string) $sched->start_time, 0, 5),
                         'end_time' => substr((string) $sched->end_time, 0, 5),
-                        'room' => $sched->classroom?->name ?? $sched->classroom?->room_number ?? 'Room TBD',
+                        'time_slot_id' => $sched->time_slot_id,
+                        'period' => $sched->timeSlot?->studyPeriod?->name,
+                        'status' => $sched->status?->value,
+                        'room' => $sched->classroom?->room_code ?? 'Room TBD',
                     ];
                 });
             }),

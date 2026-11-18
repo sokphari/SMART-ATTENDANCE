@@ -4,6 +4,7 @@ namespace App\Modules\TeacherAssignments\Services;
 
 use App\Models\TeacherAssignment;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Facades\DB;
 
 class TeacherAssignmentServices
 {
@@ -48,11 +49,16 @@ class TeacherAssignmentServices
      */
     public function create(array $data): TeacherAssignment
     {
-        $assignment = TeacherAssignment::create([
-            'class_section_id' => $data['class_section_id'],
-            'teacher_id' => $data['teacher_id'],
-            'assigned_at' => $data['assigned_at'] ?? now(),
-        ]);
+        $assignment = DB::transaction(function () use ($data): TeacherAssignment {
+            \App\Models\ClassSection::query()->whereKey($data['class_section_id'])->lockForUpdate()->firstOrFail();
+            \App\Models\Teacher::query()->whereKey($data['teacher_id'])->lockForUpdate()->firstOrFail();
+
+            return TeacherAssignment::create([
+                'class_section_id' => $data['class_section_id'],
+                'teacher_id' => $data['teacher_id'],
+                'assigned_at' => $data['assigned_at'] ?? now(),
+            ]);
+        }, 3);
 
         return $assignment->load($this->relations());
     }
@@ -62,15 +68,26 @@ class TeacherAssignmentServices
      */
     public function update(TeacherAssignment $assignment, array $data): TeacherAssignment
     {
-        $assignment->fill($data);
-        $assignment->save();
+        DB::transaction(function () use ($assignment, $data): void {
+            $locked = TeacherAssignment::query()->whereKey($assignment->id)->lockForUpdate()->firstOrFail();
+            $sectionId = (int) ($data['class_section_id'] ?? $locked->class_section_id);
+            $teacherId = (int) ($data['teacher_id'] ?? $locked->teacher_id);
+            \App\Models\ClassSection::query()->whereIn('id', [$locked->class_section_id, $sectionId])->orderBy('id')->lockForUpdate()->get();
+            \App\Models\Teacher::query()->whereIn('id', [$locked->teacher_id, $teacherId])->orderBy('id')->lockForUpdate()->get();
+            $locked->fill($data)->save();
+        }, 3);
 
         return $assignment->refresh()->load($this->relations());
     }
 
     public function unassign(TeacherAssignment $assignment): void
     {
-        $assignment->delete();
+        DB::transaction(function () use ($assignment): void {
+            $locked = TeacherAssignment::query()->whereKey($assignment->id)->lockForUpdate()->firstOrFail();
+            \App\Models\ClassSection::query()->whereKey($locked->class_section_id)->lockForUpdate()->firstOrFail();
+            \App\Models\Teacher::query()->whereKey($locked->teacher_id)->lockForUpdate()->firstOrFail();
+            $locked->delete();
+        }, 3);
     }
 
     /**
