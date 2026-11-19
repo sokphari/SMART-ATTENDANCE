@@ -1,9 +1,7 @@
-import { TeacherSessionCreateView } from "@/features/teacher-portal/components/TeacherSessionCreateView";
+import { redirect } from "next/navigation";
 
 export const metadata = { title: "Open attendance session" };
 
-export default async function TeacherAttendanceSessionCreatePage({ searchParams }: { searchParams: Promise<{ class_section_id?: string }> }) {
-  const { class_section_id } = await searchParams;
-  const initialSectionId = Number(class_section_id);
-  return <TeacherSessionCreateView initialSectionId={Number.isInteger(initialSectionId) && initialSectionId > 0 ? initialSectionId : undefined} />;
+export default function TeacherAttendanceSessionCreatePage() {
+  redirect("/teacher/classes");
 }

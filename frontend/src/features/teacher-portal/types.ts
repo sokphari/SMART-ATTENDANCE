@@ -62,9 +62,9 @@ export type SessionAttendanceStatus = "present" | "late" | "absent" | "excused" 
 
 export type SessionAttendance = {
   student_id: number;
-  student_code: string;
   name: string;
   email: string | null;
+  gender: string | null;
   enrollment_status: "enrolled";
   status: SessionAttendanceStatus;
   verification_method: "dynamic_qr" | "manual" | "system" | null;

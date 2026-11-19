@@ -1,6 +1,6 @@
 import type { NextConfig } from "next";
 
-const fallbackApiProxyUrl = "http://localhost:8001";
+const fallbackApiProxyUrl = "http://localhost:8002";
 const configuredApiProxyUrl = process.env.API_PROXY_URL?.trim();
 
 function resolveApiProxyUrl(value: string | undefined): string {

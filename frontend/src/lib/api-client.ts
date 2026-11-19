@@ -21,7 +21,7 @@ function isHttpUrl(value: string | undefined): value is string {
 const backendUrl = [
   process.env.BACKEND_INTERNAL_URL,
   process.env.API_PROXY_URL,
-].find(isHttpUrl)?.trim().replace(/\/+$/, "") ?? "http://localhost:8001";
+].find(isHttpUrl)?.trim().replace(/\/+$/, "") ?? "http://localhost:8002";
 
 /** Server-side API client for App Router Server Components and Actions. */
 export async function apiClient<T>(

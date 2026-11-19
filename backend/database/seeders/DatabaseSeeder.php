@@ -25,6 +25,7 @@ class DatabaseSeeder extends Seeder
             TeacherAssignmentSeeder::class,  // 11. Assign demo teachers
             ScheduleSeeder::class,           // 12. Configure slots, then activate ready sections
             EnrollmentSeeder::class,         // 13. Enroll demo students in active sections
+            AttendanceTrackingDemoSeeder::class, // 14. Ready one class for attendance tracking
         ]);
     }
 }

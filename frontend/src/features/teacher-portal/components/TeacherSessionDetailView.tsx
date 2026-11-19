@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent } from "react";
-import { ArrowLeft, Check, CheckCircle2, Clipboard, Clock3, FileCheck2, QrCode, RefreshCw, Search, X, XCircle } from "lucide-react";
+import { ArrowLeft, Check, CheckCircle2, Clipboard, Clock3, FileCheck2, QrCode, RefreshCw, Search, XCircle } from "lucide-react";
 import { QRCodeSVG } from "qrcode.react";
 import { Button } from "@/components/ui/Button";
 import { closeTeacherSession, generateSessionQrToken, getSessionAttendance, getTeacherSession, markSessionAttendance } from "../api";
@@ -28,6 +28,16 @@ const STATUS_LABEL: Record<SessionAttendanceStatus, string> = {
   excused: "Permission",
   unmarked: "Pending",
 };
+const GENDER_STYLE: Record<string, string> = {
+  male: "bg-sky-500/15 text-sky-300 ring-1 ring-inset ring-sky-400/20",
+  female: "bg-fuchsia-500/15 text-fuchsia-300 ring-1 ring-inset ring-fuchsia-400/20",
+  other: "bg-violet-500/15 text-violet-300 ring-1 ring-inset ring-violet-400/20",
+};
+
+function GenderBadge({ gender }: { gender: string | null }) {
+  const value = gender?.toLowerCase() ?? "";
+  return <span className={`inline-flex rounded-pill px-2.5 py-1 text-xs font-semibold capitalize ${GENDER_STYLE[value] ?? "bg-slate-500/15 text-slate-300 ring-1 ring-inset ring-slate-400/20"}`}>{gender ?? "Not provided"}</span>;
+}
 
 function formatTime(value: string) {
   return new Date(value).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
@@ -45,40 +55,48 @@ export function TeacherSessionDetailView({ sessionId }: { sessionId: number }) {
   const [lastPage, setLastPage] = useState(1);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
-  const [savingStudentId, setSavingStudentId] = useState<number | null>(null);
+  const [pendingAttendance, setPendingAttendance] = useState<Record<number, { status: Exclude<SessionAttendanceStatus, "unmarked">; remarks?: string }>>({});
+  const [savingAttendance, setSavingAttendance] = useState(false);
+  const [savedSummary, setSavedSummary] = useState<AttendanceSummary | null>(null);
+  const [saveSummaryDialogOpen, setSaveSummaryDialogOpen] = useState(false);
   const [permissionStudent, setPermissionStudent] = useState<SessionAttendance | null>(null);
   const [permissionReason, setPermissionReason] = useState("");
   const [qrToken, setQrToken] = useState<{ token: string; expires_at: string } | null>(null);
+  const [qrDialogOpen, setQrDialogOpen] = useState(false);
   const [qrError, setQrError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [closing, setClosing] = useState(false);
   const [generatingQr, setGeneratingQr] = useState(false);
-  const [confirmClose, setConfirmClose] = useState(false);
   const [copied, setCopied] = useState(false);
   const [clock, setClock] = useState(() => Date.now());
-  const autoQrStarted = useRef(false);
-  const closeDialog = useRef<HTMLDialogElement>(null);
+  const attendanceRequestId = useRef(0);
   const permissionDialog = useRef<HTMLDialogElement>(null);
+  const qrDialog = useRef<HTMLDialogElement>(null);
+  const saveSummaryDialog = useRef<HTMLDialogElement>(null);
 
-  const refresh = useCallback(async (targetPage = 1) => {
-    setLoading(true);
+  const refresh = useCallback(async (targetPage = 1, options: { background?: boolean } = {}) => {
+    const requestId = ++attendanceRequestId.current;
+    const background = options.background ?? false;
+    if (!background) setLoading(true);
     setError(null);
     try {
       const [sessionResponse, attendanceResponse] = await Promise.all([
         getTeacherSession(sessionId),
         getSessionAttendance(sessionId, targetPage, { search, status: statusFilter }),
       ]);
+      if (requestId !== attendanceRequestId.current) return;
       setSession(sessionResponse.data);
       setRows(attendanceResponse.data);
       setSummary(attendanceResponse.summary);
       setPage(attendanceResponse.meta?.current_page ?? targetPage);
       setLastPage(attendanceResponse.meta?.last_page ?? 1);
     } catch (caught) {
+      if (requestId !== attendanceRequestId.current) return;
       setError(caught instanceof Error ? caught.message : "Unable to load this attendance session.");
     } finally {
-      setLoading(false);
+      if (!background && requestId === attendanceRequestId.current) setLoading(false);
     }
   }, [search, sessionId, statusFilter]);
 
@@ -86,7 +104,7 @@ export function TeacherSessionDetailView({ sessionId }: { sessionId: number }) {
 
   useEffect(() => {
     if (session?.status !== "open" && session?.status !== "scheduled") return;
-    const timer = window.setInterval(() => void refresh(page), 5000);
+    const timer = window.setInterval(() => void refresh(page, { background: true }), 5000);
     return () => window.clearInterval(timer);
   }, [session?.status, page, refresh]);
 
@@ -95,13 +113,6 @@ export function TeacherSessionDetailView({ sessionId }: { sessionId: number }) {
     const timer = window.setInterval(() => setClock(Date.now()), 1000);
     return () => window.clearInterval(timer);
   }, [session?.status]);
-
-  useEffect(() => {
-    const dialog = closeDialog.current;
-    if (!dialog) return;
-    if (confirmClose && !dialog.open) dialog.showModal();
-    if (!confirmClose && dialog.open) dialog.close();
-  }, [confirmClose]);
 
   useEffect(() => {
     const dialog = permissionDialog.current;
@@ -131,55 +142,69 @@ export function TeacherSessionDetailView({ sessionId }: { sessionId: number }) {
   }, [sessionId]);
 
   useEffect(() => {
-    if (!qrCanGenerate || qrToken || qrError || generatingQr || autoQrStarted.current) return;
-    autoQrStarted.current = true;
-    void refreshQr();
-  }, [qrCanGenerate, qrToken, qrError, generatingQr, refreshQr]);
-
-  useEffect(() => {
-    if (!qrToken || session?.status !== "open") return;
+    if (!qrToken || !qrDialogOpen || session?.status !== "open") return;
     const untilExpiry = new Date(qrToken.expires_at).getTime() - Date.now();
     const timer = window.setTimeout(() => void refreshQr(), Math.max(1000, untilExpiry - 1500));
     return () => window.clearTimeout(timer);
-  }, [qrToken, refreshQr, session?.status]);
+  }, [qrDialogOpen, qrToken, refreshQr, session?.status]);
 
-  async function markStudent(row: SessionAttendance, status: Exclude<SessionAttendanceStatus, "unmarked">, remarks?: string) {
-    setSavingStudentId(row.student_id);
+  useEffect(() => {
+    const dialog = qrDialog.current;
+    if (!dialog) return;
+    if (qrDialogOpen && qrToken && !dialog.open) dialog.showModal();
+    if (!qrDialogOpen && dialog.open) dialog.close();
+  }, [qrDialogOpen, qrToken]);
+
+  useEffect(() => {
+    const dialog = saveSummaryDialog.current;
+    if (!dialog) return;
+    if (saveSummaryDialogOpen && savedSummary && !dialog.open) dialog.showModal();
+    if (!saveSummaryDialogOpen && dialog.open) dialog.close();
+  }, [saveSummaryDialogOpen, savedSummary]);
+
+  function selectStudentStatus(row: SessionAttendance, status: Exclude<SessionAttendanceStatus, "unmarked">, remarks?: string) {
     setNotice(null);
     setError(null);
+    setPendingAttendance((current) => ({ ...current, [row.student_id]: { status, remarks } }));
+  }
+
+  async function savePendingAttendance() {
+    const records = Object.entries(pendingAttendance).map(([studentId, record]) => ({
+      student_id: Number(studentId),
+      status: record.status,
+      remarks: record.remarks,
+    }));
+    if (records.length === 0) return;
+
+    setSavingAttendance(true);
+    setError(null);
     try {
-      const response = await markSessionAttendance(sessionId, [{ student_id: row.student_id, status, remarks }]);
-      setRows((current) => statusFilter && statusFilter !== status
-        ? current.filter((item) => item.student_id !== row.student_id)
-        : current.map((item) => item.student_id === row.student_id ? {
-          ...item,
-          status,
-          verification_method: "manual",
-          checked_in_at: status === "present" || status === "late" ? new Date().toISOString() : null,
-          remarks: remarks ?? null,
-        } : item));
+      const response = await markSessionAttendance(sessionId, records);
       setSummary(response.summary);
-      setNotice(`${row.name}'s attendance saved as ${status === "excused" ? "Permission" : status}.`);
-      return true;
+      setPendingAttendance({});
+      await refresh(page);
+      setSavedSummary(response.summary);
+      setSaveSummaryDialogOpen(true);
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "Unable to save attendance.");
-      return false;
     } finally {
-      setSavingStudentId(null);
+      setSavingAttendance(false);
     }
   }
 
   async function submitPermission(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!permissionStudent) return;
-    const saved = await markStudent(permissionStudent, "excused", permissionReason.trim() || undefined);
-    if (saved) {
-      setPermissionStudent(null);
-      setPermissionReason("");
-    }
+    selectStudentStatus(permissionStudent, "excused", permissionReason.trim() || undefined);
+    setPermissionStudent(null);
+    setPermissionReason("");
   }
 
   async function handleClose() {
+    if (Object.keys(pendingAttendance).length > 0) {
+      setError("Save attendance before closing the session.");
+      return;
+    }
     setClosing(true);
     setError(null);
     try {
@@ -187,7 +212,6 @@ export function TeacherSessionDetailView({ sessionId }: { sessionId: number }) {
       setSession(response.data);
       setSummary(response.summary);
       setQrToken(null);
-      setConfirmClose(false);
       setNotice("Session closed. Remaining enrolled students were marked absent.");
       await refresh(page);
     } catch (caught) {
@@ -203,6 +227,19 @@ export function TeacherSessionDetailView({ sessionId }: { sessionId: number }) {
     setCopied(true);
     window.setTimeout(() => setCopied(false), 1800);
   }
+
+  async function openQrDialog() {
+    if (!qrToken || new Date(qrToken.expires_at).getTime() <= Date.now()) {
+      await refreshQr();
+    }
+    setQrDialogOpen(true);
+  }
+
+  function displayedStatus(row: SessionAttendance): SessionAttendanceStatus {
+    return pendingAttendance[row.student_id]?.status ?? row.status;
+  }
+
+  const pendingCount = Object.keys(pendingAttendance).length;
 
   if (loading && !session) return <div className="w-full animate-pulse space-y-5"><div className="h-8 w-64 rounded bg-slate-200" /><div className="h-52 rounded-panel bg-slate-100" /><div className="h-80 rounded-panel bg-slate-100" /></div>;
   if (error && !session) return <div className="w-full"><Link href="/teacher/attendance-sessions" className="inline-flex items-center gap-2 text-sm font-semibold text-brand-600"><ArrowLeft className="size-4" />Back to sessions</Link><p role="alert" className="mt-5 rounded-control bg-danger-soft p-4 text-sm text-danger">{error}</p></div>;
@@ -222,39 +259,39 @@ export function TeacherSessionDetailView({ sessionId }: { sessionId: number }) {
         {session.status === "scheduled" && <p role="status" className="mt-4 rounded-control bg-brand-50 p-3 text-sm text-brand-800 dark:bg-brand-500/10 dark:text-brand-200">Attendance will open automatically at {formatTime(session.starts_at)}. QR check-in is configured to close at {formatTime(session.closes_at)}.</p>}
         {session.status === "open" && <p role="status" className="mt-4 rounded-control bg-emerald-50 p-3 text-sm text-emerald-800 dark:bg-emerald-500/10 dark:text-emerald-200">{qrCanGenerate ? `QR check-in is open · closes in ${Math.floor(secondsUntilQrClose / 60)}m ${secondsUntilQrClose % 60}s.` : `QR check-in is closed. The session remains open until ${formatTime(session.session_ends_at ?? session.closes_at)} for attendance review.`}</p>}
         <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">{summary && ([['Present', summary.present], ['Late', summary.late], ['Absent', summary.absent], ['Permission', summary.excused], ['Pending', summary.unmarked], ['Enrolled', summary.total]] as const).map(([label, count]) => <div key={label} className="rounded-control bg-canvas p-3"><p className="text-xs text-muted">{label}</p><p className="mt-1 font-display text-xl font-bold">{count}</p></div>)}</div>
-        <div className="mt-5 flex flex-wrap gap-3">{session.status === "open" && <Button variant="danger" onClick={() => setConfirmClose(true)}>Close session</Button>}</div>
       </section>
 
-      {session.status === "open" && <section className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_320px]">
-        <div className="rounded-panel border border-hairline bg-card p-5 shadow-soft sm:p-6">
-          <h2 className="font-display text-lg font-bold">Manual attendance</h2><p className="mt-1 text-sm text-muted">Mark or correct each enrolled student. Updates share the same attendance record as QR check-in.</p>
+      {session.status === "open" && <section className="rounded-panel border border-hairline bg-card p-5 shadow-soft sm:p-6">
+        <div>
+          <div className="flex flex-wrap items-start justify-between gap-3"><div><h2 className="font-display text-lg font-bold">Manual attendance</h2><p className="mt-1 text-sm text-muted">Ask students to scan the QR or mark them manually below.</p></div><div className="flex flex-wrap gap-2">{pendingCount > 0 && <Button onClick={() => void savePendingAttendance()} loading={savingAttendance}><Check className="size-4" />Save attendance ({pendingCount})</Button>}<Button variant="secondary" onClick={() => void openQrDialog()} loading={generatingQr} disabled={!qrCanGenerate}><QrCode className="size-4" />Open QR for students</Button></div></div>
+          {qrError && <p role="alert" className="mt-3 text-sm text-danger">{qrError}</p>}
           <div className="mt-4 grid gap-3 sm:grid-cols-[minmax(0,1fr)_12rem]">
             <label className="relative"><Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted" /><input value={search} onChange={(event) => { setSearch(event.target.value); setPage(1); }} placeholder="Search student name or ID" aria-label="Search students" className="h-11 w-full rounded-control border border-hairline bg-card pl-10 pr-3 text-sm" /></label>
             <select aria-label="Filter attendance status" value={statusFilter} onChange={(event) => { setStatusFilter(event.target.value); setPage(1); }} className="h-11 rounded-control border border-hairline bg-card px-3 text-sm"><option value="">All statuses</option><option value="unmarked">Pending</option><option value="present">Present</option><option value="absent">Absent</option><option value="late">Late</option><option value="excused">Permission</option></select>
           </div>
-          {loading && <p role="status" className="py-3 text-sm text-muted">Loading attendance…</p>}
+          {loading && rows.length === 0 && <p role="status" className="py-3 text-sm text-muted">Loading attendance…</p>}
           <div className="mt-3 space-y-3 md:hidden">
-            {rows.map((row, index) => <article key={row.student_id} className="rounded-control border border-hairline bg-card p-3"><div className="flex items-center gap-3"><span aria-hidden="true" className="flex size-10 shrink-0 items-center justify-center rounded-full bg-brand-50 text-sm font-bold text-brand-700 dark:bg-brand-500/15 dark:text-brand-300">{row.name.split(/\s+/).map((part) => part[0]).slice(0, 2).join("").toUpperCase()}</span><div className="min-w-0 flex-1"><p className="truncate text-sm font-semibold">{(page - 1) * 50 + index + 1}. {row.name}</p><p className="truncate text-xs text-muted">{row.student_code}</p></div><span className={`rounded-pill px-2.5 py-1 text-xs font-semibold ${STATUS_STYLE[row.status]}`}>{STATUS_LABEL[row.status]}</span></div><div className="mt-3 grid grid-cols-2 gap-2">{STATUS_OPTIONS.map(({ status, label, icon: Icon, style }) => <button key={status} type="button" aria-label={`${label} for ${row.name}`} aria-pressed={row.status === status} disabled={savingStudentId === row.student_id} onClick={() => status === "excused" ? (setPermissionStudent(row), setPermissionReason("")) : void markStudent(row, status)} className={`flex min-h-10 items-center justify-center gap-1.5 rounded-control border px-2 text-xs font-semibold transition-colors disabled:opacity-50 ${style} ${row.status === status ? "ring-2 ring-brand-500 ring-offset-1" : ""}`}><Icon className="size-4" />{label}{savingStudentId === row.student_id && <span className="sr-only">Saving</span>}</button>)}</div></article>)}
+            {rows.map((row, index) => <article key={row.student_id} className="rounded-control border border-hairline bg-card p-3"><div className="flex items-center gap-3"><span aria-hidden="true" className="flex size-10 shrink-0 items-center justify-center rounded-full bg-brand-50 text-sm font-bold text-brand-700 dark:bg-brand-500/15 dark:text-brand-300">{row.name.split(/\s+/).map((part) => part[0]).slice(0, 2).join("").toUpperCase()}</span><div className="min-w-0 flex-1"><p className="truncate text-sm font-semibold">{(page - 1) * 50 + index + 1}. {row.name}</p><GenderBadge gender={row.gender} /></div><span className={`rounded-pill px-2.5 py-1 text-xs font-semibold ${STATUS_STYLE[displayedStatus(row)]}`}>{STATUS_LABEL[displayedStatus(row)]}</span></div><div className="mt-3 grid grid-cols-2 gap-2">{STATUS_OPTIONS.map(({ status, label, icon: Icon, style }) => <button key={status} type="button" aria-label={`${label} for ${row.name}`} aria-pressed={displayedStatus(row) === status} disabled={savingAttendance} onClick={() => status === "excused" ? (setPermissionStudent(row), setPermissionReason("")) : selectStudentStatus(row, status)} className={`flex min-h-10 items-center justify-center gap-1.5 rounded-control border px-2 text-xs font-semibold transition-colors disabled:opacity-50 ${style} ${displayedStatus(row) === status ? "ring-2 ring-brand-500 ring-offset-1" : ""}`}><Icon className="size-4" />{label}</button>)}</div></article>)}
           </div>
-          <div className="mt-3 hidden overflow-x-auto md:block"><table className="w-full min-w-[760px] text-left text-sm"><thead className="bg-canvas text-xs uppercase tracking-wide text-muted"><tr><th className="px-3 py-3">No.</th><th className="px-3 py-3">Student</th><th className="px-3 py-3">Student ID</th><th className="px-3 py-3">Status</th><th className="px-3 py-3">Actions</th></tr></thead><tbody className="divide-y divide-hairline">{rows.map((row, index) => <tr key={row.student_id}><td className="px-3 py-3 text-muted">{(page - 1) * 50 + index + 1}</td><td className="px-3 py-3"><div className="flex items-center gap-3"><span aria-hidden="true" className="flex size-9 shrink-0 items-center justify-center rounded-full bg-brand-50 text-xs font-bold text-brand-700 dark:bg-brand-500/15 dark:text-brand-300">{row.name.split(/\s+/).map((part) => part[0]).slice(0, 2).join("").toUpperCase()}</span><div><p className="font-semibold">{row.name}</p><p className="text-xs text-muted">{row.email}</p></div></div></td><td className="px-3 py-3">{row.student_code}</td><td className="px-3 py-3"><span className={`rounded-pill px-2.5 py-1 text-xs font-semibold ${STATUS_STYLE[row.status]}`}>{STATUS_LABEL[row.status]}</span><p className="mt-1 text-[11px] text-muted">{row.verification_method ? row.verification_method.replaceAll("_", " ") : "Awaiting mark"}</p></td><td className="px-3 py-3"><div className="grid grid-cols-2 gap-1.5 xl:flex">{STATUS_OPTIONS.map(({ status, label, icon: Icon, style }) => <button key={status} type="button" aria-label={`${label} for ${row.name}`} aria-pressed={row.status === status} disabled={savingStudentId === row.student_id} onClick={() => status === "excused" ? (setPermissionStudent(row), setPermissionReason("")) : void markStudent(row, status)} className={`inline-flex min-h-9 items-center justify-center gap-1 rounded-control border px-2 text-xs font-semibold transition-colors disabled:opacity-50 ${style} ${row.status === status ? "ring-2 ring-brand-500 ring-offset-1" : ""}`}><Icon className="size-3.5" />{label}</button>)}</div></td></tr>)}</tbody></table></div>
+          <div className="mt-3 hidden overflow-x-auto md:block"><table className="w-full min-w-[760px] text-left text-sm"><thead className="bg-canvas text-xs uppercase tracking-wide text-muted"><tr><th className="px-3 py-3">No.</th><th className="px-3 py-3">Student</th><th className="px-3 py-3">Gender</th><th className="px-3 py-3">Status</th><th className="px-3 py-3">Actions</th></tr></thead><tbody className="divide-y divide-hairline">{rows.map((row, index) => <tr key={row.student_id}><td className="px-3 py-3 text-muted">{(page - 1) * 50 + index + 1}</td><td className="px-3 py-3"><div className="flex items-center gap-3"><span aria-hidden="true" className="flex size-9 shrink-0 items-center justify-center rounded-full bg-brand-50 text-xs font-bold text-brand-700 dark:bg-brand-500/15 dark:text-brand-300">{row.name.split(/\s+/).map((part) => part[0]).slice(0, 2).join("").toUpperCase()}</span><div><p className="font-semibold">{row.name}</p><p className="text-xs text-muted">{row.email}</p></div></div></td><td className="px-3 py-3"><GenderBadge gender={row.gender} /></td><td className="px-3 py-3"><span className={`rounded-pill px-2.5 py-1 text-xs font-semibold ${STATUS_STYLE[displayedStatus(row)]}`}>{STATUS_LABEL[displayedStatus(row)]}</span><p className="mt-1 text-[11px] text-muted">{row.verification_method ? row.verification_method.replaceAll("_", " ") : "Awaiting mark"}</p></td><td className="px-3 py-3"><div className="grid grid-cols-2 gap-1.5 xl:flex">{STATUS_OPTIONS.map(({ status, label, icon: Icon, style }) => <button key={status} type="button" aria-label={`${label} for ${row.name}`} aria-pressed={displayedStatus(row) === status} disabled={savingAttendance} onClick={() => status === "excused" ? (setPermissionStudent(row), setPermissionReason("")) : selectStudentStatus(row, status)} className={`inline-flex min-h-9 items-center justify-center gap-1 rounded-control border px-2 text-xs font-semibold transition-colors disabled:opacity-50 ${style} ${displayedStatus(row) === status ? "ring-2 ring-brand-500 ring-offset-1" : ""}`}><Icon className="size-3.5" />{label}</button>)}</div></td></tr>)}</tbody></table></div>
           {rows.length === 0 && !loading && <p className="py-6 text-center text-sm text-muted">No enrolled students match this search and status filter.</p>}
           <div className="mt-4 flex flex-wrap items-center justify-between gap-3"><p className="text-xs text-muted">Page {page} of {lastPage} · {summary?.unmarked ?? 0} pending</p><div className="flex gap-2"><Button size="sm" variant="secondary" disabled={page <= 1 || loading} onClick={() => void refresh(page - 1)}>Previous</Button><Button size="sm" variant="secondary" disabled={page >= lastPage || loading} onClick={() => void refresh(page + 1)}>Next</Button></div></div>
         </div>
 
-        <aside className="rounded-panel border border-hairline bg-card p-5 text-center shadow-soft sm:p-6"><div className="mx-auto flex size-11 items-center justify-center rounded-control bg-brand-50 text-brand-600 dark:bg-brand-500/15 dark:text-brand-300"><QrCode className="size-5" /></div><h2 className="mt-3 font-display text-lg font-bold">Live attendance QR</h2><p className="mt-1 text-sm text-muted">QR tokens expire after 30 seconds and rotate automatically.</p>
-          {qrToken ? <><div className="mx-auto mt-5 flex w-fit rounded-xl bg-white p-3"><QRCodeSVG value={qrToken.token} size={220} level="M" includeMargin /></div><p className="mt-3 text-xs text-muted">Expires {new Date(qrToken.expires_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" })}</p><div className="mt-3 flex justify-center gap-2"><Button size="sm" variant="secondary" onClick={() => void copyToken()}>{copied ? <Check className="size-4" /> : <Clipboard className="size-4" />}{copied ? "Copied" : "Copy token"}</Button><Button size="sm" onClick={() => void refreshQr()} loading={generatingQr}><RefreshCw className="size-4" />Refresh QR</Button></div></> : <div className="mt-5 rounded-control bg-canvas p-5"><p className="text-sm text-muted">{qrCanGenerate ? "Generate a code for students to scan." : `The QR is available from ${formatTime(session.starts_at)} until ${formatTime(session.closes_at)}.`}</p><Button className="mt-4 w-full" onClick={() => void refreshQr()} loading={generatingQr} disabled={!qrCanGenerate}>Generate QR</Button></div>}
-          {qrError && <p role="alert" className="mt-3 text-xs text-danger">{qrError}</p>}
-        </aside>
       </section>}
 
-      {session.status !== "open" && <section className="rounded-panel border border-hairline bg-card p-5 shadow-soft"><h2 className="font-display text-lg font-bold">Attendance records</h2><div className="mt-4 overflow-x-auto"><table className="w-full min-w-[580px] text-left text-sm"><thead className="bg-canvas text-xs uppercase tracking-wide text-muted"><tr><th className="px-3 py-3">Student</th><th className="px-3 py-3">ID</th><th className="px-3 py-3">Status</th><th className="px-3 py-3">Verified by</th></tr></thead><tbody className="divide-y divide-hairline">{rows.map((row) => <tr key={row.student_id}><td className="px-3 py-3 font-semibold">{row.name}</td><td className="px-3 py-3">{row.student_code}</td><td className="px-3 py-3"><span className={`rounded-pill px-2.5 py-1 text-xs font-semibold capitalize ${STATUS_STYLE[row.status]}`}>{row.status}</span></td><td className="px-3 py-3 text-muted">{row.verification_method?.replaceAll("_", " ") ?? "—"}</td></tr>)}</tbody></table></div><div className="mt-4 flex justify-end gap-2"><Button size="sm" variant="secondary" disabled={page <= 1} onClick={() => void refresh(page - 1)}>Previous</Button><Button size="sm" variant="secondary" disabled={page >= lastPage} onClick={() => void refresh(page + 1)}>Next</Button></div></section>}
+      {session.status !== "open" && <section className="rounded-panel border border-hairline bg-card p-5 shadow-soft"><h2 className="font-display text-lg font-bold">Attendance records</h2><div className="mt-4 overflow-x-auto"><table className="w-full min-w-[580px] text-left text-sm"><thead className="bg-canvas text-xs uppercase tracking-wide text-muted"><tr><th className="px-3 py-3">Student</th><th className="px-3 py-3">Gender</th><th className="px-3 py-3">Status</th><th className="px-3 py-3">Verified by</th></tr></thead><tbody className="divide-y divide-hairline">{rows.map((row) => <tr key={row.student_id}><td className="px-3 py-3 font-semibold">{row.name}</td><td className="px-3 py-3"><GenderBadge gender={row.gender} /></td><td className="px-3 py-3"><span className={`rounded-pill px-2.5 py-1 text-xs font-semibold capitalize ${STATUS_STYLE[row.status]}`}>{row.status}</span></td><td className="px-3 py-3 text-muted">{row.verification_method?.replaceAll("_", " ") ?? "—"}</td></tr>)}</tbody></table></div><div className="mt-4 flex justify-end gap-2"><Button size="sm" variant="secondary" disabled={page <= 1} onClick={() => void refresh(page - 1)}>Previous</Button><Button size="sm" variant="secondary" disabled={page >= lastPage} onClick={() => void refresh(page + 1)}>Next</Button></div></section>}
 
-      <dialog ref={closeDialog} onCancel={(event) => { event.preventDefault(); setConfirmClose(false); }} className="m-auto w-[min(92vw,30rem)] rounded-panel border border-hairline bg-card p-0 text-ink shadow-lift backdrop:bg-ink/50">
-        <div className="p-6"><div className="flex items-start justify-between gap-4"><div><h2 className="font-display text-lg font-bold">Close attendance session?</h2><p className="mt-2 text-sm text-muted">All remaining enrolled students without an attendance record will be marked absent. This action cannot be undone.</p></div><button type="button" aria-label="Cancel" onClick={() => setConfirmClose(false)} className="rounded-control p-1.5 text-muted hover:bg-canvas"><X className="size-4" /></button></div><div className="mt-6 flex justify-end gap-3"><Button variant="secondary" onClick={() => setConfirmClose(false)}>Keep open</Button><Button variant="danger" loading={closing} onClick={() => void handleClose()}>Close session</Button></div></div>
+      <dialog ref={permissionDialog} aria-labelledby="permission-title" aria-describedby="permission-description" onCancel={(event) => { event.preventDefault(); if (!savingAttendance) setPermissionStudent(null); }} onClose={() => { if (permissionStudent && !savingAttendance) setPermissionStudent(null); }} className="m-auto w-[min(92vw,30rem)] rounded-panel border border-hairline bg-card p-0 text-ink shadow-lift backdrop:bg-ink/50">
+        {permissionStudent && <form onSubmit={(event) => void submitPermission(event)} className="p-6"><h2 id="permission-title" className="font-display text-lg font-bold">Record permission</h2><p id="permission-description" className="mt-2 text-sm text-muted">Mark {permissionStudent.name} as excused for this session. A reason is optional. Click Save attendance after selecting students.</p><label htmlFor="permission-reason" className="mt-4 block text-sm font-semibold">Reason (optional)</label><textarea id="permission-reason" value={permissionReason} onChange={(event) => setPermissionReason(event.target.value)} maxLength={1000} rows={3} placeholder="Add a short note" className="mt-2 w-full resize-y rounded-control border border-hairline bg-canvas p-3 text-sm outline-none focus:border-brand-400" /><div className="mt-5 flex justify-end gap-2"><Button type="button" variant="secondary" disabled={savingAttendance} onClick={() => setPermissionStudent(null)}>Cancel</Button><Button type="submit" loading={savingAttendance}><FileCheck2 className="size-4" />Select permission</Button></div></form>}
       </dialog>
 
-      <dialog ref={permissionDialog} aria-labelledby="permission-title" aria-describedby="permission-description" onCancel={(event) => { event.preventDefault(); if (!savingStudentId) setPermissionStudent(null); }} onClose={() => { if (permissionStudent && !savingStudentId) setPermissionStudent(null); }} className="m-auto w-[min(92vw,30rem)] rounded-panel border border-hairline bg-card p-0 text-ink shadow-lift backdrop:bg-ink/50">
-        {permissionStudent && <form onSubmit={(event) => void submitPermission(event)} className="p-6"><h2 id="permission-title" className="font-display text-lg font-bold">Record permission</h2><p id="permission-description" className="mt-2 text-sm text-muted">Mark {permissionStudent.name} as excused for this session. A reason is optional.</p><label htmlFor="permission-reason" className="mt-4 block text-sm font-semibold">Reason (optional)</label><textarea id="permission-reason" value={permissionReason} onChange={(event) => setPermissionReason(event.target.value)} maxLength={1000} rows={3} placeholder="Add a short note" className="mt-2 w-full resize-y rounded-control border border-hairline bg-canvas p-3 text-sm outline-none focus:border-brand-400" /><div className="mt-5 flex justify-end gap-2"><Button type="button" variant="secondary" disabled={savingStudentId === permissionStudent.student_id} onClick={() => setPermissionStudent(null)}>Cancel</Button><Button type="submit" loading={savingStudentId === permissionStudent.student_id}><FileCheck2 className="size-4" />Save permission</Button></div></form>}
+      <dialog ref={qrDialog} aria-labelledby="qr-dialog-title" onCancel={(event) => { event.preventDefault(); setQrDialogOpen(false); }} onClose={() => setQrDialogOpen(false)} className="m-auto w-[min(92vw,28rem)] rounded-panel border border-hairline bg-card p-0 text-ink shadow-lift backdrop:bg-ink/50">
+        {qrToken && <div className="p-6 text-center"><div className="flex items-start justify-between gap-4 text-left"><div><h2 id="qr-dialog-title" className="font-display text-lg font-bold">Student attendance QR</h2><p className="mt-1 text-sm text-muted">Students can scan this code to check in.</p></div><button type="button" aria-label="Close QR popup" onClick={() => setQrDialogOpen(false)} className="rounded-control px-2 py-1 text-muted hover:bg-canvas">×</button></div><div className="mx-auto mt-5 flex w-fit rounded-xl bg-white p-3"><QRCodeSVG value={qrToken.token} size={240} level="M" includeMargin /></div><p className="mt-3 text-xs text-muted">Expires {new Date(qrToken.expires_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" })}</p><div className="mt-4 flex justify-center gap-2"><Button size="sm" variant="secondary" onClick={() => void copyToken()}>{copied ? <Check className="size-4" /> : <Clipboard className="size-4" />}{copied ? "Copied" : "Copy token"}</Button><Button size="sm" onClick={() => void refreshQr()} loading={generatingQr}><RefreshCw className="size-4" />Refresh QR</Button></div><Button className="mt-4 w-full" variant="secondary" onClick={() => setQrDialogOpen(false)}>Close</Button></div>}
+      </dialog>
+
+      <dialog ref={saveSummaryDialog} aria-labelledby="save-summary-title" onCancel={(event) => { event.preventDefault(); setSaveSummaryDialogOpen(false); }} onClose={() => setSaveSummaryDialogOpen(false)} className="m-auto w-[min(92vw,34rem)] rounded-panel border border-hairline bg-card p-0 text-ink shadow-lift backdrop:bg-ink/50">
+        {savedSummary && <div className="p-6 sm:p-7"><div className="flex items-start justify-between gap-4"><div className="flex items-start gap-3"><span className="mt-0.5 flex size-10 shrink-0 items-center justify-center rounded-full bg-emerald-500/15 text-emerald-400"><Check className="size-5" /></span><div><h2 id="save-summary-title" className="font-display text-xl font-bold">Attendance saved</h2><p className="mt-1 text-sm text-muted">Your changes were saved successfully.</p></div></div><button type="button" aria-label="Close attendance summary" onClick={() => setSaveSummaryDialogOpen(false)} className="rounded-control px-2 py-1 text-muted hover:bg-canvas">×</button></div><div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-4"><div className="rounded-control border border-emerald-500/15 bg-emerald-500/10 p-3"><p className="text-xs text-muted">Present</p><p className="mt-1 text-2xl font-bold text-emerald-400">{savedSummary.present}</p></div><div className="rounded-control border border-rose-500/15 bg-rose-500/10 p-3"><p className="text-xs text-muted">Absent</p><p className="mt-1 text-2xl font-bold text-rose-300">{savedSummary.absent}</p></div><div className="rounded-control border border-amber-500/15 bg-amber-500/10 p-3"><p className="text-xs text-muted">Late</p><p className="mt-1 text-2xl font-bold text-amber-300">{savedSummary.late}</p></div><div className="rounded-control border border-blue-500/15 bg-blue-500/10 p-3"><p className="text-xs text-muted">Permission</p><p className="mt-1 text-2xl font-bold text-blue-300">{savedSummary.excused}</p></div></div><div className="mt-4 flex items-center justify-between rounded-control border border-hairline bg-canvas p-4"><div><p className="text-sm font-semibold">Pending attendance</p><p className="mt-1 text-xs text-muted">Students still waiting for a status</p></div><p className="font-display text-xl font-bold">{savedSummary.unmarked}<span className="ml-1 text-sm font-normal text-muted">/ {savedSummary.total}</span></p></div><p className="mt-4 text-xs leading-relaxed text-muted">Continue marking to update more students, or close the session when attendance is complete. Closing marks any remaining pending students absent.</p><div className="mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end"><Button variant="danger" loading={closing} onClick={() => { setSaveSummaryDialogOpen(false); void handleClose(); }}>Close session</Button><Button onClick={() => setSaveSummaryDialogOpen(false)}>Continue marking</Button></div></div>}
       </dialog>
     </div>
   );
