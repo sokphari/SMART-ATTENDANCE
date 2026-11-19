@@ -459,6 +459,7 @@ useEffect(() => {
                             onFeedback={(message, kind) =>
                               setFeedback({ message, kind })
                             }
+                            onRefresh={() => void loadStudents(true)}
                           />
                         </div>
                       )}

@@ -163,6 +163,7 @@ class AttendanceSessionServices
             'starts_at' => $data['starts_at'],
             'late_after' => $data['late_after'],
             'closes_at' => $data['closes_at'],
+            'session_ends_at' => $data['session_ends_at'] ?? $data['closes_at'],
             'closed_at' => null,
             'status' => AttendanceSessionStatus::Open->value,
             'allowed_latitude' => $classroom->latitude,
@@ -323,37 +324,46 @@ class AttendanceSessionServices
                 ]);
             }
 
-            $existingIds = Attendance::query()
+            $existing = Attendance::query()
                 ->where('attendance_session_id', $lockedSession->id)
                 ->whereIn('student_id', $studentIds)
-                ->pluck('student_id')
-                ->all();
-
-            if ($existingIds !== []) {
-                abort(409, 'One or more students already have an attendance record. Refresh the roster before trying again.');
-            }
+                ->lockForUpdate()
+                ->get()
+                ->keyBy('student_id');
 
             try {
                 foreach ($data['records'] as $record) {
-                    $attendance = Attendance::create([
+                    $attendance = $existing->get($record['student_id']);
+                    $oldValues = $attendance ? [
+                        'status' => $attendance->status?->value,
+                        'verification_method' => $attendance->verification_method?->value,
+                        'remarks' => $attendance->remarks,
+                    ] : ['status' => 'unmarked'];
+                    $attendance ??= new Attendance([
                         'attendance_session_id' => $lockedSession->id,
                         'student_id' => $record['student_id'],
+                    ]);
+                    $attendance->fill([
                         'status' => $record['status'],
                         'verification_method' => VerificationMethod::Manual->value,
-                        'checked_in_at' => now(),
+                        'checked_in_at' => in_array($record['status'], [AttendanceStatus::Present->value, AttendanceStatus::Late->value], true)
+                            ? now()
+                            : null,
                         'marked_by' => $actor->id,
                         'remarks' => $record['remarks'] ?? null,
                     ]);
+                    $attendance->save();
 
                     $this->auditLogs->record(
-                        'attendance.manual_marked',
+                        $oldValues['status'] === 'unmarked' ? 'attendance.manual_marked' : 'attendance.manual_updated',
                         'attendance',
                         $attendance->id,
-                        ['status' => 'unmarked'],
+                        $oldValues,
                         [
                             'status' => $record['status'],
                             'student_id' => $record['student_id'],
                             'attendance_session_id' => $lockedSession->id,
+                            'verification_method' => VerificationMethod::Manual->value,
                             'remarks' => $record['remarks'] ?? null,
                         ]
                     );

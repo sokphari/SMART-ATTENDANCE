@@ -23,6 +23,11 @@ class TimetableConfigurationService
             'weekdays' => [1, 2, 3, 4, 5],
             'max_weekly_teaching_hours' => (float) ($settings?->max_weekly_teaching_hours ?? 30),
             'max_assigned_sections' => $settings?->max_assigned_sections,
+            'automatic_attendance_enabled' => (bool) ($settings?->automatic_attendance_enabled ?? false),
+            'late_after_minutes' => (int) ($settings?->late_after_minutes ?? 15),
+            'check_in_window_minutes' => (int) ($settings?->check_in_window_minutes ?? 30),
+            'geofencing_enabled' => (bool) ($settings?->geofencing_enabled ?? true),
+            'gps_accuracy_threshold_meters' => (int) ($settings?->gps_accuracy_threshold_meters ?? 30),
             'periods' => StudyPeriod::query()->with('timeSlots')->orderBy('position')->get()->map(fn (StudyPeriod $period): array => [
                 'id' => $period->id,
                 'code' => $period->code,
@@ -105,6 +110,11 @@ class TimetableConfigurationService
         return [
             'max_weekly_teaching_hours' => (float) $settings->max_weekly_teaching_hours,
             'max_assigned_sections' => $settings->max_assigned_sections,
+            'automatic_attendance_enabled' => $settings->automatic_attendance_enabled,
+            'late_after_minutes' => $settings->late_after_minutes,
+            'check_in_window_minutes' => $settings->check_in_window_minutes,
+            'geofencing_enabled' => $settings->geofencing_enabled,
+            'gps_accuracy_threshold_meters' => $settings->gps_accuracy_threshold_meters,
             'timezone' => $settings->timezone,
         ];
     }

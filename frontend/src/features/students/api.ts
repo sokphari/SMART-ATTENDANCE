@@ -55,7 +55,13 @@ export type ClassSectionOption = {
   id: number;
   section_code: string;
   status: string;
+  course_id: number;
+  semester_id: number;
+  capacity: number;
+  enrolled_count: number;
   course?: { course_code: string; name: string };
+  semester?: { name?: string };
+  schedules?: { period?: string | null; start_time: string; end_time: string; status: string }[];
 };
 
 export function fetchStudentEnrollments(studentId: number) {
@@ -66,8 +72,25 @@ export function fetchClassSections() {
   return apiFetch<Paginated<ClassSectionOption>>("/api/v1/admin/class-sections?per_page=100");
 }
 
+export async function fetchAllClassSections() {
+  const first = await fetchClassSections();
+  const sections = [...first.data];
+  for (let page = 2; page <= (first.meta?.last_page ?? 1); page += 1) {
+    const next = await apiFetch<Paginated<ClassSectionOption>>(`/api/v1/admin/class-sections?per_page=100&page=${page}`);
+    sections.push(...next.data);
+  }
+  return sections;
+}
+
 export function createEnrollment(input: { student_id: number; class_section_id: number }) {
   return apiFetch<{ data: StudentEnrollment }>("/api/v1/admin/enrollments", { method: "POST", body: input });
+}
+
+export function transferStudentClass(enrollmentId: number, targetClassSectionId: number) {
+  return apiFetch<{ data: StudentEnrollment }>(`/api/v1/admin/enrollments/${enrollmentId}/transfer`, {
+    method: "POST",
+    body: { target_class_section_id: targetClassSectionId },
+  });
 }
 
 

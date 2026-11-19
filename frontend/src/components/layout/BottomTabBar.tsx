@@ -85,7 +85,7 @@ export function BottomTabBar({ role, teacherModules = [] }: { role: string | nul
                 <tab.icon
                   className={cx("size-5", active && "drop-shadow-sm")}
                 />
-                {isTeacher && tab.label === "Teacher dashboard" ? "Home" : isTeacher && tab.label === "Attendance sessions" ? "Attendance" : tab.label}
+                {isTeacher && tab.label === "Teacher dashboard" ? "Home" : isTeacher && tab.label === "Live Attendance" ? "Attendance" : tab.label}
               </Link>
             );
           })}

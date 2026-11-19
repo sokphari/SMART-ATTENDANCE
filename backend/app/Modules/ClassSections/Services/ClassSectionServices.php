@@ -22,7 +22,7 @@ class ClassSectionServices
                 'classSchedules.classroom',
                 'classSchedules.timeSlot.studyPeriod',
             ])
-            ->withCount('enrollments')
+            ->withCount(['enrollments as enrolled_count' => fn ($query) => $query->where('status', 'enrolled')])
             ->when($filters['search'] ?? null, function ($query, string $search): void {
                 $term = '%'.strtolower($search).'%';
 

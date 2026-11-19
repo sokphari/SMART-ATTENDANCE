@@ -156,7 +156,15 @@ export const TEACHER_NAV_ITEMS: NavItem[] = [
     permissionKey: "classes",
   },
   {
-    label: "Attendance sessions",
+    label: "My timetable",
+    href: "/teacher/timetable",
+    icon: CalendarClock,
+    description: "Your assigned weekly class schedule and teaching hours.",
+    endpoint: "/api/v1/teacher/class-sections",
+    permissionKey: "classes",
+  },
+  {
+    label: "Live Attendance",
     href: "/teacher/attendance-sessions",
     icon: ClipboardList,
     description: "Open sessions, mark attendance, and review class records.",
@@ -199,7 +207,8 @@ export const TEACHER_NAV_ITEMS: NavItem[] = [
 
 export const TEACHER_NAV_SECTIONS: NavSection[] = [
   { label: "Overview", items: TEACHER_NAV_ITEMS.slice(0, 1) },
-  { label: "Teaching", items: TEACHER_NAV_ITEMS.slice(1) },
+  { label: "Teaching", items: TEACHER_NAV_ITEMS.slice(1, 7) },
+  { label: "Account", items: TEACHER_NAV_ITEMS.slice(7) },
 ];
 
 export const NAV_SECTIONS: NavSection[] = [

@@ -12,8 +12,8 @@ export function TeacherDashboardView() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  async function load() {
-    setLoading(true);
+  async function load(silent = false) {
+    if (!silent) setLoading(true);
     setError(null);
     try {
       const response = await getTeacherDashboard();
@@ -21,15 +21,20 @@ export function TeacherDashboardView() {
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "Unable to load your teacher dashboard.");
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
   }
 
-  useEffect(() => { void load(); }, []);
+  useEffect(() => {
+    void load();
+    const timer = window.setInterval(() => void load(true), 15000);
+    return () => window.clearInterval(timer);
+  }, []);
 
   const attendance = dashboard?.summary.attendance_last_7_days;
   const attendanceTotal = attendance ? attendance.present + attendance.late + attendance.absent + attendance.excused : 0;
   const dateLabel = dashboard ? new Intl.DateTimeFormat(undefined, { dateStyle: "full", timeZone: dashboard.timezone }).format(new Date(`${dashboard.date}T12:00:00+07:00`)) : "";
+  const nextClass = dashboard?.today_schedule.find((item) => item.status === "in_progress") ?? dashboard?.today_schedule.find((item) => item.status === "upcoming");
 
   return (
     <div className="w-full space-y-7">
@@ -43,15 +48,17 @@ export function TeacherDashboardView() {
       {loading && !dashboard ? <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">{[0, 1, 2, 3].map((item) => <div key={item} className="h-32 animate-pulse rounded-panel border border-hairline bg-card" />)}</div> : dashboard && (
         <>
           <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-            <MetricCard icon={CalendarDays} label="Classes today" value={dashboard.summary.classes_today} detail="Assigned schedule" tone="brand" />
-            <MetricCard icon={BookOpen} label="Open sessions" value={dashboard.summary.open_sessions} detail="Attendance in progress" tone="green" />
-            <MetricCard icon={Clock3} label="Awaiting closure" value={dashboard.summary.awaiting_closure} detail="Past the scheduled end time" tone={dashboard.summary.awaiting_closure ? "amber" : "slate"} />
-            <MetricCard icon={Users} label="Attendance records" value={attendanceTotal} detail="Last 7 days" tone="violet" />
+            <MetricCard icon={BookOpen} label="My assigned classes" value={dashboard.summary.assigned_classes} detail="Active semester" tone="brand" />
+            <MetricCard icon={CalendarDays} label="Today's sessions" value={dashboard.summary.today_sessions} detail="Scheduled for today" tone="green" />
+            <MetricCard icon={Users} label="Students checked in today" value={dashboard.summary.checked_in_today} detail="Present or late" tone="violet" />
+            <MetricCard icon={Clock3} label="Pending attendance reviews" value={dashboard.summary.pending_attendance_reviews} detail="Awaiting teacher review" tone={dashboard.summary.pending_attendance_reviews ? "amber" : "slate"} />
           </section>
+
+          {nextClass && <section className="flex flex-wrap items-center justify-between gap-4 rounded-panel border border-brand-200 bg-brand-50 p-5 dark:border-brand-400/20 dark:bg-brand-500/10"><div><p className="text-xs font-bold uppercase tracking-wide text-brand-700 dark:text-brand-300">{nextClass.status === "in_progress" ? "Class in progress" : "Next scheduled class"}</p><h2 className="mt-1 font-display text-lg font-bold">{nextClass.course_code} · {nextClass.class_name}</h2><p className="mt-1 text-sm text-muted">Section {nextClass.section_code} · {nextClass.start_time.slice(0, 5)}–{nextClass.end_time.slice(0, 5)} · {nextClass.classroom}</p></div><Link href={`/teacher/classes/${nextClass.class_section_id}`} className="inline-flex min-h-10 items-center gap-2 rounded-control bg-brand-600 px-4 text-sm font-semibold text-white">View class <ArrowRight className="size-4" /></Link></section>}
 
           <section className="rounded-panel border border-hairline bg-card p-5 shadow-soft sm:p-6">
             <div className="flex flex-wrap items-center justify-between gap-3"><div><h2 className="font-display text-lg font-bold">Today’s schedule</h2><p className="mt-1 text-sm text-muted">Only active sections assigned to you are included.</p></div><Link href="/teacher/classes" className="inline-flex items-center gap-2 text-sm font-semibold text-brand-600 hover:text-brand-700">My classes <ArrowRight className="size-4" /></Link></div>
-            {dashboard.today_schedule.length === 0 ? <div className="mt-5 rounded-control bg-canvas p-5 text-sm text-muted">No classes are scheduled for today.</div> : <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">{dashboard.today_schedule.map((item) => <Link key={item.id} href={`/teacher/classes/${item.class_section_id}`} className="rounded-control border border-hairline p-4 transition hover:border-brand-300 hover:bg-brand-50/40"><div className="flex flex-wrap gap-2"><span className="rounded-pill bg-brand-50 px-2 py-1 text-[11px] font-bold text-brand-700 dark:bg-brand-500/15 dark:text-brand-300">{item.course_code}</span><span className="rounded-pill bg-slate-100 px-2 py-1 text-[11px] font-semibold text-slate-700 dark:bg-slate-800 dark:text-slate-200">Section {item.section_code}</span></div><h3 className="mt-3 font-semibold">{item.class_name}</h3><p className="mt-1 text-xs text-muted">{item.semester}</p><p className="mt-3 text-sm font-semibold">{item.start_time.slice(0, 5)}–{item.end_time.slice(0, 5)}</p><p className="mt-1 text-xs text-muted">{item.classroom}{item.building ? ` · ${item.building}` : ""}</p></Link>)}</div>}
+            {dashboard.today_schedule.length === 0 ? <div className="mt-5 rounded-control bg-canvas p-5 text-sm text-muted">No classes are scheduled for today.</div> : <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">{dashboard.today_schedule.map((item) => <article key={item.id} className="rounded-control border border-hairline p-4"><div className="flex flex-wrap gap-2"><span className="rounded-pill bg-brand-50 px-2 py-1 text-[11px] font-bold text-brand-700 dark:bg-brand-500/15 dark:text-brand-300">{item.course_code}</span><span className="rounded-pill bg-slate-100 px-2 py-1 text-[11px] font-semibold text-slate-700 dark:bg-slate-800 dark:text-slate-200">Section {item.section_code}</span><span className="rounded-pill bg-canvas px-2 py-1 text-[11px] font-semibold capitalize text-muted">{item.status.replace("_", " ")}</span></div><h3 className="mt-3 font-semibold">{item.class_name}</h3><p className="mt-1 text-xs text-muted">{item.semester}</p><p className="mt-3 text-sm font-semibold">{item.start_time.slice(0, 5)}–{item.end_time.slice(0, 5)}</p><p className="mt-1 text-xs text-muted">{item.classroom}{item.building ? ` · ${item.building}` : ""}</p><div className="mt-4 flex flex-wrap gap-x-3 gap-y-2 border-t border-hairline pt-3 text-xs font-semibold"><Link href={`/teacher/classes/${item.class_section_id}`} className="text-brand-600 hover:text-brand-700">View students</Link><Link href={`/teacher/timetable?section_id=${item.class_section_id}`} className="text-brand-600 hover:text-brand-700">Timetable</Link>{item.attendance_session_id && <Link href={`/teacher/attendance-sessions/${item.attendance_session_id}`} className="text-emerald-700 hover:text-emerald-800 dark:text-emerald-300">Open live attendance</Link>}</div></article>)}</div>}
           </section>
 
           <div className="grid gap-5 xl:grid-cols-[minmax(0,1.3fr)_minmax(320px,0.7fr)]">

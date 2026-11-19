@@ -5,6 +5,7 @@ namespace App\Modules\Enrollments\Controllers;
 use App\Http\Controllers\Controller;
 use App\Models\Enrollment;
 use App\Modules\Enrollments\Requests\RequestStore;
+use App\Modules\Enrollments\Requests\RequestTransfer;
 use App\Modules\Enrollments\Requests\RequestUpdate;
 use App\Modules\Enrollments\Resources\EnrollmentResource;
 use App\Modules\Enrollments\Services\EnrollmentServices;
@@ -48,6 +49,13 @@ class EnrollmentController extends Controller
     {
         return new EnrollmentResource(
             $this->enrollments->update($enrollment, $request->validated())
+        );
+    }
+
+    public function transfer(RequestTransfer $request, Enrollment $enrollment): EnrollmentResource
+    {
+        return new EnrollmentResource(
+            $this->enrollments->transfer($enrollment, (int) $request->validated('target_class_section_id'))
         );
     }
 

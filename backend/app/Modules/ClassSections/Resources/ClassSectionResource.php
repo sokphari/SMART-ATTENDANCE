@@ -23,7 +23,7 @@ class ClassSectionResource extends JsonResource
             'section_code' => $this->section_code,
             'capacity' => $this->capacity,
             'status' => $this->status?->value,
-            'enrolled_count' => $this->enrollments_count ?? 0,
+            'enrolled_count' => $this->enrolled_count ?? $this->enrollments_count ?? 0,
             'teachers' => $this->whenLoaded('teacherAssignments', function () {
                 return $this->teacherAssignments->map(function ($assignment) {
                     return [

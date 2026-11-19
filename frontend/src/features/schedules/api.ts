@@ -60,7 +60,15 @@ export function updateTimeSlot(id: number, input: { name?: string; starts_at?: s
   return apiFetch<{ data: unknown }>(`${SCHEDULES_URL}/time-slots/${id}`, { method: "PATCH", body: input });
 }
 
-export function updateTimetableSettings(input: { max_weekly_teaching_hours: number; max_assigned_sections: number | null }) {
+export function updateTimetableSettings(input: {
+  max_weekly_teaching_hours: number;
+  max_assigned_sections: number | null;
+  automatic_attendance_enabled: boolean;
+  late_after_minutes: number;
+  check_in_window_minutes: number;
+  geofencing_enabled: boolean;
+  gps_accuracy_threshold_meters: number;
+}) {
   return apiFetch<{ data: unknown }>(`${SCHEDULES_URL}/settings`, { method: "PATCH", body: input });
 }
 

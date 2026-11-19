@@ -11,6 +11,8 @@ export type Student = {
   current_enrollment?: {
     id: number;
     class_section_id: number;
+    course_id: number | null;
+    semester_id: number | null;
     section_code: string | null;
     section_status: string | null;
     course_name: string | null;

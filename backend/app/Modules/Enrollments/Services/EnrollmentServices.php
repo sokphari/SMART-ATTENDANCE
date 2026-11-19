@@ -3,14 +3,18 @@
 namespace App\Modules\Enrollments\Services;
 
 use App\Enums\EnrollmentStatus;
+use App\Enums\ClassSectionStatus;
 use App\Models\ClassSection;
 use App\Models\Enrollment;
+use App\Modules\AuditLogs\Services\AuditLogServices;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
 class EnrollmentServices
 {
+    public function __construct(private readonly AuditLogServices $auditLogs) {}
+
     /**
      * @param  array{search?: string|null, class_section_id?: int|string|null, student_id?: int|string|null, status?: string|null, per_page?: int|string|null}  $filters
      */
@@ -98,6 +102,75 @@ class EnrollmentServices
         $enrollment->save();
 
         return $enrollment->refresh()->load($this->relations());
+    }
+
+    public function transfer(Enrollment $enrollment, int $targetSectionId): Enrollment
+    {
+        return DB::transaction(function () use ($enrollment, $targetSectionId): Enrollment {
+            $current = Enrollment::query()->whereKey($enrollment->id)->lockForUpdate()->firstOrFail();
+            if ($current->status !== EnrollmentStatus::Enrolled) {
+                throw ValidationException::withMessages(['enrollment' => ['Only a currently enrolled student can be switched to another class.']]);
+            }
+
+            $target = ClassSection::query()->whereKey($targetSectionId)->lockForUpdate()->firstOrFail();
+            $source = ClassSection::query()->findOrFail($current->class_section_id);
+            if ($target->id === $source->id) {
+                throw ValidationException::withMessages(['target_class_section_id' => ['Choose a different class section.']]);
+            }
+            if ($target->status !== ClassSectionStatus::Active) {
+                throw ValidationException::withMessages(['target_class_section_id' => ['Choose an active class section.']]);
+            }
+            if ($target->course_id !== $source->course_id || $target->semester_id !== $source->semester_id) {
+                throw ValidationException::withMessages(['target_class_section_id' => ['Students can only switch between sections of the same course and semester.']]);
+            }
+
+            $existingTarget = Enrollment::query()
+                ->where('student_id', $current->student_id)
+                ->where('class_section_id', $target->id)
+                ->lockForUpdate()
+                ->first();
+            if ($existingTarget?->status === EnrollmentStatus::Enrolled) {
+                throw ValidationException::withMessages(['target_class_section_id' => ['The student is already enrolled in that class section.']]);
+            }
+            if ($existingTarget?->status === EnrollmentStatus::Completed) {
+                throw ValidationException::withMessages(['target_class_section_id' => ['The student has already completed that class section.']]);
+            }
+
+            $enrolledCount = Enrollment::query()
+                ->where('class_section_id', $target->id)
+                ->where('status', EnrollmentStatus::Enrolled->value)
+                ->count();
+            if ($enrolledCount >= $target->capacity) {
+                throw ValidationException::withMessages(['target_class_section_id' => ['The selected class section has reached its capacity.']]);
+            }
+
+            $fromSectionId = $current->class_section_id;
+            $current->update(['status' => EnrollmentStatus::Dropped->value]);
+            if ($existingTarget) {
+                $existingTarget->update([
+                    'status' => EnrollmentStatus::Enrolled->value,
+                    'enrollment_date' => now()->toDateString(),
+                ]);
+                $transferred = $existingTarget;
+            } else {
+                $transferred = Enrollment::create([
+                    'student_id' => $current->student_id,
+                    'class_section_id' => $target->id,
+                    'enrollment_date' => now()->toDateString(),
+                    'status' => EnrollmentStatus::Enrolled->value,
+                ]);
+            }
+
+            $this->auditLogs->record(
+                'student.class_switched',
+                'enrollment',
+                $transferred->id,
+                ['enrollment_id' => $current->id, 'class_section_id' => $fromSectionId],
+                ['enrollment_id' => $transferred->id, 'class_section_id' => $target->id, 'student_id' => $current->student_id]
+            );
+
+            return $transferred->refresh()->load($this->relations());
+        }, 3);
     }
 
     public function withdraw(Enrollment $enrollment): void

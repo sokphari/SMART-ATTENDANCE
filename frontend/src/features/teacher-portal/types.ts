@@ -3,8 +3,10 @@ export type TeacherSchedule = {
   day_of_week: number;
   start_time: string;
   end_time: string;
+  status?: "active" | "inactive";
   effective_from: string | null;
   effective_until: string | null;
+  time_slot?: { id: number; name: string; period: { id: number; name: string; color: string } | null } | null;
   classroom: { id: number; room_code: string; building: string | null; floor: string | null } | null;
 };
 
@@ -51,6 +53,7 @@ export type TeacherAttendanceSession = {
   starts_at: string;
   late_after: string;
   closes_at: string;
+  session_ends_at?: string | null;
   closed_at: string | null;
   status: "scheduled" | "open" | "closed" | "cancelled";
 };
@@ -93,6 +96,10 @@ export type TeacherDashboardData = {
   date: string;
   timezone: string;
   summary: {
+    assigned_classes: number;
+    today_sessions: number;
+    checked_in_today: number;
+    pending_attendance_reviews: number;
     classes_today: number;
     open_sessions: number;
     awaiting_closure: number;
@@ -101,6 +108,7 @@ export type TeacherDashboardData = {
   today_schedule: Array<{
     id: number;
     class_section_id: number;
+    attendance_session_id: number | null;
     course_code: string;
     class_name: string;
     section_code: string;
@@ -109,6 +117,7 @@ export type TeacherDashboardData = {
     end_time: string;
     classroom: string;
     building: string | null;
+    status: "upcoming" | "in_progress" | "completed";
   }>;
   open_sessions: Array<{
     id: number;

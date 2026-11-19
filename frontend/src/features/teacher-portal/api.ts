@@ -50,10 +50,24 @@ export function getTeacherSectionOptions() {
   }));
 }
 
-export function getMyClassSections(status: string | null = "active") {
+export function getMyClassSections(status: string | null = "active", page = 1, perPage = 100, currentSemester = false) {
   const query = new URLSearchParams({ per_page: "100" });
+  query.set("page", String(page));
+  query.set("per_page", String(perPage));
   if (status) query.set("status", status);
+  if (currentSemester) query.set("current_semester", "1");
   return apiFetch<ApiPage<TeacherClassSection>>(`/api/v1/teacher/class-sections?${query}`);
+}
+
+export async function getAllMyClassSections(status: string | null = "active", currentSemester = false) {
+  const firstPage = await getMyClassSections(status, 1, 100, currentSemester);
+  const sections = [...firstPage.data];
+  const lastPage = firstPage.meta?.last_page ?? 1;
+  for (let page = 2; page <= lastPage; page += 1) {
+    const response = await getMyClassSections(status, page, 100, currentSemester);
+    sections.push(...response.data);
+  }
+  return sections;
 }
 
 export function getMyClassSection(id: number) {
@@ -68,9 +82,12 @@ export function getMyClassSchedules(id: number) {
   return apiFetch<ApiPage<TeacherSchedule>>(`/api/v1/teacher/class-sections/${id}/schedules`);
 }
 
-export function getTeacherSessions(filters: { status?: string; per_page?: number } = {}) {
+export function getTeacherSessions(filters: { status?: string; per_page?: number; date_from?: string; date_to?: string; class_section_id?: number } = {}) {
   const query = new URLSearchParams();
   if (filters.status) query.set("status", filters.status);
+  if (filters.date_from) query.set("date_from", filters.date_from);
+  if (filters.date_to) query.set("date_to", filters.date_to);
+  if (filters.class_section_id) query.set("class_section_id", String(filters.class_section_id));
   query.set("per_page", String(filters.per_page ?? 30));
   return apiFetch<ApiPage<TeacherAttendanceSession>>(`/api/v1/teacher/attendance-sessions?${query}`);
 }
@@ -93,8 +110,11 @@ export function createTeacherSession(payload: {
   });
 }
 
-export function getSessionAttendance(id: number, page = 1) {
-  return apiFetch<SessionAttendancePage>(`/api/v1/teacher/attendance-sessions/${id}/attendance?per_page=50&page=${page}`);
+export function getSessionAttendance(id: number, page = 1, filters: { search?: string; status?: string } = {}) {
+  const query = new URLSearchParams({ per_page: "50", page: String(page) });
+  if (filters.search) query.set("search", filters.search);
+  if (filters.status) query.set("status", filters.status);
+  return apiFetch<SessionAttendancePage>(`/api/v1/teacher/attendance-sessions/${id}/attendance?${query}`);
 }
 
 export function markSessionAttendance(id: number, records: ManualAttendanceRecord[]) {

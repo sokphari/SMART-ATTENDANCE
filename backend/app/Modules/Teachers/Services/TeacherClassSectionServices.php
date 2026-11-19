@@ -7,6 +7,7 @@ use App\Models\ClassSection;
 use App\Models\ClassSchedule;
 use App\Models\Teacher;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Carbon;
 
 class TeacherClassSectionServices
 {
@@ -16,8 +17,14 @@ class TeacherClassSectionServices
         return ClassSection::query()
             ->whereHas('teacherAssignments', fn ($query) => $query->where('teacher_id', $teacher->id))
             ->withCount(['enrollments' => fn ($query) => $query->where('status', EnrollmentStatus::Enrolled->value)])
-            ->with(['course.department', 'semester.academicYear', 'classSchedules.classroom'])
+            ->with(['course.department', 'semester.academicYear', 'classSchedules.classroom', 'classSchedules.timeSlot.studyPeriod'])
             ->when($filters['status'] ?? null, fn ($query, string $status) => $query->where('status', $status))
+            ->when(($filters['current_semester'] ?? false), function ($query): void {
+                $today = Carbon::now('Asia/Phnom_Penh')->toDateString();
+                $query->whereHas('semester', fn ($semester) => $semester
+                    ->whereDate('start_date', '<=', $today)
+                    ->whereDate('end_date', '>=', $today));
+            })
             ->orderBy('section_code')
             ->paginate((int) ($filters['per_page'] ?? 15))
             ->withQueryString();
@@ -29,7 +36,7 @@ class TeacherClassSectionServices
             ->whereKey($sectionId)
             ->whereHas('teacherAssignments', fn ($query) => $query->where('teacher_id', $teacher->id))
             ->withCount(['enrollments' => fn ($query) => $query->where('status', EnrollmentStatus::Enrolled->value)])
-            ->with(['course.department', 'semester.academicYear', 'classSchedules.classroom'])
+            ->with(['course.department', 'semester.academicYear', 'classSchedules.classroom', 'classSchedules.timeSlot.studyPeriod'])
             ->firstOrFail();
     }
 
@@ -60,7 +67,7 @@ class TeacherClassSectionServices
 
         return ClassSchedule::query()
             ->where('class_section_id', $sectionId)
-            ->with('classroom')
+            ->with(['classroom', 'timeSlot.studyPeriod'])
             ->when($filters['date_from'] ?? null, fn ($query, string $date) => $query
                 ->where(fn ($range) => $range->whereNull('effective_until')->orWhereDate('effective_until', '>=', $date)))
             ->when($filters['date_to'] ?? null, fn ($query, string $date) => $query

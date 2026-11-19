@@ -36,6 +36,16 @@ class TeacherClassSectionResource extends JsonResource
                 'end_time' => $schedule->end_time,
                 'effective_from' => $schedule->effective_from?->toDateString(),
                 'effective_until' => $schedule->effective_until?->toDateString(),
+                'status' => $schedule->status?->value,
+                'time_slot' => $schedule->timeSlot ? [
+                    'id' => $schedule->timeSlot->id,
+                    'name' => $schedule->timeSlot->name,
+                    'period' => $schedule->timeSlot->studyPeriod ? [
+                        'id' => $schedule->timeSlot->studyPeriod->id,
+                        'name' => $schedule->timeSlot->studyPeriod->name,
+                        'color' => $schedule->timeSlot->studyPeriod->color,
+                    ] : null,
+                ] : null,
                 'classroom' => $schedule->classroom ? [
                     'id' => $schedule->classroom->id,
                     'room_code' => $schedule->classroom->room_code,

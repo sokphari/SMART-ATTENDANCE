@@ -28,6 +28,7 @@ class AttendanceSessionResource extends JsonResource
             'starts_at' => $this->starts_at?->toIso8601String(),
             'late_after' => $this->late_after?->toIso8601String(),
             'closes_at' => $this->closes_at?->toIso8601String(),
+            'session_ends_at' => $this->session_ends_at?->toIso8601String(),
             'closed_at' => $this->closed_at?->toIso8601String(),
             'status' => $this->status?->value,
             'allowed_latitude' => (float) $this->allowed_latitude,

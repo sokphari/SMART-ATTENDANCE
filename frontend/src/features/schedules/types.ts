@@ -51,6 +51,11 @@ export type TimetableConfig = {
   weekdays: number[];
   max_weekly_teaching_hours: number;
   max_assigned_sections: number | null;
+  automatic_attendance_enabled: boolean;
+  late_after_minutes: number;
+  check_in_window_minutes: number;
+  geofencing_enabled: boolean;
+  gps_accuracy_threshold_meters: number;
   periods: { id: number; code: string; name: string; color: string; is_active: boolean; time_slots: { id: number; code: string; name: string; starts_at: string; ends_at: string; is_break: boolean; is_active: boolean }[] }[];
 };
 export type TimetableSummary = { week_start: string; week_end: string; weekly_sessions: number; active_class_sections: number; assigned_teachers: number; scheduling_conflicts: number };

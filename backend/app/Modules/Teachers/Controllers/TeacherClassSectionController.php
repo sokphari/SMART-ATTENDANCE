@@ -18,6 +18,7 @@ class TeacherClassSectionController extends Controller
     {
         $filters = $request->validate([
             'status' => ['sometimes', 'nullable', 'in:active,inactive'],
+            'current_semester' => ['sometimes', 'boolean'],
             'per_page' => ['sometimes', 'integer', 'min:1', 'max:100'],
         ]);
 

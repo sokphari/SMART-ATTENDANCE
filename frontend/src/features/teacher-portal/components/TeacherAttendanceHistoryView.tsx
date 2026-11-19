@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState, type FormEvent } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { CalendarDays, ClipboardList, History, Search } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import type { AttendanceRecord, SectionOption } from "@/features/attendance/types";
@@ -16,11 +17,12 @@ const STATUS_STYLE: Record<AttendanceRecord["status"], string> = {
 };
 
 export function TeacherAttendanceHistoryView() {
+  const searchParams = useSearchParams();
   const [records, setRecords] = useState<AttendanceRecord[]>([]);
   const [sections, setSections] = useState<SectionOption[]>([]);
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState("");
-  const [sectionId, setSectionId] = useState("");
+  const [sectionId, setSectionId] = useState(() => searchParams.get("class_section_id") ?? "");
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
   const [page, setPage] = useState(1);

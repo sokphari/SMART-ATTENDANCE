@@ -131,6 +131,11 @@ export function SchedulesView() {
   const visibleConflicts = findVisibleConflicts(items, config);
   const [maxHours, setMaxHours] = useState(30);
   const [maxSections, setMaxSections] = useState("");
+  const [automaticAttendance, setAutomaticAttendance] = useState(false);
+  const [lateAfterMinutes, setLateAfterMinutes] = useState(15);
+  const [checkInWindowMinutes, setCheckInWindowMinutes] = useState(30);
+  const [geofencingEnabled, setGeofencingEnabled] = useState(true);
+  const [gpsAccuracyThreshold, setGpsAccuracyThreshold] = useState(30);
   const [search, setSearch] = useState("");
   const [dayOfWeek, setDayOfWeek] = useState("");
   const [classroomId, setClassroomId] = useState("");
@@ -213,6 +218,11 @@ export function SchedulesView() {
       setConfig(timetable.data);
       setMaxHours(timetable.data.max_weekly_teaching_hours);
       setMaxSections(timetable.data.max_assigned_sections ? String(timetable.data.max_assigned_sections) : "");
+      setAutomaticAttendance(timetable.data.automatic_attendance_enabled);
+      setLateAfterMinutes(timetable.data.late_after_minutes);
+      setCheckInWindowMinutes(timetable.data.check_in_window_minutes);
+      setGeofencingEnabled(timetable.data.geofencing_enabled);
+      setGpsAccuracyThreshold(timetable.data.gps_accuracy_threshold_meters);
       setDepartments(departmentResult.data);
       setTeachers(teacherResult.data.map((teacher) => ({ id: teacher.id, name: teacher.user?.name ?? `Teacher ${teacher.id}` })));
     }).catch(() => {
@@ -318,8 +328,8 @@ export function SchedulesView() {
   async function saveSettings() {
     setSavingSettings(true);
     try {
-      await updateTimetableSettings({ max_weekly_teaching_hours: maxHours, max_assigned_sections: maxSections ? Number(maxSections) : null });
-      setFeedback({ message: "Teacher workload limits saved.", kind: "success" });
+      await updateTimetableSettings({ max_weekly_teaching_hours: maxHours, max_assigned_sections: maxSections ? Number(maxSections) : null, automatic_attendance_enabled: automaticAttendance, late_after_minutes: lateAfterMinutes, check_in_window_minutes: checkInWindowMinutes, geofencing_enabled: geofencingEnabled, gps_accuracy_threshold_meters: gpsAccuracyThreshold });
+      setFeedback({ message: "Timetable and attendance policies saved.", kind: "success" });
     } catch (caught) {
       setFeedback({ message: caught instanceof ApiError ? Object.values(caught.errors).flat()[0] ?? caught.message : "Could not save timetable settings.", kind: "error" });
     } finally { setSavingSettings(false); }
@@ -356,6 +366,15 @@ export function SchedulesView() {
           <Input label="Max weekly teaching hours" type="number" min="1" max="168" value={maxHours} onChange={(event) => setMaxHours(Number(event.target.value))} />
           <Input label="Maximum assigned sections (optional)" type="number" min="1" value={maxSections} onChange={(event) => setMaxSections(event.target.value)} placeholder="No limit" />
           <Button loading={savingSettings} onClick={() => void saveSettings()}>Save workload limits</Button>
+        </div>
+        <div className="mt-4 grid gap-4 rounded-control border border-hairline p-4 sm:grid-cols-2 xl:grid-cols-5 sm:items-end">
+          <label className="flex min-h-11 items-center gap-2 text-sm font-semibold"><input type="checkbox" checked={automaticAttendance} onChange={(event) => setAutomaticAttendance(event.target.checked)} />Automatically open scheduled attendance</label>
+          <Input label="Late after (minutes)" type="number" min="0" max="240" value={lateAfterMinutes} onChange={(event) => setLateAfterMinutes(Number(event.target.value))} />
+          <Input label="QR check-in window (minutes)" type="number" min="1" max="480" value={checkInWindowMinutes} onChange={(event) => setCheckInWindowMinutes(Number(event.target.value))} />
+          <label className="flex min-h-11 items-center gap-2 text-sm font-semibold"><input type="checkbox" checked={geofencingEnabled} onChange={(event) => setGeofencingEnabled(event.target.checked)} />Require classroom location</label>
+          <Input label="Maximum GPS accuracy (meters)" type="number" min="1" max="500" value={gpsAccuracyThreshold} onChange={(event) => setGpsAccuracyThreshold(Number(event.target.value))} disabled={!geofencingEnabled} />
+          <p className="text-xs leading-relaxed text-muted sm:col-span-2 xl:col-span-5">Automatic attendance uses each class’s configured timetable and classroom. A scheduled session appears ahead of class, opens at its start time, stops accepting QR check-ins after the configured window, and is finalized at the class end time. The scheduler must be running on the server.</p>
+          <div className="sm:col-span-2 xl:col-span-5"><Button loading={savingSettings} onClick={() => void saveSettings()}>Save attendance policy</Button></div>
         </div>
       </Card>}
 

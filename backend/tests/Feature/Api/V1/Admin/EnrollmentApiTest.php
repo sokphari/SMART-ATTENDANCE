@@ -8,6 +8,8 @@ use App\Models\ClassSection;
 use App\Models\Enrollment;
 use App\Models\Student;
 use App\Models\User;
+use App\Models\Course;
+use App\Models\Semester;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Laravel\Sanctum\Sanctum;
 use Tests\TestCase;
@@ -163,6 +165,45 @@ class EnrollmentApiTest extends TestCase
             'id' => $enrollment->id,
             'status' => EnrollmentStatus::Dropped->value,
         ]);
+    }
+
+    public function test_admin_can_switch_student_to_another_section_of_same_course_and_semester(): void
+    {
+        $this->actingAsAdmin();
+        $course = Course::factory()->create();
+        $semester = Semester::factory()->create();
+        $source = ClassSection::factory()->create(['course_id' => $course->id, 'semester_id' => $semester->id]);
+        $target = ClassSection::factory()->create(['course_id' => $course->id, 'semester_id' => $semester->id]);
+        $enrollment = Enrollment::factory()->create(['class_section_id' => $source->id]);
+
+        $response = $this->postJson("/api/v1/admin/enrollments/{$enrollment->id}/transfer", [
+            'target_class_section_id' => $target->id,
+        ]);
+        $response->assertOk()
+            ->assertJsonPath('data.class_section_id', $target->id)
+            ->assertJsonPath('data.student_id', $enrollment->student_id)
+            ->assertJsonPath('data.status', EnrollmentStatus::Enrolled->value);
+
+        $this->assertDatabaseHas('enrollments', ['id' => $enrollment->id, 'status' => EnrollmentStatus::Dropped->value]);
+        $this->assertDatabaseHas('enrollments', ['id' => $response->json('data.id'), 'class_section_id' => $target->id, 'status' => EnrollmentStatus::Enrolled->value]);
+        $this->assertDatabaseHas('audit_logs', ['action' => 'student.class_switched', 'entity_type' => 'enrollment']);
+    }
+
+    public function test_class_switch_rejects_a_full_target_section_without_dropping_current_enrollment(): void
+    {
+        $this->actingAsAdmin();
+        $course = Course::factory()->create();
+        $semester = Semester::factory()->create();
+        $source = ClassSection::factory()->create(['course_id' => $course->id, 'semester_id' => $semester->id]);
+        $target = ClassSection::factory()->create(['course_id' => $course->id, 'semester_id' => $semester->id, 'capacity' => 1]);
+        $enrollment = Enrollment::factory()->create(['class_section_id' => $source->id]);
+        Enrollment::factory()->create(['class_section_id' => $target->id]);
+
+        $this->postJson("/api/v1/admin/enrollments/{$enrollment->id}/transfer", [
+            'target_class_section_id' => $target->id,
+        ])->assertUnprocessable()->assertJsonValidationErrors('target_class_section_id');
+
+        $this->assertDatabaseHas('enrollments', ['id' => $enrollment->id, 'status' => EnrollmentStatus::Enrolled->value]);
     }
 
     public function test_admin_can_filter_enrollments(): void

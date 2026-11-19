@@ -9,6 +9,7 @@ use App\Models\Attendance;
 use App\Models\AttendanceQrToken;
 use App\Models\Enrollment;
 use App\Models\Student;
+use App\Models\TimetableSetting;
 use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Validation\ValidationException;
 
@@ -65,19 +66,25 @@ class AttendanceCheckInServices
             abort(409, 'Attendance has already been recorded for this session.');
         }
 
-        $latitude = (float) $data['latitude'];
-        $longitude = (float) $data['longitude'];
-        $distance = $this->distanceInMeters(
-            (float) $session->allowed_latitude,
-            (float) $session->allowed_longitude,
-            $latitude,
-            $longitude
-        );
+        $settings = TimetableSetting::query()->find(1);
+        $geofencingEnabled = $settings?->geofencing_enabled ?? true;
+        $latitude = $geofencingEnabled ? (float) $data['latitude'] : null;
+        $longitude = $geofencingEnabled ? (float) $data['longitude'] : null;
+        $distance = null;
 
-        if ($distance > $session->allowed_radius_meters) {
-            throw ValidationException::withMessages([
-                'latitude' => 'You are outside the allowed classroom radius.',
-            ]);
+        if ($geofencingEnabled) {
+            $distance = $this->distanceInMeters(
+                (float) $session->allowed_latitude,
+                (float) $session->allowed_longitude,
+                $latitude,
+                $longitude
+            );
+
+            if ($distance > $session->allowed_radius_meters) {
+                throw ValidationException::withMessages([
+                    'latitude' => 'You are outside the allowed classroom radius.',
+                ]);
+            }
         }
 
         $status = $now->lte($session->late_after)
@@ -92,8 +99,8 @@ class AttendanceCheckInServices
                 'verification_method' => VerificationMethod::DynamicQr->value,
                 'latitude' => $latitude,
                 'longitude' => $longitude,
-                'gps_accuracy_meters' => $data['gps_accuracy_meters'],
-                'distance_meters' => round($distance, 2),
+                'gps_accuracy_meters' => $geofencingEnabled ? $data['gps_accuracy_meters'] : null,
+                'distance_meters' => $distance !== null ? round($distance, 2) : null,
                 'checked_in_at' => $now,
                 'marked_by' => null,
                 'remarks' => null,

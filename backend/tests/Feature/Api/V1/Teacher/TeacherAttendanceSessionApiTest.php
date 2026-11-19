@@ -269,4 +269,80 @@ class TeacherAttendanceSessionApiTest extends TestCase
         $this->postJson("/api/v1/teacher/attendance-sessions/{$session->id}/close")
             ->assertStatus(409);
     }
+
+    public function test_assigned_teacher_can_manually_mark_an_enrolled_student(): void
+    {
+        [$teacher, $classSection, $classroom] = $this->assignedTeacher();
+        $session = AttendanceSession::factory()->create([
+            'teacher_id' => $teacher->id,
+            'class_section_id' => $classSection->id,
+            'classroom_id' => $classroom->id,
+        ]);
+        $student = Student::factory()->create();
+        Enrollment::factory()->create(['class_section_id' => $classSection->id, 'student_id' => $student->id]);
+
+        $this->postJson("/api/v1/teacher/attendance-sessions/{$session->id}/attendance/manual", [
+            'records' => [['student_id' => $student->id, 'status' => AttendanceStatus::Present->value]],
+        ])->assertOk()
+            ->assertJsonPath('summary.present', 1)
+            ->assertJsonPath('summary.unmarked', 0);
+
+        $this->assertDatabaseHas('attendances', [
+            'attendance_session_id' => $session->id,
+            'student_id' => $student->id,
+            'status' => AttendanceStatus::Present->value,
+            'verification_method' => VerificationMethod::Manual->value,
+            'marked_by' => $teacher->user_id,
+        ]);
+    }
+
+    public function test_assigned_teacher_can_update_qr_attendance_and_save_permission_reason(): void
+    {
+        [$teacher, $classSection, $classroom] = $this->assignedTeacher();
+        $session = AttendanceSession::factory()->create([
+            'teacher_id' => $teacher->id,
+            'class_section_id' => $classSection->id,
+            'classroom_id' => $classroom->id,
+        ]);
+        $student = Student::factory()->create();
+        Enrollment::factory()->create(['class_section_id' => $classSection->id, 'student_id' => $student->id]);
+        $attendance = Attendance::factory()->create([
+            'attendance_session_id' => $session->id,
+            'student_id' => $student->id,
+            'status' => AttendanceStatus::Present->value,
+            'verification_method' => VerificationMethod::DynamicQr->value,
+        ]);
+
+        $this->postJson("/api/v1/teacher/attendance-sessions/{$session->id}/attendance/manual", [
+            'records' => [['student_id' => $student->id, 'status' => AttendanceStatus::Excused->value, 'remarks' => 'Approved medical leave']],
+        ])->assertOk()
+            ->assertJsonPath('summary.excused', 1)
+            ->assertJsonPath('summary.present', 0);
+
+        $this->assertDatabaseHas('attendances', [
+            'id' => $attendance->id,
+            'status' => AttendanceStatus::Excused->value,
+            'verification_method' => VerificationMethod::Manual->value,
+            'remarks' => 'Approved medical leave',
+            'marked_by' => $teacher->user_id,
+        ]);
+        $this->assertDatabaseHas('audit_logs', ['action' => 'attendance.manual_updated', 'entity_id' => $attendance->id]);
+    }
+
+    public function test_unassigned_teacher_cannot_change_attendance_records(): void
+    {
+        $session = AttendanceSession::factory()->create();
+        $student = Student::factory()->create();
+        Enrollment::factory()->create(['class_section_id' => $session->class_section_id, 'student_id' => $student->id]);
+        Sanctum::actingAs(Teacher::factory()->create()->user);
+
+        $this->postJson("/api/v1/teacher/attendance-sessions/{$session->id}/attendance/manual", [
+            'records' => [['student_id' => $student->id, 'status' => AttendanceStatus::Present->value]],
+        ])->assertForbidden();
+
+        $this->assertDatabaseMissing('attendances', [
+            'attendance_session_id' => $session->id,
+            'student_id' => $student->id,
+        ]);
+    }
 }

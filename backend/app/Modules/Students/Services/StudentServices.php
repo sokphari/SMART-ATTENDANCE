@@ -23,7 +23,12 @@ class StudentServices
     public function paginate(array $filters = []): LengthAwarePaginator
     {
         return Student::query()
-            ->with(['user', 'department'])
+            ->with([
+                'user',
+                'department',
+                'enrollments' => fn ($query) => $query->where('status', EnrollmentStatus::Enrolled->value)
+                    ->with(['classSection.course.department', 'classSection.semester.academicYear']),
+            ])
             ->when($filters['search'] ?? null, function ($query, string $search): void {
                 $term = '%'.strtolower($search).'%';
 

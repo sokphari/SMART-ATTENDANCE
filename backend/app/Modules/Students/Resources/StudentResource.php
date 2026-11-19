@@ -34,6 +34,8 @@ class StudentResource extends JsonResource
                     'id' => $enrollment->id,
                     'class_section_id' => $enrollment->class_section_id,
                     'section_code' => $enrollment->classSection?->section_code,
+                    'course_id' => $enrollment->classSection?->course_id,
+                    'semester_id' => $enrollment->classSection?->semester_id,
                     'section_status' => $enrollment->classSection?->status?->value,
                     'course_name' => $enrollment->classSection?->course?->name,
                     'department_name' => $enrollment->classSection?->course?->department?->name,

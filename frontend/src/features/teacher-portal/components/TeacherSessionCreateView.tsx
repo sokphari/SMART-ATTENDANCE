@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { ArrowLeft, CalendarClock } from "lucide-react";
 import { ApiError } from "@/lib/api/client";
 import { Button } from "@/components/ui/Button";
-import { getMyClassSections, createTeacherSession } from "../api";
+import { getAllMyClassSections, createTeacherSession } from "../api";
 import type { TeacherClassSection, TeacherSchedule } from "../types";
 
 function campusDate() {
@@ -25,7 +25,7 @@ function isoCampusTime(date: string, time: string) {
   return `${date}T${time}:00+07:00`;
 }
 
-export function TeacherSessionCreateView() {
+export function TeacherSessionCreateView({ initialSectionId }: { initialSectionId?: number }) {
   const router = useRouter();
   const [sections, setSections] = useState<TeacherClassSection[]>([]);
   const [sectionId, setSectionId] = useState("");
@@ -40,12 +40,13 @@ export function TeacherSessionCreateView() {
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
   useEffect(() => {
-    getMyClassSections().then((response) => {
-      const activeSections = response.data.filter((section) => section.status === "active");
+    getAllMyClassSections("active", true).then((allSections) => {
+      const activeSections = allSections.filter((section) => section.status === "active");
       setSections(activeSections);
-      if (activeSections[0]) {
-        setSectionId(String(activeSections[0].id));
-        const firstSchedule = activeSections[0].schedules?.[0];
+      const initialSection = activeSections.find((section) => section.id === initialSectionId) ?? activeSections[0];
+      if (initialSection) {
+        setSectionId(String(initialSection.id));
+        const firstSchedule = initialSection.schedules?.find((schedule) => schedule.status === "active" && schedule.classroom);
         if (firstSchedule) selectSchedule(firstSchedule);
       }
     }).catch((caught: unknown) => setError(caught instanceof Error ? caught.message : "Unable to load your assigned classes."))

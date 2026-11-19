@@ -15,6 +15,23 @@ services:
     networks:
       - laravel_network
 
+  scheduler:
+    build:
+      context: ./backend
+      dockerfile: docker/php/Dockerfile
+    restart: unless-stopped
+    working_dir: /var/www/html
+    command: ["php", "artisan", "schedule:work"]
+    env_file:
+      - ./backend/.env
+    volumes:
+      - ./backend:/var/www/html
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - laravel_network
+
   nginx:
     image: nginx:stable-alpine
     restart: unless-stopped
