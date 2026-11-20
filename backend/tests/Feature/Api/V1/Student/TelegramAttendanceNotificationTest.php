@@ -62,7 +62,7 @@ class TelegramAttendanceNotificationTest extends TestCase
         $this->assertStringContainsString('👤 Student: Sokha Meas', $message);
         $this->assertStringContainsString('⚧ Gender: Male', $message);
         $this->assertStringContainsString('⚠️ Status: Late (8 minutes)', $message);
-        $this->assertStringContainsString('🕒 Schedule: 7:30 PM – 10:45 PM', $message);
+        $this->assertSame('🕒 Schedule: 7:30 PM – 10:45 PM', collect(explode("\n", $message))->first(fn ($line) => str_starts_with($line, '🕒 Schedule:')));
         $this->assertStringContainsString('📅 Date: 20/11/2026', $message);
         $this->assertStringNotContainsString('11.5564', $message);
         $this->assertStringNotContainsString('token', $message);
