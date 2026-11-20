@@ -151,9 +151,9 @@ export function TeacherSessionDetailView({ sessionId }: { sessionId: number }) {
   useEffect(() => {
     const dialog = qrDialog.current;
     if (!dialog) return;
-    if (qrDialogOpen && qrToken && !dialog.open) dialog.showModal();
+    if (qrDialogOpen && !dialog.open) dialog.showModal();
     if (!qrDialogOpen && dialog.open) dialog.close();
-  }, [qrDialogOpen, qrToken]);
+  }, [qrDialogOpen]);
 
   useEffect(() => {
     const dialog = saveSummaryDialog.current;
@@ -228,11 +228,12 @@ export function TeacherSessionDetailView({ sessionId }: { sessionId: number }) {
     window.setTimeout(() => setCopied(false), 1800);
   }
 
-  async function openQrDialog() {
-    if (!qrToken || new Date(qrToken.expires_at).getTime() <= Date.now()) {
-      await refreshQr();
-    }
+  function openQrDialog() {
+    // Open the dialog first so the teacher can see loading/error states.
     setQrDialogOpen(true);
+    if (!qrToken || new Date(qrToken.expires_at).getTime() <= Date.now()) {
+      void refreshQr();
+    }
   }
 
   function displayedStatus(row: SessionAttendance): SessionAttendanceStatus {
@@ -287,7 +288,23 @@ export function TeacherSessionDetailView({ sessionId }: { sessionId: number }) {
       </dialog>
 
       <dialog ref={qrDialog} aria-labelledby="qr-dialog-title" onCancel={(event) => { event.preventDefault(); setQrDialogOpen(false); }} onClose={() => setQrDialogOpen(false)} className="m-auto w-[min(92vw,28rem)] rounded-panel border border-hairline bg-card p-0 text-ink shadow-lift backdrop:bg-ink/50">
-        {qrToken && <div className="p-6 text-center"><div className="flex items-start justify-between gap-4 text-left"><div><h2 id="qr-dialog-title" className="font-display text-lg font-bold">Student attendance QR</h2><p className="mt-1 text-sm text-muted">Students can scan this code to check in.</p></div><button type="button" aria-label="Close QR popup" onClick={() => setQrDialogOpen(false)} className="rounded-control px-2 py-1 text-muted hover:bg-canvas">×</button></div><div className="mx-auto mt-5 flex w-fit rounded-xl bg-white p-3"><QRCodeSVG value={qrToken.token} size={240} level="M" includeMargin /></div><p className="mt-3 text-xs text-muted">Expires {new Date(qrToken.expires_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" })}</p><div className="mt-4 flex justify-center gap-2"><Button size="sm" variant="secondary" onClick={() => void copyToken()}>{copied ? <Check className="size-4" /> : <Clipboard className="size-4" />}{copied ? "Copied" : "Copy token"}</Button><Button size="sm" onClick={() => void refreshQr()} loading={generatingQr}><RefreshCw className="size-4" />Refresh QR</Button></div><Button className="mt-4 w-full" variant="secondary" onClick={() => setQrDialogOpen(false)}>Close</Button></div>}
+        <div className="p-6 text-center">
+          <div className="flex items-start justify-between gap-4 text-left">
+            <div><h2 id="qr-dialog-title" className="font-display text-lg font-bold">Student attendance QR</h2><p className="mt-1 text-sm text-muted">Students can scan this code during the scheduled attendance window.</p></div>
+            <button type="button" aria-label="Close QR popup" onClick={() => setQrDialogOpen(false)} className="rounded-control px-2 py-1 text-muted hover:bg-canvas">×</button>
+          </div>
+          {qrError && <p role="alert" className="mt-4 rounded-control bg-danger-soft p-3 text-left text-sm text-danger">{qrError}</p>}
+          <div className="mx-auto mt-5 flex min-h-64 w-fit min-w-64 items-center justify-center rounded-xl bg-white p-3">
+            {qrToken ? <QRCodeSVG value={qrToken.token} size={240} level="M" includeMargin /> :
+              <p role="status" className="max-w-48 text-sm text-slate-600">{generatingQr ? "Generating student QR…" : "No QR available. Refresh to retry."}</p>}
+          </div>
+          {qrToken && <p className="mt-3 text-xs text-muted">Expires {new Date(qrToken.expires_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" })}</p>}
+          <div className="mt-4 flex justify-center gap-2">
+            <Button size="sm" variant="secondary" disabled={!qrToken} onClick={() => void copyToken()}>{copied ? <Check className="size-4" /> : <Clipboard className="size-4" />}{copied ? "Copied" : "Copy token"}</Button>
+            <Button size="sm" onClick={() => void refreshQr()} loading={generatingQr} disabled={!qrCanGenerate}><RefreshCw className="size-4" />Refresh QR</Button>
+          </div>
+          <Button className="mt-4 w-full" variant="secondary" onClick={() => setQrDialogOpen(false)}>Close</Button>
+        </div>
       </dialog>
 
       <dialog ref={saveSummaryDialog} aria-labelledby="save-summary-title" onCancel={(event) => { event.preventDefault(); setSaveSummaryDialogOpen(false); }} onClose={() => setSaveSummaryDialogOpen(false)} className="m-auto w-[min(92vw,34rem)] rounded-panel border border-hairline bg-card p-0 text-ink shadow-lift backdrop:bg-ink/50">
