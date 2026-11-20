@@ -12,7 +12,6 @@ use App\Models\Enrollment;
 use App\Models\Student;
 use App\Models\TimetableSetting;
 use Illuminate\Database\UniqueConstraintViolationException;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
 class AttendanceCheckInServices
@@ -135,59 +134,6 @@ class AttendanceCheckInServices
             'student.user',
             'student.department',
         ]);
-    }
-
-    /**
-     * Local-only identity-free QR demo. Student IDs are public identifiers,
-     * NOT authentication credentials: never enable in staging/production.
-     * Unique DB constraints prevent two students using the same browser
-     * identifier in the same session, but this is not device attestation.
-     *
-     * @param array{token:string,student_id:string,device_id:string,latitude?:float|int|string|null,longitude?:float|int|string|null,gps_accuracy_meters?:float|int|string|null} $data
-     */
-    public function checkInLocalByStudentId(array $data): Attendance
-    {
-        abort_unless(
-            app()->environment('local') && config('attendance.allow_local_id_check_in', false),
-            404,
-            'Local student ID check-in is disabled.'
-        );
-
-        $studentNumber = (int) $data['student_id'];
-        $student = Student::query()->find($studentNumber);
-        if (! $student || $student->attendanceId() !== $data['student_id']) {
-            throw ValidationException::withMessages(['student_id' => 'No student matches this 9-digit ID.']);
-        }
-
-        // Serialize the check-in and claim under the session's row lock.
-        return DB::transaction(function () use ($data, $student): Attendance {
-            $token = AttendanceQrToken::query()->where('token_hash', hash('sha256', $data['token']))->first();
-            if (! $token || ! $token->isUsable()) {
-                throw ValidationException::withMessages(['token' => 'The QR token is invalid or expired.']);
-            }
-            \App\Models\AttendanceSession::query()->whereKey($token->attendance_session_id)->lockForUpdate()->firstOrFail();
-            $deviceHash = hash('sha256', $data['device_id']);
-            if (DB::table('attendance_device_claims')
-                ->where('attendance_session_id', $token->attendance_session_id)
-                ->where('device_hash', $deviceHash)->exists()) {
-                abort(409, 'This device has already checked in for this session.');
-            }
-
-            // Reuse enrollment, QR, GPS, active window and duplicate checks.
-            $attendance = $this->checkIn($student, $data);
-            try {
-                DB::table('attendance_device_claims')->insert([
-                    'attendance_session_id' => $attendance->attendance_session_id,
-                    'student_id' => $student->id,
-                    'device_hash' => $deviceHash,
-                    'created_at' => now(),
-                    'updated_at' => now(),
-                ]);
-            } catch (UniqueConstraintViolationException) {
-                abort(409, 'This student or device has already checked in for the session.');
-            }
-            return $attendance;
-        }, 3);
     }
 
     private function distanceInMeters(
