@@ -152,7 +152,7 @@ export function TeacherSessionDetailView({ sessionId }: { sessionId: number }) {
   }, [sessionId]);
 
   useEffect(() => {
-    if (!qrDialogOpen || !qrCanGenerate || generatingQr) return;
+    if (!qrDialogOpen || !qrCanGenerate || generatingQr || qrError) return;
     // Once the check-in window opens, generate without requiring another click.
     if (!qrToken || new Date(qrToken.expires_at).getTime() <= clock) {
       void refreshQr();
@@ -161,7 +161,7 @@ export function TeacherSessionDetailView({ sessionId }: { sessionId: number }) {
     const untilExpiry = new Date(qrToken.expires_at).getTime() - Date.now();
     const timer = window.setTimeout(() => void refreshQr(), Math.max(1000, untilExpiry - 1500));
     return () => window.clearTimeout(timer);
-  }, [qrDialogOpen, qrCanGenerate, qrToken, generatingQr, clock, refreshQr]);
+  }, [qrDialogOpen, qrCanGenerate, qrToken, generatingQr, qrError, clock, refreshQr]);
 
   useEffect(() => {
     // Never display an expired or previously issued token when QR check-in closes.
