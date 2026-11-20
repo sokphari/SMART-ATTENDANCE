@@ -175,6 +175,48 @@ class AttendanceSessionServices
     }
 
     /**
+     * Development-only: make a teacher-owned open session scannable for a short
+     * test window, without weakening QR validation for normal sessions.
+     * This modifies a session, never the timetable or any attendance records.
+     */
+    public function startLocalQrTest(AttendanceSession $session, Teacher $teacher): AttendanceSession
+    {
+        abort_unless(
+            app()->environment('local') && config('attendance.allow_local_qr_testing', false),
+            404,
+            'Local QR testing is not enabled.'
+        );
+        $this->ensureOwnedBy($session, $teacher);
+
+        return DB::transaction(function () use ($session, $teacher): AttendanceSession {
+            $locked = AttendanceSession::query()->lockForUpdate()->findOrFail($session->id);
+            $this->ensureOwnedBy($locked, $teacher);
+
+            if (! $locked->isOpen()) {
+                abort(409, 'Only open attendance sessions can enter local QR test mode.');
+            }
+            if ($locked->session_date->timezone('Asia/Phnom_Penh')->toDateString() !== now('Asia/Phnom_Penh')->toDateString()) {
+                abort(409, 'Local QR test mode is only available for sessions dated today.');
+            }
+
+            $now = now();
+            $start = $now->copy()->subMinute();
+            $cutoff = $now->copy()->addMinutes(15);
+            $end = $now->copy()->addMinutes(30);
+            $locked->update([
+                'starts_at' => $start,
+                'late_after' => $cutoff,
+                'closes_at' => $end,
+                'session_ends_at' => $end,
+            ]);
+            // Previously issued QR tokens must never survive a new test window.
+            $locked->qrTokens()->whereNull('revoked_at')->update(['revoked_at' => $now]);
+
+            return $locked->refresh()->load($this->relations());
+        });
+    }
+
+    /**
      * @return array{token: string, expires_at: string}
      */
     public function generateQrToken(AttendanceSession $session, Teacher $teacher): array
