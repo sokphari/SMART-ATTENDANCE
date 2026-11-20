@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
-  ArrowLeft, ArrowRight, Building2, Check, CheckCircle2, ChevronDown,
+  ArrowLeft, ArrowRight, Building2, Check, CheckCircle2, ChevronDown, ChevronRight,
   DoorOpen, Layers3, MapPin, Plus, Search, Trash2, Users, X,
 } from "lucide-react";
 import { apiFetch, ApiError } from "@/lib/api/client";
@@ -19,6 +19,8 @@ type Building = {
   description?: string | null;
   status?: string;
   floors_count?: number;
+  classrooms_count?: number;
+  total_seats?: number;
 };
 
 type Floor = {
@@ -99,6 +101,7 @@ export function BuildingsView() {
   const [floors, setFloors] = useState<Floor[]>([]);
   const [rooms, setRooms] = useState<Room[]>([]);
   const [search, setSearch] = useState("");
+  const [showDetails, setShowDetails] = useState(false);
   const [loading, setLoading] = useState(true);
   const [browseError, setBrowseError] = useState("");
 
@@ -211,6 +214,7 @@ export function BuildingsView() {
     setFormError("");
     setCreated(null);
     setStep(1);
+    setShowDetails(false);
     setWizardOpen(true);
   }
 
@@ -365,6 +369,8 @@ export function BuildingsView() {
     `${building.name} ${building.code}`.toLowerCase().includes(search.toLowerCase()),
   );
   const selectedBuilding = buildings.find((building) => building.id === selectedBuildingId);
+  const totalClassrooms = buildings.reduce((sum, building) => sum + (building.classrooms_count ?? 0), 0);
+  const totalBuildingSeats = buildings.reduce((sum, building) => sum + (building.total_seats ?? 0), 0);
   const breadcrumbItems: BreadcrumbItem[] = [
     { label: "Dashboard", href: "/dashboard" },
     wizardOpen
@@ -667,7 +673,7 @@ export function BuildingsView() {
                   {created.floors_count} floors · {created.classrooms_count} rooms · {created.total_seats} seats
                 </p>
                 <div className="flex flex-wrap justify-center gap-3">
-                  <Button variant="secondary" onClick={closeWizard}>View Building</Button>
+                  <Button variant="secondary" onClick={() => { closeWizard(); setShowDetails(true); }}>View Building</Button>
                   <Button onClick={openWizard}><Plus className="size-4" /> Create Another</Button>
                 </div>
               </div>
@@ -697,95 +703,184 @@ export function BuildingsView() {
         </Card>
       )}
 
-      {!wizardOpen && <Card className="overflow-hidden">
-        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-hairline p-4">
-          <h2 className="font-semibold">Existing Buildings</h2>
-          <div className="relative w-full sm:w-64">
-            <Search className="absolute left-3 top-3.5 size-4 text-muted" />
-            <Input aria-label="Search buildings" className="pl-9" placeholder="Search buildings..."
-              value={search} onChange={(event) => setSearch(event.target.value)} />
-          </div>
-        </div>
-        {loading ? (
-          <p className="p-6 text-sm text-muted">Loading buildings...</p>
-        ) : !buildings.length ? (
-          <div className="p-8 text-center">
-            <Building2 className="mx-auto mb-2 size-8 text-muted" />
-            <p className="font-semibold">No buildings yet</p>
-            <p className="mt-1 text-sm text-muted">Use Create Building to set up your first building and its classrooms.</p>
-          </div>
-        ) : (
-          <div className="grid gap-4 p-4 lg:grid-cols-[280px_minmax(0,1fr)]">
-            <div className="space-y-2">
-              {visibleBuildings.map((building) => (
-                <button type="button" key={building.id}
-                  onClick={() => { setSelectedBuildingId(building.id); setSelectedFloorId(0); }}
-                  className={`flex w-full items-center justify-between gap-2 rounded-control border p-3 text-left transition-colors ${
-                    building.id === selectedBuildingId ? "border-brand-500 bg-brand-50" : "border-hairline hover:border-brand-300"
-                  }`}>
-                  <span className="min-w-0">
-                    <span className="block truncate text-sm font-semibold">{building.name}</span>
-                    <span className="text-xs text-muted">{building.code}</span>
-                  </span>
-                  <span className="shrink-0 rounded-full bg-canvas px-2 py-1 text-xs text-muted">
-                    {building.floors_count ?? 0} floors
-                  </span>
-                </button>
-              ))}
-              {visibleBuildings.length === 0 && <p className="p-3 text-sm text-muted">No matching buildings.</p>}
+
+      {!wizardOpen && (
+        <section aria-label="Campus buildings" className="space-y-4">
+          <div className="flex flex-wrap items-end justify-between gap-3">
+            <div>
+              <h2 className="font-display text-lg font-bold text-ink">All Buildings</h2>
+              <p className="mt-1 text-xs text-muted">
+                {buildings.length} {buildings.length === 1 ? "building" : "buildings"} · {totalClassrooms} classrooms · {totalBuildingSeats.toLocaleString()} seats
+              </p>
             </div>
-            <div className="min-w-0 space-y-4">
-              <div className="flex flex-wrap items-center justify-between gap-2">
-                <div>
-                  <h3 className="font-semibold">{selectedBuilding?.name ?? "Select a building"}</h3>
-                  {selectedBuilding && <p className="text-xs text-muted">Choose a floor to see its classrooms.</p>}
-                </div>
-                <span className="text-xs text-muted">{floors.length} floors</span>
+            <div className="relative w-full sm:w-64">
+              <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted" />
+              <Input aria-label="Search buildings" className="h-9 pl-9" placeholder="Search buildings..."
+                value={search} onChange={(event) => setSearch(event.target.value)} />
+            </div>
+          </div>
+
+          {loading ? (
+            <div role="status" className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+              {[1, 2, 3].map((item) => (
+                <div key={item} className="h-48 animate-pulse rounded-card border border-hairline bg-card" />
+              ))}
+            </div>
+          ) : buildings.length === 0 ? (
+            <Card className="flex flex-col items-center gap-3 px-6 py-10 text-center">
+              <span className="flex size-12 items-center justify-center rounded-panel bg-brand-50 text-brand-600">
+                <Building2 className="size-6" />
+              </span>
+              <div>
+                <h3 className="font-semibold">No buildings yet</h3>
+                <p className="mt-1 text-sm text-muted">Create a building, then add floors and classrooms in one flow.</p>
               </div>
-              {floors.length > 0 ? (
-                <>
-                  <div className="flex flex-wrap gap-2">
-                    {floors.map((floor) => (
-                      <button type="button" key={floor.id} onClick={() => setSelectedFloorId(floor.id)}
-                        className={`rounded-full border px-3 py-1.5 text-xs font-semibold transition-colors ${
-                          selectedFloorId === floor.id
-                            ? "border-brand-500 bg-brand-50 text-brand-700"
-                            : "border-hairline text-muted hover:border-brand-300"
-                        }`}>
-                        {floor.name} ({floor.classrooms_count ?? 0})
-                      </button>
-                    ))}
+              <Button onClick={openWizard}><Plus className="size-4" /> Add Building</Button>
+            </Card>
+          ) : visibleBuildings.length === 0 ? (
+            <Card className="p-8 text-center">
+              <Search className="mx-auto mb-2 size-6 text-muted" />
+              <h3 className="font-semibold">No matching buildings</h3>
+              <p className="mt-1 text-sm text-muted">Try searching by building name or code.</p>
+              <Button variant="secondary" size="sm" className="mt-3" onClick={() => setSearch("")}>Clear search</Button>
+            </Card>
+          ) : showDetails && selectedBuilding ? (
+            <Card className="overflow-hidden">
+              <div className="flex flex-wrap items-center justify-between gap-3 border-b border-hairline p-4">
+                <div className="flex min-w-0 items-center gap-3">
+                  <button type="button" onClick={() => setShowDetails(false)} aria-label="Back to all buildings"
+                    className="flex size-9 shrink-0 items-center justify-center rounded-control border border-hairline text-muted hover:bg-brand-50 hover:text-brand-700">
+                    <ArrowLeft className="size-4" />
+                  </button>
+                  <span className="flex size-10 shrink-0 items-center justify-center rounded-control bg-brand-50 text-brand-600">
+                    <Building2 className="size-5" />
+                  </span>
+                  <div className="min-w-0">
+                    <h3 className="truncate font-bold">{selectedBuilding.name}</h3>
+                    <p className="text-xs text-muted">Building code: {selectedBuilding.code}</p>
                   </div>
-                  <div className="grid gap-3 sm:grid-cols-2">
-                    {rooms.map((room) => (
-                      <div key={room.id} className="rounded-control border border-hairline p-4">
-                        <div className="flex items-center justify-between gap-2">
-                          <span className="font-bold">{room.room_code}</span>
-                          <span className={`rounded-full px-2 py-1 text-[11px] font-semibold ${
-                            room.status === "active" ? "bg-success-soft text-success" : "bg-canvas text-muted"
-                          }`}>{room.status}</span>
-                        </div>
-                        <p className="mt-2 text-xs text-muted">
-                          {roomTypeLabel(room.room_type)} · {room.capacity} seats
-                        </p>
-                        <p className="mt-2 flex items-center gap-1 text-xs text-muted">
-                          <MapPin className="size-3" />
-                          {room.latitude != null && room.longitude != null ? "GPS enabled" : "No GPS configured"}
-                        </p>
+                </div>
+                <span className={"rounded-full px-3 py-1 text-xs font-semibold " + (selectedBuilding.status === "inactive" ? "bg-canvas text-muted" : "bg-success-soft text-success")}>
+                  {selectedBuilding.status === "inactive" ? "Inactive" : "Active"}
+                </span>
+              </div>
+              <div className="grid grid-cols-3 divide-x divide-hairline border-b border-hairline">
+                {[
+                  { label: "Floors", number: selectedBuilding.floors_count ?? floors.length },
+                  { label: "Classrooms", number: selectedBuilding.classrooms_count ?? 0 },
+                  { label: "Total seats", number: selectedBuilding.total_seats ?? 0 },
+                ].map((metric) => (
+                  <div key={metric.label} className="px-3 py-4 text-center">
+                    <p className="text-xl font-bold tabular-nums">{metric.number.toLocaleString()}</p>
+                    <p className="text-xs text-muted">{metric.label}</p>
+                  </div>
+                ))}
+              </div>
+              <div className="space-y-4 p-4">
+                <div>
+                  <h4 className="text-sm font-semibold">Floors & Classrooms</h4>
+                  <p className="mt-1 text-xs text-muted">Select a floor to view its rooms and seating capacity.</p>
+                </div>
+                {floors.length ? (
+                  <>
+                    <div role="group" aria-label="Select floor" className="flex flex-wrap gap-2">
+                      {floors.map((floor) => (
+                        <button type="button" key={floor.id} onClick={() => setSelectedFloorId(floor.id)}
+                          aria-pressed={selectedFloorId === floor.id}
+                          className={"rounded-control border px-3 py-2 text-xs font-semibold transition-colors " +
+                            (selectedFloorId === floor.id ? "border-brand-500 bg-brand-50 text-brand-700" : "border-hairline text-muted hover:border-brand-300")}>
+                          {floor.name} <span className="ml-1 opacity-70">({floor.classrooms_count ?? 0})</span>
+                        </button>
+                      ))}
+                    </div>
+                    {rooms.length ? (
+                      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+                        {rooms.map((room) => (
+                          <div key={room.id} className="rounded-control border border-hairline bg-canvas/40 p-4">
+                            <div className="flex items-center justify-between gap-2">
+                              <span className="font-bold">{room.room_code}</span>
+                              <span className={"rounded-full px-2 py-1 text-[11px] font-semibold " +
+                                (room.status === "active" ? "bg-success-soft text-success" : "bg-canvas text-muted")}>
+                                {room.status === "active" ? "Active" : "Inactive"}
+                              </span>
+                            </div>
+                            <p className="mt-2 text-xs text-muted">{roomTypeLabel(room.room_type)} · {room.capacity} seats</p>
+                            <p className="mt-2 flex items-center gap-1 text-xs text-muted">
+                              <MapPin className="size-3" />
+                              {room.latitude != null && room.longitude != null ? "GPS configured" : "No GPS configured"}
+                            </p>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="rounded-control border border-dashed border-hairline p-5 text-sm text-muted">
+                        No classrooms found for this floor.
+                      </p>
+                    )}
+                  </>
+                ) : (
+                  <p className="rounded-control border border-dashed border-hairline p-5 text-sm text-muted">
+                    No floors have been added to this building.
+                  </p>
+                )}
+              </div>
+            </Card>
+          ) : (
+            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
+              {visibleBuildings.map((building) => (
+                <article key={building.id} className="flex min-w-0 flex-col overflow-hidden rounded-card border border-hairline bg-card shadow-soft transition-colors hover:border-brand-300">
+                  <div className="flex min-w-0 items-start gap-3 px-4 py-4">
+                    <div className="flex size-11 shrink-0 items-center justify-center rounded-control bg-brand-50 text-brand-600">
+                      <Building2 className="size-5" aria-hidden="true" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <div className="mb-1 flex flex-wrap items-center gap-2">
+                        <span className="rounded-md bg-brand-50 px-2 py-0.5 text-[11px] font-bold text-brand-700">{building.code}</span>
+                        <span className={"rounded-full px-2 py-0.5 text-[10px] font-semibold " +
+                          (building.status === "inactive" ? "bg-canvas text-muted" : "bg-success-soft text-success")}>
+                          {building.status === "inactive" ? "Inactive" : "Active"}
+                        </span>
+                      </div>
+                      <h3 className="truncate text-sm font-bold text-ink" title={building.name}>{building.name}</h3>
+                      {building.description && <p className="mt-1 line-clamp-2 text-xs text-muted">{building.description}</p>}
+                    </div>
+                  </div>
+                  <div className="mt-auto grid grid-cols-3 divide-x divide-hairline border-y border-hairline bg-canvas/30">
+                    {[
+                      { label: "Floors", number: building.floors_count ?? 0 },
+                      { label: "Rooms", number: building.classrooms_count ?? 0 },
+                      { label: "Seats", number: building.total_seats ?? 0 },
+                    ].map((metric) => (
+                      <div key={metric.label} className="flex min-w-0 items-baseline justify-center gap-1 px-2 py-3">
+                        <span className="text-sm font-bold tabular-nums text-ink">{metric.number.toLocaleString()}</span>
+                        <span className="text-[11px] text-muted">{metric.label}</span>
                       </div>
                     ))}
                   </div>
-                  {!rooms.length && <p className="rounded-control border border-dashed border-hairline p-5 text-sm text-muted">No classrooms on this floor yet.</p>}
-                </>
-              ) : (
-                <p className="rounded-control border border-dashed border-hairline p-5 text-sm text-muted">
-                  {selectedBuilding ? "No floors in this building." : "Select a building."}
-                </p>
+                  <button type="button"
+                    onClick={() => { setSelectedBuildingId(building.id); setSelectedFloorId(0); setShowDetails(true); }}
+                    aria-label={"View details for " + building.name}
+                    className="flex w-full items-center justify-between px-4 py-3 text-left text-xs font-semibold text-brand-700 transition-colors hover:bg-brand-50">
+                    View details <ChevronRight className="size-4" />
+                  </button>
+                </article>
+              ))}
+              {!search.trim() && (
+                <button type="button" onClick={openWizard}
+                  className="flex min-h-48 flex-col items-center justify-center gap-3 rounded-card border border-dashed border-hairline bg-card/30 p-6 text-center transition-colors hover:border-brand-400 hover:bg-brand-50"
+                  aria-label="Add new building">
+                  <span className="flex size-11 items-center justify-center rounded-full bg-brand-50 text-brand-600"><Plus className="size-5" /></span>
+                  <span>
+                    <span className="block text-sm font-semibold text-ink">Add New Building</span>
+                    <span className="mt-1 block text-xs text-muted">Set up floors and classrooms</span>
+                  </span>
+                </button>
               )}
             </div>
-          </div>
-        )}
-      </Card>}
+          )}
+        </section>
+      )}
+
     </>
   );
 }
