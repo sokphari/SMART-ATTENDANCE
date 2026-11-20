@@ -17,6 +17,7 @@ import { ApiError } from "@/lib/api/client";
 import { getStoredUser, getToken, setSession } from "@/lib/api/session";
 import { setAuthCookie } from "@/app/actions/auth";
 import { login } from "../api";
+import { hasPendingStudentScan } from "@/features/attendance/studentScanPending";
 
 const HIGHLIGHTS = [
   {
@@ -47,7 +48,9 @@ export function LoginForm() {
 
   useEffect(() => {
     if (getToken()) {
-      router.replace(getStoredUser()?.role?.toLowerCase() === "teacher" ? "/teacher/dashboard" : "/dashboard");
+      router.replace(getStoredUser()?.role?.toLowerCase() === "student" && hasPendingStudentScan()
+        ? "/student/scan"
+        : getStoredUser()?.role?.toLowerCase() === "teacher" ? "/teacher/dashboard" : "/dashboard");
     } else if (typeof window !== "undefined") {
       const savedEmail = localStorage.getItem("smart_attendance_remember_email");
       if (savedEmail) {
@@ -74,7 +77,9 @@ export function LoginForm() {
       const payload = await login(email, password);
       setSession(payload.token, payload.data);
       await setAuthCookie(payload.token, rememberMe);
-      router.replace(payload.data.role?.toLowerCase() === "teacher" ? "/teacher/dashboard" : "/dashboard");
+      router.replace(payload.data.role?.toLowerCase() === "student" && hasPendingStudentScan()
+        ? "/student/scan"
+        : payload.data.role?.toLowerCase() === "teacher" ? "/teacher/dashboard" : "/dashboard");
     } catch (caught) {
       setError(
         caught instanceof ApiError
