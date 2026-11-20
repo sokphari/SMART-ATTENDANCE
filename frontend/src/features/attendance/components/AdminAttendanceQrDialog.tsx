@@ -16,6 +16,7 @@ export function AdminAttendanceQrDialog({ open, onClose }: Props) {
   const [generating, setGenerating] = useState(false);
   const [error, setError] = useState("");
   const [copied, setCopied] = useState(false);
+  const [reopenCount, setReopenCount] = useState(0);
   const dialogRef = useRef<HTMLDialogElement>(null);
   const generationRef = useRef(0);
 
@@ -59,6 +60,7 @@ export function AdminAttendanceQrDialog({ open, onClose }: Props) {
     if (!open && dialog.open) dialog.close();
     if (open) {
       setQr(null);
+      setReopenCount((current) => current + 1);
       void loadSessions();
     } else {
       generationRef.current++;
@@ -69,7 +71,7 @@ export function AdminAttendanceQrDialog({ open, onClose }: Props) {
     if (!open || !sessionId) return;
     setQr(null);
     void issueQr(Number(sessionId));
-  }, [open, sessionId, issueQr]);
+  }, [open, sessionId, issueQr, reopenCount]);
 
   useEffect(() => {
     if (!open || !qr || !sessionId) return;
