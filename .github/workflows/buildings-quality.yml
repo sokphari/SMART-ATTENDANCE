@@ -55,6 +55,8 @@ jobs:
           cache-dependency-path: frontend/package-lock.json
       - name: Install frontend dependencies
         run: npm ci --no-audit --no-fund
+      - name: Test breadcrumb navigation
+        run: node --experimental-strip-types --test tests/breadcrumbs.test.mjs
       - name: Type-check frontend
         run: npx tsc --noEmit
       - name: Build Next.js
