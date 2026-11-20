@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Input } from "@/components/ui/Input";
 import { PageHeader } from "@/components/ui/PageHeader";
+import { Breadcrumb, type BreadcrumbItem } from "@/components/ui/Breadcrumb";
 
 type Building = {
   id: number;
@@ -364,9 +365,29 @@ export function BuildingsView() {
     `${building.name} ${building.code}`.toLowerCase().includes(search.toLowerCase()),
   );
   const selectedBuilding = buildings.find((building) => building.id === selectedBuildingId);
+  const breadcrumbItems: BreadcrumbItem[] = [
+    { label: "Dashboard", href: "/dashboard" },
+    wizardOpen
+      ? { label: "Buildings & Rooms", onClick: closeWizard, disabled: saving }
+      : { label: "Buildings & Rooms" },
+    ...(wizardOpen
+      ? [
+          {
+            label: "Create Building",
+            ...(step > 1 && step < 5 ? { onClick: () => { setStep(1); setFormError(""); } } : {}),
+          },
+          ...(step > 1
+            ? [{
+                label: step === 5 ? "Success" : steps[step - 1].label,
+              }]
+            : []),
+        ]
+      : []),
+  ];
 
   return (
     <>
+      <Breadcrumb items={breadcrumbItems} />
       <PageHeader
         title="Buildings & Rooms"
         description="Manage campus buildings, floors, and classrooms in one place."
