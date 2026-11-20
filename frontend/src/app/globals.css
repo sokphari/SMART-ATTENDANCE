@@ -228,3 +228,7 @@
 @utility animate-slide-up {
   animation: slide-up 0.32s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
+
+/* Khmer uses system fonts that contain Khmer script; do not ship third-party font files. */
+.font-khmer body { font-family: "Noto Sans Khmer", "Khmer OS System", "Khmer Sangam MN", "Leelawadee UI", system-ui, sans-serif; }
+.font-khmer .font-display { font-family: inherit; }
