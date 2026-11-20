@@ -53,8 +53,8 @@ class ClassroomServices
             'floor_id' => $data['floor_id'] ?? null,
             'capacity' => $data['capacity'] ?? 35,
             'room_type' => $data['room_type'] ?? 'classroom',
-            'latitude' => $data['latitude'],
-            'longitude' => $data['longitude'],
+            'latitude' => $data['latitude'] ?? null,
+            'longitude' => $data['longitude'] ?? null,
             'allowed_radius_meters' => $data['allowed_radius_meters'] ?? 100,
             'status' => $data['status'] ?? ClassroomStatus::Active->value,
         ]);
