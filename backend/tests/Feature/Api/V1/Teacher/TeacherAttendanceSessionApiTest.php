@@ -189,6 +189,24 @@ class TeacherAttendanceSessionApiTest extends TestCase
             ->assertForbidden();
     }
 
+    public function test_local_qr_test_cannot_be_restarted_after_qr_is_issued(): void
+    {
+        [$teacher, $section, $room] = $this->assignedTeacher();
+        app()->detectEnvironment(fn () => 'local');
+        config()->set('attendance.allow_local_qr_testing', true);
+        $session = AttendanceSession::factory()->create([
+            'teacher_id' => $teacher->id,
+            'class_section_id' => $section->id,
+            'classroom_id' => $room->id,
+            'session_date' => now('Asia/Phnom_Penh')->toDateString(),
+        ]);
+
+        $this->postJson("/api/v1/teacher/attendance-sessions/{$session->id}/qr-token")->assertCreated();
+        $this->postJson("/api/v1/teacher/attendance-sessions/{$session->id}/local-qr-test")->assertStatus(409);
+        $this->assertSame(1, \App\Models\AttendanceQrToken::query()
+            ->where('attendance_session_id', $session->id)->count());
+    }
+
     public function test_local_qr_test_rejects_closed_session(): void
     {
         [$teacher, $section, $room] = $this->assignedTeacher();
