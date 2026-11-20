@@ -195,7 +195,7 @@ class AttendanceSessionServices
             if (! $locked->isOpen()) {
                 abort(409, 'Only open attendance sessions can enter local QR test mode.');
             }
-            if ($locked->session_date->timezone('Asia/Phnom_Penh')->toDateString() !== now('Asia/Phnom_Penh')->toDateString()) {
+            if ($locked->session_date->toDateString() !== now('Asia/Phnom_Penh')->toDateString()) {
                 abort(409, 'Local QR test mode is only available for sessions dated today.');
             }
 
