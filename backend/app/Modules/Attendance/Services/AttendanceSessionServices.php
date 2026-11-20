@@ -181,6 +181,25 @@ class AttendanceSessionServices
     {
         $this->ensureOwnedBy($session, $teacher);
 
+        return $this->issueQrToken($session);
+    }
+
+    /**
+     * Allows authorized admins to project QR codes for existing sessions.
+     * Does not grant permission to open a session or bypass its time window.
+     *
+     * @return array{token: string, expires_at: string}
+     */
+    public function generateQrTokenForAdmin(AttendanceSession $session): array
+    {
+        return $this->issueQrToken($session);
+    }
+
+    /** @return array{token: string, expires_at: string} */
+    private function issueQrToken(AttendanceSession $session): array
+    {
+        $session->refresh();
+
         if (! $session->isOpen()) {
             abort(409, 'The attendance session is not open.');
         }
