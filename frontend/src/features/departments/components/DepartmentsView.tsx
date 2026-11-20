@@ -1,5 +1,7 @@
 "use client";
 
+import { useLocale } from "@/i18n/LocaleProvider";
+
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
@@ -11,7 +13,6 @@ import {
   X,
 } from "lucide-react";
 import { ApiError } from "@/lib/api/client";
-import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Input } from "@/components/ui/Input";
@@ -19,10 +20,12 @@ import { PageHeader } from "@/components/ui/PageHeader";
 import { fetchDepartments } from "../api";
 import type { Department } from "../types";
 import { DepartmentRowActions } from "./DepartmentRowActions";
+import { DepartmentStatusToggle } from "./DepartmentStatusToggle";
 
 const DEPARTMENT_NOTICE_KEY = "sa_department_notice";
 
 export function DepartmentsView() {
+  const { t } = useLocale();
   const router = useRouter();
   const [items, setItems] = useState<Department[]>([]);
   const [search, setSearch] = useState("");
@@ -208,12 +211,12 @@ export function DepartmentsView() {
           <table className="w-full min-w-[720px] text-left text-sm">
             <thead className="bg-canvas text-xs font-bold uppercase tracking-wide text-muted">
               <tr>
-                <th className="px-5 py-3">Department</th>
-                <th className="px-5 py-3">Code</th>
-                <th className="px-5 py-3">Description</th>
-                <th className="px-5 py-3">Status</th>
-                <th className="px-5 py-3">Created</th>
-                <th className="px-5 py-3 text-right">Actions</th>
+                <th className="px-5 py-3">{t("Department")}</th>
+                <th className="px-5 py-3">{t("Code")}</th>
+                <th className="px-5 py-3">{t("Description")}</th>
+                <th className="px-5 py-3">{t("Status")}</th>
+                <th className="px-5 py-3">{t("Created")}</th>
+                <th className="px-5 py-3 text-right">{t("Actions")}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-hairline">
@@ -247,7 +250,7 @@ export function DepartmentsView() {
                       </button>
                     </td>
                     <td className="px-5 py-4">
-                      <span className="rounded-md bg-brand-50 px-2 py-1 text-xs font-bold text-brand-700">
+                      <span className="inline-flex whitespace-nowrap rounded-pill border border-blue-300 bg-blue-100 px-2.5 py-1 font-mono text-xs font-bold tracking-wide text-blue-900 dark:border-blue-300/50 dark:bg-blue-500/25 dark:text-blue-100">
                         {department.code}
                       </span>
                     </td>
@@ -255,13 +258,11 @@ export function DepartmentsView() {
                       {department.description || "—"}
                     </td>
                     <td className="px-5 py-4">
-                      <Badge
-                        tone={
-                          department.status === "active" ? "success" : "neutral"
-                        }
-                      >
-                        {department.status}
-                      </Badge>
+                      <DepartmentStatusToggle
+                        department={department}
+                        onUpdated={(updated) => setItems((current) => current.map((item) => item.id === updated.id ? updated : item))}
+                        onFeedback={(message, kind) => setFeedback({ message, kind })}
+                      />
                     </td>
                     <td className="px-5 py-4 text-muted">
                       {new Date(department.created_at).toLocaleDateString()}
@@ -270,16 +271,6 @@ export function DepartmentsView() {
                     <td className="px-5 py-3">
                       <DepartmentRowActions
                         department={department}
-                        onUpdated={(updated) =>
-                          setItems((current) =>
-                            current.map((item) =>
-                              item.id === updated.id ? updated : item,
-                            ),
-                          )
-                        }
-                        onFeedback={(message, kind) =>
-                          setFeedback({ message, kind })
-                        }
                         onEdit={() =>
                           router.push(`/departments/${department.id}/edit`)
                         }

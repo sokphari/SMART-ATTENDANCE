@@ -79,6 +79,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   }, [isTeacherPath, pathname, ready, router, teacherModules, user]);
 
   const isTeacher = user?.role?.toLowerCase() === "teacher";
+  const isAdmin = user?.role?.toLowerCase() === "admin";
   const noTeacherModules = ready && isTeacher && teacherModules.length === 0;
   const currentTeacherModule = isTeacher
     ? TEACHER_NAV_ITEMS.find((item) => pathname === item.href || pathname.startsWith(`${item.href}/`))
@@ -133,6 +134,26 @@ export function AppShell({ children }: { children: ReactNode }) {
 
   if (noTeacherModules) {
     return <div className="flex min-h-dvh items-center justify-center bg-canvas px-5"><div className="max-w-lg rounded-panel border border-hairline bg-card p-8 text-center shadow-soft"><h1 className="font-display text-xl font-bold">{t("Teacher access is disabled")}</h1><p className="mt-2 text-sm leading-relaxed text-muted">{t("An administrator has turned off all teacher modules. Contact your administrator to restore access.")}</p><button type="button" onClick={() => void handleLogout()} className="mt-5 rounded-control bg-brand-600 px-4 py-2 text-sm font-semibold text-white hover:bg-brand-700">{t("Sign out")}</button></div></div>;
+  }
+
+  if (ready && user && !isTeacher && !isAdmin) {
+    return (
+      <div className="flex min-h-dvh items-center justify-center bg-canvas px-5">
+        <div className="max-w-lg rounded-panel border border-hairline bg-card p-8 text-center shadow-soft">
+          <h1 className="font-display text-xl font-bold">Workspace unavailable</h1>
+          <p className="mt-2 text-sm leading-relaxed text-muted">
+            This account does not have an enabled workspace. Contact an administrator for access.
+          </p>
+          <button
+            type="button"
+            onClick={() => void handleLogout()}
+            className="mt-5 rounded-control bg-brand-600 px-4 py-2 text-sm font-semibold text-white hover:bg-brand-700"
+          >
+            Sign out
+          </button>
+        </div>
+      </div>
+    );
   }
 
   return (

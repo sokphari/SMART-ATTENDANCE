@@ -27,7 +27,7 @@ export type ClassSectionRosterEnrollment = {
   status: string;
   student: {
     id: number;
-    student_code: string;
+    gender: string | null;
     user?: { name: string; email: string } | null;
     department?: { name: string } | null;
   };
@@ -84,7 +84,7 @@ export function fetchSemestersOptions() {
 
 export function fetchDepartmentsOptions() {
   return apiFetch<Paginated<{ id: number; name: string; code: string }>>(
-    "/api/v1/admin/departments?per_page=100",
+    "/api/v1/admin/departments?status=active&per_page=100",
   );
 }
 

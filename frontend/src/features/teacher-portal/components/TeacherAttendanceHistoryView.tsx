@@ -1,5 +1,7 @@
 "use client";
 
+import { useLocale } from "@/i18n/LocaleProvider";
+
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
@@ -21,6 +23,7 @@ const STATUS_STYLE: Record<AttendanceRecord["status"], string> = {
 };
 
 export function TeacherAttendanceHistoryView() {
+  const { t } = useLocale();
   const searchParams = useSearchParams();
   const [records, setRecords] = useState<AttendanceRecord[]>([]);
   const [sections, setSections] = useState<SectionOption[]>([]);
@@ -208,12 +211,12 @@ export function TeacherAttendanceHistoryView() {
           <table className="w-full min-w-[900px] text-left text-sm">
             <thead className="bg-canvas text-xs uppercase tracking-wide text-muted">
               <tr>
-                <th className="px-4 py-3">Student</th>
-                <th className="px-4 py-3">Class</th>
-                <th className="px-4 py-3">Session date</th>
-                <th className="px-4 py-3">Status</th>
-                <th className="px-4 py-3">Method</th>
-                <th className="px-4 py-3">Remarks</th>
+                <th className="px-4 py-3">{t("Student")}</th>
+                <th className="px-4 py-3">{t("Class")}</th>
+                <th className="px-4 py-3">{t("Session date")}</th>
+                <th className="px-4 py-3">{t("Status")}</th>
+                <th className="px-4 py-3">{t("Method")}</th>
+                <th className="px-4 py-3">{t("Remarks")}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-hairline">

@@ -46,7 +46,7 @@ class RequestStore extends FormRequest
             'status' => ['sometimes', Rule::enum(AccountStatus::class)],
             'department_id' => ['required', 'integer', Rule::exists('departments', 'id')->where('status', 'active')],
             'program_id' => ['sometimes', 'nullable', 'integer', Rule::exists('programs', 'id')->where('status', 'active')],
-            'student_code' => ['required', 'string', 'max:50', 'unique:students,student_code'],
+            'student_code' => ['sometimes', 'required', 'string', 'max:50', 'unique:students,student_code'],
             'year_level' => ['required', 'integer', 'between:1,10'],
             'phone' => ['sometimes', 'nullable', 'string', 'max:30'],
             'gender' => ['sometimes', 'nullable', 'string', 'in:male,female,other,prefer_not_to_say'],

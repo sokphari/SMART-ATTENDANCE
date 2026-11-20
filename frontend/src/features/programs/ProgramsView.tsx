@@ -1,6 +1,7 @@
 
 "use client";
 
+import { useLocale } from "@/i18n/LocaleProvider";
 import { useCallback, useEffect, useState } from "react";
 import { Plus, Search } from "lucide-react";
 import { apiFetch, ApiError } from "@/lib/api/client";
@@ -33,6 +34,7 @@ type Result<T> = {
 };
 
 export function ProgramsView() {
+  const { t } = useLocale();
   const [items, setItems] = useState<Program[]>([]);
   const [departments, setDepartments] = useState<Department[]>([]);
   const [search, setSearch] = useState("");
@@ -247,10 +249,10 @@ export function ProgramsView() {
           <table className="w-full text-left text-sm">
             <thead className="bg-canvas-subtle text-xs uppercase text-muted">
               <tr>
-                <th className="p-4">Code</th>
-                <th className="p-4">Program</th>
-                <th className="p-4">Department</th>
-                <th className="p-4">Status</th>
+                <th className="p-4">{t("Code")}</th>
+                <th className="p-4">{t("Program")}</th>
+                <th className="p-4">{t("Department")}</th>
+                <th className="p-4">{t("Status")}</th>
               </tr>
             </thead>
 

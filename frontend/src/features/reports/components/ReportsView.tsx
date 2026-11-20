@@ -1,5 +1,7 @@
 "use client";
 
+import { useLocale } from "@/i18n/LocaleProvider";
+
 import { useCallback, useEffect, useState } from "react";
 import {
   AlertCircle,
@@ -31,6 +33,7 @@ import type {
 } from "../types";
 
 export function ReportsView() {
+  const { t } = useLocale();
   const [report, setReport] = useState<AttendanceReportData | null>(null);
   const [semesters, setSemesters] = useState<SemesterOption[]>([]);
   const [sections, setSections] = useState<SectionOption[]>([]);
@@ -253,14 +256,14 @@ export function ReportsView() {
           <table className="w-full min-w-[700px] text-left text-sm">
             <thead className="bg-canvas text-xs font-bold uppercase tracking-wide text-muted">
               <tr>
-                <th className="px-5 py-3">Course Code</th>
-                <th className="px-5 py-3">Section</th>
-                <th className="px-5 py-3 text-center">Total Check-Ins</th>
-                <th className="px-5 py-3 text-center">Present</th>
-                <th className="px-5 py-3 text-center">Late</th>
-                <th className="px-5 py-3 text-center">Absent</th>
-                <th className="px-5 py-3 text-center">Excused</th>
-                <th className="px-5 py-3 text-right">Attendance Rate</th>
+                <th className="px-5 py-3">{t("Course Code")}</th>
+                <th className="px-5 py-3">{t("Section")}</th>
+                <th className="px-5 py-3 text-center">{t("Total Check-Ins")}</th>
+                <th className="px-5 py-3 text-center">{t("Present")}</th>
+                <th className="px-5 py-3 text-center">{t("Late")}</th>
+                <th className="px-5 py-3 text-center">{t("Absent")}</th>
+                <th className="px-5 py-3 text-center">{t("Excused")}</th>
+                <th className="px-5 py-3 text-right">{t("Attendance Rate")}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-hairline">

@@ -62,12 +62,16 @@ export type CourseOption = {
   course_code: string;
   name: string;
   department_id?: number;
+  program_id?: number | null;
 };
 
 export type SemesterOption = {
   id: number;
   name: string;
-  academic_year?: { name: string } | null;
+  status?: string;
+  start_date?: string;
+  end_date?: string;
+  academic_year?: { id?: number; name: string; status?: string; start_date?: string; end_date?: string } | null;
 };
 
 export type Paginated<T> = {

@@ -1,5 +1,7 @@
 "use client";
 
+import { useLocale } from "@/i18n/LocaleProvider";
+
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
@@ -13,7 +15,6 @@ import {
   UserRound,
 } from "lucide-react";
 import { ApiError } from "@/lib/api/client";
-import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Input } from "@/components/ui/Input";
@@ -24,6 +25,7 @@ import { generateStudentRegistrationLink } from "../api";
 import { fetchDepartments, fetchStudents } from "../api";
 import type { DepartmentOption, Paginated, Student } from "../types";
 import { StudentActionsMenu } from "./StudentActionsMenu";
+import { StudentStatusToggle } from "./StudentStatusToggle";
 import { QrCode } from "lucide-react";
 
 import {
@@ -36,6 +38,7 @@ export function StudentsView({
 }: {
   initialData?: Paginated<Student> | null;
 }) {
+  const { t } = useLocale();
   const router = useRouter();
   const [students, setStudents] = useState<Student[]>(initialData?.data ?? []);
   const [departments, setDepartments] = useState<DepartmentOption[]>([]);
@@ -152,7 +155,6 @@ useEffect(() => {
   function exportCsv() {
     const rows = [
       [
-        "Student ID",
         "Name",
         "Email",
         "Gender",
@@ -162,7 +164,6 @@ useEffect(() => {
         "Phone",
       ],
       ...students.map((student) => [
-        student.student_code,
         student.user?.name ?? "",
         student.user?.email ?? "",
         student.gender ?? "",
@@ -251,7 +252,7 @@ useEffect(() => {
             <Search className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted" />
             <Input
               aria-label="Search students"
-              placeholder="Search name, student ID, or email"
+              placeholder="Search by name or email"
               value={search}
               onChange={(event) => {
                 setSearch(event.target.value);
@@ -341,29 +342,28 @@ useEffect(() => {
           />
         )}
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[760px] text-left text-sm">
+          <table className="w-full min-w-[680px] text-left text-sm">
             <thead className="bg-canvas text-xs font-bold tracking-wide text-muted uppercase">
               <tr>
-                <th className="px-5 py-3">Student</th>
-                <th className="px-5 py-3">Student ID</th>
-                <th className="px-5 py-3">Gender</th>
-                <th className="px-5 py-3">Department</th>
-                <th className="px-5 py-3">Year</th>
-                <th className="px-5 py-3">Status</th>
-                <th className="px-5 py-3">Contact</th>
-                <th className="px-5 py-3 text-right">Actions</th>
+                <th className="px-5 py-3">{t("Student")}</th>
+                <th className="px-5 py-3">{t("Gender")}</th>
+                <th className="px-5 py-3">{t("Department")}</th>
+                <th className="px-5 py-3">{t("Year")}</th>
+                <th className="px-5 py-3">{t("Status")}</th>
+                <th className="px-5 py-3">{t("Contact")}</th>
+                <th className="px-5 py-3 text-right">{t("Actions")}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-hairline">
               {loading ? (
                 <tr>
-                  <td colSpan={8} className="px-5 py-12 text-center text-muted">
+                  <td colSpan={7} className="px-5 py-12 text-center text-muted">
                     Loading students…
                   </td>
                 </tr>
               ) : students.length === 0 ? (
                 <tr>
-                  <td colSpan={8} className="px-5 py-12 text-center text-muted">
+                  <td colSpan={7} className="px-5 py-12 text-center text-muted">
                     No students match these filters.
                   </td>
                 </tr>
@@ -386,11 +386,6 @@ useEffect(() => {
                       </p>
                     </td>
                     <td className="px-5 py-4">
-                      <span className="rounded-md bg-brand-50 px-2 py-1 text-xs font-semibold text-brand-700">
-                        {student.student_code}
-                      </span>
-                    </td>
-                    <td className="px-5 py-4">
                       <span
                         className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold capitalize ${
                           student.gender?.toLowerCase() === "female"
@@ -408,17 +403,11 @@ useEffect(() => {
                     </td>
                     <td className="px-5 py-4">Year {student.year_level}</td>
                     <td className="px-5 py-4">
-                      <Badge
-                        tone={
-                          student.user?.status === "active"
-                            ? "success"
-                            : student.user?.status === "suspended"
-                              ? "danger"
-                              : "neutral"
-                        }
-                      >
-                        {student.user?.status ?? "unknown"}
-                      </Badge>
+                      {canManage ? <StudentStatusToggle
+                          student={student}
+                          onUpdated={(updated) => setStudents((current) => current.map((item) => item.id === updated.id ? updated : item))}
+                          onFeedback={(message, kind) => setFeedback({ message, kind })}
+                        /> : <span className="text-sm capitalize text-muted">{student.user?.status ?? "unknown"}</span>}
                     </td>
                     <td className="px-5 py-4">{student.phone || "—"}</td>
                     <td className="px-5 py-3">
@@ -426,7 +415,7 @@ useEffect(() => {
                         <div className="flex items-center justify-end gap-1.5">
                           <button
                             type="button"
-                            aria-label={`View profile for ${student.user?.name ?? student.student_code}`}
+                            aria-label={`View profile for ${student.user?.name ?? "student"}`}
                             title="View profile"
                             onClick={() =>
                               router.push(`/students/${student.id}`)
@@ -437,7 +426,7 @@ useEffect(() => {
                           </button>
                           <button
                             type="button"
-                            aria-label={`Edit ${student.user?.name ?? student.student_code}`}
+                            aria-label={`Edit ${student.user?.name ?? "student"}`}
                             title="Edit student"
                             onClick={() =>
                               router.push(`/students/${student.id}/edit`)
@@ -449,13 +438,6 @@ useEffect(() => {
                           <StudentActionsMenu
                             student={student}
                             canManage={canManage}
-                            onStudentUpdated={(updated) =>
-                              setStudents((current) =>
-                                current.map((item) =>
-                                  item.id === updated.id ? updated : item,
-                                ),
-                              )
-                            }
                             onFeedback={(message, kind) =>
                               setFeedback({ message, kind })
                             }

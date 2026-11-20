@@ -1,5 +1,7 @@
 "use client";
 
+import { useLocale } from "@/i18n/LocaleProvider";
+
 import { useCallback, useEffect, useState } from "react";
 import { BarChart3, CheckCircle2, Clock3, UserX, UserRoundCheck } from "lucide-react";
 import { getTeacherAttendanceReport, getTeacherSectionOptions } from "../api";
@@ -7,6 +9,7 @@ import type { SectionOption } from "@/features/attendance/types";
 import type { TeacherAttendanceReport } from "../types";
 
 export function TeacherAttendanceReportView() {
+  const { t } = useLocale();
   const [report, setReport] = useState<TeacherAttendanceReport | null>(null);
   const [sections, setSections] = useState<SectionOption[]>([]);
   const [sectionId, setSectionId] = useState("");
@@ -61,7 +64,7 @@ export function TeacherAttendanceReportView() {
         </div>
         <div className="grid gap-5 xl:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)]">
           <section className="rounded-panel border border-hairline bg-card p-5 shadow-soft sm:p-6"><h2 className="font-display text-lg font-bold">Records by status</h2><p className="mt-1 text-sm text-muted">Attendance rate counts present and late records.</p><div className="mt-5 space-y-4">{statusRows.map((row) => <div key={row.key}><div className="mb-1.5 flex items-center justify-between text-sm"><span className="inline-flex items-center gap-2 font-medium"><row.icon className="size-4 text-muted" />{row.label}</span><span className="font-semibold">{row.value}</span></div><div className="h-2 overflow-hidden rounded-pill bg-slate-100 dark:bg-slate-800"><div className={`h-full rounded-pill ${row.color}`} style={{ width: `${report.total ? (row.value / report.total) * 100 : 0}%` }} /></div></div>)}</div></section>
-          <section className="overflow-hidden rounded-panel border border-hairline bg-card shadow-soft"><div className="border-b border-hairline p-5 sm:p-6"><h2 className="font-display text-lg font-bold">By class section</h2><p className="mt-1 text-sm text-muted">Only your assigned sections are included in this report.</p></div><div className="overflow-x-auto"><table className="w-full min-w-[650px] text-left text-sm"><thead className="bg-canvas text-xs uppercase tracking-wide text-muted"><tr><th className="px-4 py-3">Class</th><th className="px-4 py-3">Records</th><th className="px-4 py-3">Present</th><th className="px-4 py-3">Late</th><th className="px-4 py-3">Absent</th><th className="px-4 py-3">Rate</th></tr></thead><tbody className="divide-y divide-hairline">{report.by_section.length === 0 ? <tr><td colSpan={6} className="px-4 py-10 text-center text-muted">No attendance records match these filters.</td></tr> : report.by_section.map((row) => <tr key={row.class_section_id}><td className="px-4 py-3 font-semibold">{row.course_code} · {row.section_code}</td><td className="px-4 py-3">{row.total}</td><td className="px-4 py-3">{row.present}</td><td className="px-4 py-3">{row.late}</td><td className="px-4 py-3">{row.absent}</td><td className="px-4 py-3"><span className="rounded-pill bg-brand-50 px-2.5 py-1 text-xs font-semibold text-brand-700 dark:bg-brand-500/15 dark:text-brand-300">{row.attendance_rate.toFixed(1)}%</span></td></tr>)}</tbody></table></div></section>
+          <section className="overflow-hidden rounded-panel border border-hairline bg-card shadow-soft"><div className="border-b border-hairline p-5 sm:p-6"><h2 className="font-display text-lg font-bold">By class section</h2><p className="mt-1 text-sm text-muted">Only your assigned sections are included in this report.</p></div><div className="overflow-x-auto"><table className="w-full min-w-[650px] text-left text-sm"><thead className="bg-canvas text-xs uppercase tracking-wide text-muted"><tr><th className="px-4 py-3">{t("Class")}</th><th className="px-4 py-3">{t("Records")}</th><th className="px-4 py-3">{t("Present")}</th><th className="px-4 py-3">{t("Late")}</th><th className="px-4 py-3">{t("Absent")}</th><th className="px-4 py-3">{t("Rate")}</th></tr></thead><tbody className="divide-y divide-hairline">{report.by_section.length === 0 ? <tr><td colSpan={6} className="px-4 py-10 text-center text-muted">No attendance records match these filters.</td></tr> : report.by_section.map((row) => <tr key={row.class_section_id}><td className="px-4 py-3 font-semibold">{row.course_code} · {row.section_code}</td><td className="px-4 py-3">{row.total}</td><td className="px-4 py-3">{row.present}</td><td className="px-4 py-3">{row.late}</td><td className="px-4 py-3">{row.absent}</td><td className="px-4 py-3"><span className="rounded-pill bg-brand-50 px-2.5 py-1 text-xs font-semibold text-brand-700 dark:bg-brand-500/15 dark:text-brand-300">{row.attendance_rate.toFixed(1)}%</span></td></tr>)}</tbody></table></div></section>
         </div>
       </>}
     </div>

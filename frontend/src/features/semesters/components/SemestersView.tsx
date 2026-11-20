@@ -1,5 +1,7 @@
 "use client";
 
+import { useLocale } from "@/i18n/LocaleProvider";
+
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { CalendarDays, Pencil, Plus, Search } from "lucide-react";
@@ -13,6 +15,7 @@ import { fetchAcademicYearOptions, fetchSemesters } from "../api";
 import type { AcademicYearOption, Semester } from "../types";
 
 export function SemestersView() {
+  const { t } = useLocale();
   const router = useRouter();
   const [items, setItems] = useState<Semester[]>([]);
   const [years, setYears] = useState<AcademicYearOption[]>([]);
@@ -172,12 +175,12 @@ export function SemestersView() {
           <table className="w-full min-w-[850px] text-left text-sm">
             <thead className="bg-canvas text-xs font-bold uppercase tracking-wide text-muted">
               <tr>
-                <th className="px-5 py-3">Semester</th>
-                <th className="px-5 py-3">Academic year</th>
-                <th className="px-5 py-3">Start date</th>
-                <th className="px-5 py-3">End date</th>
-                <th className="px-5 py-3">Status</th>
-                <th className="px-5 py-3 text-right">Action</th>
+                <th className="px-5 py-3">{t("Semester")}</th>
+                <th className="px-5 py-3">{t("Academic year")}</th>
+                <th className="px-5 py-3">{t("Start date")}</th>
+                <th className="px-5 py-3">{t("End date")}</th>
+                <th className="px-5 py-3">{t("Status")}</th>
+                <th className="px-5 py-3 text-right">{t("Action")}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-hairline">

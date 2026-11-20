@@ -1,17 +1,21 @@
 "use client";
 
+import { useLocale } from "@/i18n/LocaleProvider";
+
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   AlertCircle,
+  CalendarDays,
   CheckCircle2,
   Clock,
   GraduationCap,
   Layers,
   LayoutGrid,
-  MoreHorizontal,
+  Pause,
   Pencil,
   Plus,
+  Play,
   RotateCcw,
   Search,
   Table as TableIcon,
@@ -61,6 +65,7 @@ type DepartmentOption = {
 };
 
 export function ClassSectionsView() {
+  const { t } = useLocale();
   const router = useRouter();
   const [items, setItems] = useState<ClassSection[]>([]);
   const [semesters, setSemesters] = useState<SemesterOption[]>([]);
@@ -514,17 +519,17 @@ export function ClassSectionsView() {
                     </div>
 
                     {section.status === "active" ? (
-                      <span className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-0.5 text-xs font-semibold text-emerald-700 dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:text-emerald-400">
+                      <span className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-sm font-bold text-emerald-700 dark:border-emerald-500/40 dark:bg-emerald-500/10 dark:text-emerald-300">
                         <CheckCircle2 className="size-3.5" />
                         Active
                       </span>
                     ) : section.status === "pending_setup" ? (
-                      <span className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-amber-200 bg-amber-50 px-2.5 py-0.5 text-xs font-semibold text-amber-700 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-400">
+                      <span className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-sm font-bold text-amber-700 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-300">
                         <AlertCircle className="size-3.5" />
                         Setup needed
                       </span>
                     ) : (
-                      <span className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-rose-200 bg-rose-50 px-2.5 py-0.5 text-xs font-semibold text-rose-700 dark:border-rose-500/30 dark:bg-rose-500/10 dark:text-rose-400">
+                      <span className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-rose-200 bg-rose-50 px-3 py-1 text-sm font-bold text-rose-700 dark:border-rose-500/30 dark:bg-rose-500/10 dark:text-rose-300">
                         <AlertCircle className="size-3.5" />
                         Inactive
                       </span>
@@ -556,7 +561,7 @@ export function ClassSectionsView() {
                         <Clock className="size-3.5 text-muted" />
                         <span>
                           {section.schedules && section.schedules.length > 0
-                            ? `${formatDayOfWeek(section.schedules[0].day_of_week)} ${section.schedules[0].start_time}`
+                            ? `${formatDayOfWeek(section.schedules[0].day_of_week)} ${section.schedules[0].start_time.slice(0, 5)}–${section.schedules[0].end_time.slice(0, 5)}`
                             : "Not scheduled"}
                         </span>
                       </div>
@@ -565,9 +570,10 @@ export function ClassSectionsView() {
                       <span className="text-xs font-medium text-muted">
                         Semester
                       </span>
-                      <p className="mt-1 text-sm font-bold text-ink">
+                      <span className="mt-1 inline-flex items-center gap-1.5 rounded-full border border-brand-200 bg-brand-50 px-3 py-1 text-xs font-bold text-brand-700 dark:border-brand-400/30 dark:bg-brand-500/10 dark:text-brand-300">
+                        <CalendarDays className="size-3.5" />
                         {section.semester?.name ?? "Not assigned"}
-                      </p>
+                      </span>
                     </div>
                   </div>
 
@@ -616,14 +622,12 @@ export function ClassSectionsView() {
                     <button
                       type="button"
                       onClick={() => handleToggleStatus(section)}
-                      title={
-                        section.status === "active"
-                          ? "Deactivate section"
-                          : "Activate section"
-                      }
-                      className="flex size-10 shrink-0 cursor-pointer items-center justify-center rounded-full border border-hairline bg-canvas text-ink transition-all hover:border-brand-300 hover:bg-brand-50 hover:text-brand-700 active:scale-[0.98] dark:hover:border-brand-700 dark:hover:bg-brand-950/60 dark:hover:text-brand-300"
+                      aria-label={`${section.status === "active" ? "Deactivate" : "Activate"} section ${sectionDisplay}`}
+                      title={section.status === "active" ? "Deactivate section" : "Activate section"}
+                      className={`flex h-11 shrink-0 cursor-pointer items-center justify-center gap-2 rounded-full border px-4 text-sm font-bold transition-all active:scale-[0.98] ${section.status === "active" ? "border-rose-500/50 bg-rose-500/10 text-rose-300 hover:bg-rose-500/20" : "border-emerald-500/50 bg-emerald-500/10 text-emerald-300 hover:bg-emerald-500/20"}`}
                     >
-                      <MoreHorizontal className="size-4" />
+                      {section.status === "active" ? <Pause className="size-4" /> : <Play className="size-4" />}
+                      <span>{section.status === "active" ? "Deactivate" : "Activate"}</span>
                     </button>
                   </div>
                 </div>
@@ -638,13 +642,13 @@ export function ClassSectionsView() {
             <table className="w-full min-w-[760px] text-left text-sm">
               <thead className="bg-canvas text-xs font-bold uppercase tracking-wide text-muted">
                 <tr>
-                  <th className="px-5 py-3.5">Course</th>
-                  <th className="px-5 py-3.5">Section</th>
-                  <th className="px-5 py-3.5">Semester</th>
-                  <th className="px-5 py-3.5">Teacher</th>
-                  <th className="px-5 py-3.5">Capacity</th>
-                  <th className="px-5 py-3.5">Status</th>
-                  <th className="px-5 py-3.5 text-right">Actions</th>
+                  <th className="px-5 py-3.5">{t("Course")}</th>
+                  <th className="px-5 py-3.5">{t("Section")}</th>
+                  <th className="px-5 py-3.5">{t("Semester")}</th>
+                  <th className="px-5 py-3.5">{t("Teacher")}</th>
+                  <th className="px-5 py-3.5">{t("Capacity")}</th>
+                  <th className="px-5 py-3.5">{t("Status")}</th>
+                  <th className="px-5 py-3.5 text-right">{t("Actions")}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-hairline">
@@ -726,13 +730,15 @@ export function ClassSectionsView() {
                           <Button
                             type="button"
                             variant="secondary"
-                            size="sm"
+                            size="icon"
                             onClick={() =>
                               router.push(`/class-sections/${section.id}`)
                             }
-                            className="text-xs rounded-xl"
+                            aria-label={`View students in section ${section.section_code}`}
+                            title="View students"
+                            className="border-brand-500/20 bg-brand-500/10 text-brand-400 hover:bg-brand-500/20"
                           >
-                            Students
+                            <Users className="size-4" />
                           </Button>
                           <Button
                             type="button"

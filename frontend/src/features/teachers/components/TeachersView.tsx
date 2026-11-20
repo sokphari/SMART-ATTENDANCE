@@ -1,5 +1,7 @@
 "use client";
 
+import { useLocale } from "@/i18n/LocaleProvider";
+
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
@@ -12,7 +14,6 @@ import {
   X,
 } from "lucide-react";
 import { ApiError } from "@/lib/api/client";
-import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Input } from "@/components/ui/Input";
@@ -20,10 +21,12 @@ import { PageHeader } from "@/components/ui/PageHeader";
 import { fetchTeacherDepartments, fetchTeachers } from "../api";
 import type { DepartmentOption, Teacher } from "../types";
 import { TeacherRowActions } from "./TeacherRowActions";
+import { TeacherStatusToggle } from "./TeacherStatusToggle";
 
 const NOTICE_KEY = "sa_teacher_notice";
 
 export function TeachersView() {
+  const { t } = useLocale();
   const router = useRouter();
   const [items, setItems] = useState<Teacher[]>([]);
   const [departments, setDepartments] = useState<DepartmentOption[]>([]);
@@ -141,7 +144,7 @@ export function TeachersView() {
             <Search className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted" />
             <Input
               aria-label="Search teachers"
-              placeholder="Search name, teacher ID, or email"
+              placeholder="Search by name or email"
               value={search}
               onChange={(event) => {
                 setSearch(event.target.value);
@@ -230,29 +233,26 @@ export function TeachersView() {
           </div>
         )}
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[900px] text-left text-sm">
+          <table className="w-full min-w-[760px] text-left text-sm">
             <thead className="bg-canvas text-xs font-bold uppercase tracking-wide text-muted">
               <tr>
-                <th className="px-5 py-3">Teacher</th>
-                <th className="px-5 py-3">Teacher ID</th>
-                <th className="px-5 py-3">Department</th>
-                <th className="px-5 py-3">Phone</th>
-                <th className="px-5 py-3">Status</th>
-                <th scope="col" className="w-40 px-5 py-3 text-right">
-                  Actions
-                </th>
+                <th className="px-5 py-3">{t("Teacher")}</th>
+                <th className="px-5 py-3">{t("Department")}</th>
+                <th className="px-5 py-3">{t("Phone")}</th>
+                <th className="px-5 py-3">{t("Status")}</th>
+                <th scope="col" className="px-5 py-3 text-right">{t("Actions")}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-hairline">
               {loading ? (
                 <tr>
-                  <td colSpan={6} className="px-5 py-12 text-center text-muted">
+                  <td colSpan={5} className="px-5 py-12 text-center text-muted">
                     Loading teachers…
                   </td>
                 </tr>
               ) : items.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="px-5 py-12 text-center text-muted">
+                  <td colSpan={5} className="px-5 py-12 text-center text-muted">
                     No teachers match these filters.
                   </td>
                 </tr>
@@ -275,42 +275,21 @@ export function TeachersView() {
                       </p>
                     </td>
                     <td className="px-5 py-4">
-                      <span className="rounded-md bg-brand-50 px-2 py-1 text-xs font-bold text-brand-700">
-                        {teacher.teacher_code}
-                      </span>
-                    </td>
-                    <td className="px-5 py-4">
                       {teacher.department?.name ?? "—"}
                     </td>
                     <td className="px-5 py-4">{teacher.phone || "—"}</td>
                     <td className="px-5 py-4">
-                      <Badge
-                        tone={
-                          teacher.user?.status === "active"
-                            ? "success"
-                            : teacher.user?.status === "suspended"
-                              ? "danger"
-                              : "neutral"
-                        }
-                      >
-                        {teacher.user?.status ?? "unknown"}
-                      </Badge>
+                      <TeacherStatusToggle
+                          teacher={teacher}
+                          onUpdated={(updated) => setItems((current) => current.map((item) => item.id === updated.id ? updated : item))}
+                          onFeedback={(message, kind) => setNotice({ message, kind })}
+                        />
                     </td>
-                    <td className="w-40 px-4 py-3">
+                    <td className="px-4 py-3">
                       <TeacherRowActions
                         teacher={teacher}
                         onEdit={() =>
                           router.push(`/teachers/${teacher.id}/edit`)
-                        }
-                        onUpdated={(updated) =>
-                          setItems((current) =>
-                            current.map((item) =>
-                              item.id === updated.id ? updated : item,
-                            ),
-                          )
-                        }
-                        onFeedback={(message, kind) =>
-                          setNotice({ message, kind })
                         }
                       />
                     </td>

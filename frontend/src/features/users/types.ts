@@ -4,6 +4,7 @@ export type ManagedUser = {
   email: string;
   role: "admin" | "teacher" | "student" | string;
   status: "active" | "inactive" | "suspended" | string;
+  teacher_id?: number | null;
   created_at: string;
 };
 

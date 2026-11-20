@@ -420,22 +420,27 @@ export function BuildingsView() {
 
       {wizardOpen && (
         <Card className="mb-4 w-full overflow-hidden">
-          <div className="flex items-start justify-between gap-3 border-b border-hairline p-3 sm:px-4">
-            <div>
-              <h2 className="text-base font-bold">
-                {step === 5 ? "Building created" : "Create a new building"}
-              </h2>
-              <p className="mt-0.5 text-xs text-muted">
-                {step === 5 ? "Your building and classrooms are ready." : "Complete each step, then review before saving."}
-              </p>
+          <div className="flex items-start justify-between gap-4 border-b border-hairline bg-canvas-subtle px-5 py-4 sm:px-6">
+            <div className="flex min-w-0 items-start gap-3">
+              <span className="flex size-10 shrink-0 items-center justify-center rounded-control bg-brand-50 text-brand-600 dark:bg-brand-950/60 dark:text-brand-300">
+                {step === 5 ? <CheckCircle2 className="size-5" /> : <Building2 className="size-5" />}
+              </span>
+              <div>
+                <h2 className="text-lg font-bold">
+                  {step === 5 ? "Building created" : step === 1 ? "Create a new building" : steps[step - 1]?.label}
+                </h2>
+                <p className="mt-0.5 text-sm text-muted">
+                  {step === 5 ? "Your building and classrooms are ready." : `Step ${step} of 4 · ${step === 1 ? "Start with the building identity, then add floors and classrooms." : "Complete this step to continue through the setup."}`}
+                </p>
+              </div>
             </div>
-            <Button variant="secondary" size="icon" aria-label="Close wizard" onClick={closeWizard} disabled={saving}>
+            {step < 5 && <Button variant="secondary" size="icon" aria-label="Close wizard" onClick={closeWizard} disabled={saving}>
               <X className="size-4" />
-            </Button>
+            </Button>}
           </div>
 
           {step < 5 && (
-            <ol className="grid grid-cols-4 gap-1 border-b border-hairline px-3 py-2 sm:gap-2 sm:px-4">
+            <ol aria-label="Building setup progress" className="grid grid-cols-2 gap-2 border-b border-hairline px-5 py-4 sm:grid-cols-4 sm:px-6">
               {steps.map((item, index) => {
                 const current = index + 1;
                 const Icon = item.icon;
@@ -446,9 +451,9 @@ export function BuildingsView() {
                       disabled={current > step || saving}
                       onClick={() => { setStep(current); setFormError(""); }}
                       aria-current={current === step ? "step" : undefined}
-                      className="flex w-full flex-col items-center justify-center gap-1 rounded-control px-1 py-1 sm:flex-row sm:gap-2 disabled:cursor-default"
+                      className={`flex min-h-12 w-full items-center gap-2 rounded-control border px-3 py-2 text-left transition-colors disabled:cursor-not-allowed disabled:opacity-55 ${current === step ? "border-brand-400 bg-brand-50 dark:bg-brand-950/60" : current < step ? "border-success/30 bg-success-soft" : "border-hairline bg-card"}`}
                     >
-                      <span className={`flex size-7 shrink-0 items-center justify-center rounded-full border text-xs font-bold transition-colors ${
+                      <span className={`flex size-8 shrink-0 items-center justify-center rounded-full border text-xs font-bold transition-colors ${
                         current < step
                           ? "border-emerald-500 bg-emerald-500 text-white"
                           : current === step
@@ -457,9 +462,7 @@ export function BuildingsView() {
                       }`}>
                         {current < step ? <Check className="size-3.5" /> : <Icon className="size-3.5" />}
                       </span>
-                      <span className={`text-center text-[11px] font-semibold sm:text-xs ${
-                        current === step ? "text-ink" : "text-muted"
-                      }`}>{item.label}</span>
+                      <span className={`text-xs font-semibold ${current === step ? "text-ink" : "text-muted"}`}>{item.label}</span>
                     </button>
                   </li>
                 );
@@ -467,43 +470,65 @@ export function BuildingsView() {
             </ol>
           )}
 
-          <div className="space-y-3 p-3 sm:p-4">
+          <div className="space-y-5 p-5 sm:p-6">
             {step === 1 && (
-              <div className="grid gap-3 md:grid-cols-2">
-                <div>
-                  <label htmlFor="setup-building-code" className={labelStyle}>{t("Building code *")}</label>
-                  <Input className="h-9" id="setup-building-code" maxLength={30} placeholder="e.g. A1" value={buildingForm.code}
-                    onChange={(event) => {
-                      setBuildingForm((value) => ({ ...value, code: event.target.value.toUpperCase() }));
-                      setFormError("");
-                    }} />
-                </div>
-                <div>
-                  <label htmlFor="setup-building-name" className={labelStyle}>{t("Building name *")}</label>
-                  <Input className="h-9" id="setup-building-name" maxLength={150} placeholder="e.g. Building A" value={buildingForm.name}
-                    onChange={(event) => {
-                      setBuildingForm((value) => ({ ...value, name: event.target.value }));
-                      setFormError("");
-                    }} />
-                </div>
-                <div className="md:col-span-2">
-                  <button type="button" aria-expanded={showDescription} aria-controls="setup-description-panel"
-                    className="flex items-center gap-1.5 text-xs font-semibold text-brand-700 hover:underline"
-                    onClick={() => setShowDescription((value) => !value)}>
-                    <ChevronDown className={`size-3.5 transition-transform ${showDescription ? "rotate-180" : ""}`} />
-                    {showDescription ? "Hide description" : "Add description (optional)"}
-                  </button>
-                  {showDescription && (
-                    <div id="setup-description-panel" className="mt-2">
-                      <label htmlFor="setup-building-description" className={labelStyle}>{t("Description (optional)")}</label>
-                      <textarea id="setup-building-description" rows={2} maxLength={5000}
-                        className={`${selectStyle} h-auto min-h-16 py-2`}
-                        placeholder="Where is this building located?"
-                        value={buildingForm.description}
-                        onChange={(event) => setBuildingForm((value) => ({ ...value, description: event.target.value }))} />
+              <div className="grid gap-6 lg:grid-cols-[minmax(0,1.2fr)_minmax(16rem,0.8fr)]">
+                <section className="space-y-5">
+                  <div>
+                    <h3 className="font-display text-base font-bold">Building details</h3>
+                    <p className="mt-1 text-sm text-muted">Choose a short code and a name staff can recognize.</p>
+                  </div>
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    <div>
+                      <label htmlFor="setup-building-code" className={labelStyle}>{t("Building code *")}</label>
+                      <Input className="h-11" id="setup-building-code" maxLength={30} placeholder="e.g. A1" autoComplete="off" value={buildingForm.code}
+                        onChange={(event) => {
+                          setBuildingForm((value) => ({ ...value, code: event.target.value.toUpperCase() }));
+                          setFormError("");
+                        }} />
+                      <p className="mt-1.5 text-xs text-muted">Short, unique, and easy to identify.</p>
                     </div>
-                  )}
-                </div>
+                    <div>
+                      <label htmlFor="setup-building-name" className={labelStyle}>{t("Building name *")}</label>
+                      <Input className="h-11" id="setup-building-name" maxLength={150} placeholder="e.g. Main Campus Building A" value={buildingForm.name}
+                        onChange={(event) => {
+                          setBuildingForm((value) => ({ ...value, name: event.target.value }));
+                          setFormError("");
+                        }} />
+                      <p className="mt-1.5 text-xs text-muted">This name appears throughout room and class setup.</p>
+                    </div>
+                  </div>
+                  <div>
+                    <button type="button" aria-expanded={showDescription} aria-controls="setup-description-panel"
+                      className="flex items-center gap-1.5 text-sm font-semibold text-brand-700 hover:underline"
+                      onClick={() => setShowDescription((value) => !value)}>
+                      <ChevronDown className={`size-4 transition-transform ${showDescription ? "rotate-180" : ""}`} />
+                      {showDescription ? "Hide description" : "Add description (optional)"}
+                    </button>
+                    {showDescription && (
+                      <div id="setup-description-panel" className="mt-3">
+                        <label htmlFor="setup-building-description" className={labelStyle}>{t("Description (optional)")}</label>
+                        <textarea id="setup-building-description" rows={3} maxLength={5000}
+                          className={`${selectStyle} h-auto min-h-24 py-2`}
+                          placeholder="Where is this building located?"
+                          value={buildingForm.description}
+                          onChange={(event) => setBuildingForm((value) => ({ ...value, description: event.target.value }))} />
+                      </div>
+                    )}
+                  </div>
+                </section>
+                <aside className="rounded-panel border border-brand-200 bg-gradient-to-br from-brand-50 to-card p-5 dark:border-brand-700/60 dark:from-brand-950/70 dark:to-card">
+                  <div className="flex size-12 items-center justify-center rounded-panel bg-brand-600 text-white shadow-soft"><Building2 className="size-6" /></div>
+                  <p className="mt-5 text-xs font-bold uppercase tracking-wide text-muted">Building preview</p>
+                  <h3 className="mt-1 break-words font-display text-xl font-bold">{buildingForm.name.trim() || "Your building name"}</h3>
+                  <span className="mt-3 inline-flex rounded-pill border border-brand-200 bg-card px-3 py-1 font-mono text-sm font-bold text-brand-700 dark:border-brand-400/40 dark:bg-brand-900/50 dark:text-brand-200">
+                    {buildingForm.code.trim().toUpperCase() || "CODE"}
+                  </span>
+                  <div className="mt-5 border-t border-brand-200/70 pt-4 text-sm text-muted dark:border-brand-700/60">
+                    <p className="font-semibold text-ink">What happens next?</p>
+                    <p className="mt-1">Add floors, then add classrooms and their seating capacity. GPS coordinates are optional.</p>
+                  </div>
+                </aside>
               </div>
             )}
 
@@ -689,7 +714,7 @@ export function BuildingsView() {
           </div>
 
           {step < 5 && (
-            <div className="flex flex-wrap items-center justify-between gap-2 border-t border-hairline px-3 py-2.5 sm:px-4">
+            <div className="flex flex-wrap items-center justify-between gap-3 border-t border-hairline px-5 py-4 sm:px-6">
               <Button variant="secondary" disabled={step === 1 || saving} onClick={() => { setStep((value) => value - 1); setFormError(""); }}>
                 <ArrowLeft className="size-4" /> Back
               </Button>

@@ -169,9 +169,16 @@ export function LoginForm() {
             </p>
 
             {error && (
-              <div className="mt-6 flex items-start gap-3 rounded-control border border-red-100 bg-danger-soft p-3.5 text-sm font-medium text-red-800">
+              <div role="alert" aria-live="assertive" className="mt-6 flex items-start gap-3 rounded-control border border-red-100 bg-danger-soft p-3.5 text-sm font-medium text-red-800">
                 <AlertCircle className="mt-0.5 size-4.5 shrink-0" />
-                <span>{error.message}</span>
+                <div>
+                  <p>{error.message}</p>
+                  {error.status === 502 && (
+                    <p className="mt-1 text-xs font-normal">
+                      The API proxy could not reach Laravel. In Docker, check that it targets http://nginx; for local development, check that Nginx is running at http://localhost:8001.
+                    </p>
+                  )}
+                </div>
               </div>
             )}
 

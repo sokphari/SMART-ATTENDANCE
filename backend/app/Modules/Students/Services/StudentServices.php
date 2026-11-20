@@ -98,7 +98,7 @@ class StudentServices
                 'user_id' => $user->id,
                 'department_id' => $data['department_id'],
                 'program_id' => $data['program_id'] ?? null,
-                'student_code' => $data['student_code'],
+                'student_code' => $data['student_code'] ?? $this->generateStudentCode(),
                 'year_level' => $data['year_level'],
                 'phone' => $data['phone'] ?? null,
                 'gender' => $data['gender'] ?? null,

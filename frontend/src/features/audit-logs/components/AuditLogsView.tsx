@@ -1,5 +1,7 @@
 "use client";
 
+import { useLocale } from "@/i18n/LocaleProvider";
+
 import { useCallback, useEffect, useState } from "react";
 import {
   AlertCircle,
@@ -23,6 +25,7 @@ import { fetchAuditLogs } from "../api";
 import type { AuditLog } from "../types";
 
 export function AuditLogsView() {
+  const { t } = useLocale();
   const [items, setItems] = useState<AuditLog[]>([]);
   const [action, setAction] = useState("");
   const [dateFrom, setDateFrom] = useState("");
@@ -159,12 +162,12 @@ export function AuditLogsView() {
           <table className="w-full min-w-[800px] text-left text-sm">
             <thead className="bg-canvas text-xs font-bold uppercase tracking-wide text-muted">
               <tr>
-                <th className="px-5 py-3">Timestamp</th>
-                <th className="px-5 py-3">Actor / User</th>
-                <th className="px-5 py-3">Action</th>
-                <th className="px-5 py-3">Target Entity</th>
-                <th className="px-5 py-3">IP Address</th>
-                <th className="px-5 py-3 text-right">Details</th>
+                <th className="px-5 py-3">{t("Timestamp")}</th>
+                <th className="px-5 py-3">{t("Actor / User")}</th>
+                <th className="px-5 py-3">{t("Action")}</th>
+                <th className="px-5 py-3">{t("Target Entity")}</th>
+                <th className="px-5 py-3">{t("IP Address")}</th>
+                <th className="px-5 py-3 text-right">{t("Details")}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-hairline">

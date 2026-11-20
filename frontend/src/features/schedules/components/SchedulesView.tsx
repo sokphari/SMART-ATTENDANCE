@@ -1,5 +1,7 @@
 "use client";
 
+import { useLocale } from "@/i18n/LocaleProvider";
+
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
@@ -101,6 +103,7 @@ function findVisibleConflicts(items: ClassSchedule[], config: TimetableConfig | 
 }
 
 export function SchedulesView() {
+  const { t } = useLocale();
   const router = useRouter();
   const [items, setItems] = useState<ClassSchedule[]>([]);
   const [classrooms, setClassrooms] = useState<ClassroomOption[]>([]);
@@ -572,14 +575,14 @@ export function SchedulesView() {
           <table className="w-full min-w-[1120px] text-left text-sm">
             <thead className="bg-canvas text-xs font-bold uppercase tracking-wide text-muted">
               <tr>
-                <th className="px-5 py-3">Day</th>
-                <th className="px-5 py-3">Study Period</th>
-                <th className="px-5 py-3">Time Window</th>
-                <th className="px-5 py-3">Course & Section</th>
-                <th className="px-5 py-3">Teacher</th>
-                <th className="px-5 py-3">Classroom</th>
-                <th className="px-5 py-3">Status</th>
-                <th className="px-5 py-3 text-right">Actions</th>
+                <th className="px-5 py-3">{t("Day")}</th>
+                <th className="px-5 py-3">{t("Study Period")}</th>
+                <th className="px-5 py-3">{t("Time Window")}</th>
+                <th className="px-5 py-3">{t("Course & Section")}</th>
+                <th className="px-5 py-3">{t("Teacher")}</th>
+                <th className="px-5 py-3">{t("Classroom")}</th>
+                <th className="px-5 py-3">{t("Status")}</th>
+                <th className="px-5 py-3 text-right">{t("Actions")}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-hairline">

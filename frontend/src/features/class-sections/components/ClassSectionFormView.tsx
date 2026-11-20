@@ -42,19 +42,26 @@ export function ClassSectionFormView({ mode }: { mode: "create" | "edit" }) {
   const [buildings, setBuildings] = useState<SetupOption[]>([]);
   const [floors, setFloors] = useState<SetupOption[]>([]);
   const [rooms, setRooms] = useState<RoomOption[]>([]);
+  const [optionsLoading, setOptionsLoading] = useState(true);
   const [loading, setLoading] = useState(mode === "edit");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
 
   useEffect(() => {
+    setOptionsLoading(true);
     Promise.all([
       fetchCoursesOptions().then(r => setCourses(r.data)),
-      fetchSemestersOptions().then(r => setSemesters(r.data)),
+      fetchSemestersOptions().then(r => { setSemesters(r.data); return r; }),
       fetchSetupOptions("departments").then(r => setDepartments(r.data)),
       fetchSetupOptions("programs").then(r => setPrograms(r.data)),
-      apiFetch<{ data: TeacherOption[] }>("/api/v1/admin/teachers?per_page=100").then(r => setTeachers(r.data.filter(t => t.user?.status === "active"))),
+      apiFetch<{ data: TeacherOption[] }>("/api/v1/admin/teachers?status=active&per_page=100").then(r => setTeachers(r.data.filter(t => t.user?.status === "active"))),
       fetchSetupOptions("buildings").then(r => setBuildings(r.data)),
-    ]).catch(caught => setError(caught instanceof ApiError ? caught.message : "Could not load class setup options."));
+    ]).then(([, semesterResult]) => {
+      setSemesters(semesterResult.data.filter(semester =>
+        ["active", "upcoming"].includes(semester.status ?? "")
+        && ["active", "upcoming"].includes(semester.academic_year?.status ?? ""),
+      ));
+    }).catch(caught => setError(caught instanceof ApiError ? caught.message : "Could not load class setup options.")).finally(() => setOptionsLoading(false));
     if (mode === "edit") {
       if (!Number.isInteger(id) || id < 1) { setError("Section not found."); setLoading(false); return; }
       fetchClassSection(id).then(({ data }) => {
@@ -77,18 +84,67 @@ export function ClassSectionFormView({ mode }: { mode: "create" | "edit" }) {
     setScheduleRows(rows => rows.map(row => ({ ...row, classroom_id: 0 })));
   }, [selectedFloor]);
 
-  const departmentPrograms = useMemo(() => programs.filter(p => !p.department_id || p.department_id === departmentId), [programs, departmentId]);
+  const departmentPrograms = useMemo(() => programs.filter(p => p.department_id === departmentId), [programs, departmentId]);
   const departmentCourses = useMemo(() => courses.filter(c => !departmentId || c.department_id === departmentId), [courses, departmentId]);
   const departmentTeachers = useMemo(() => teachers.filter(t => !departmentId || t.department_id === departmentId), [teachers, departmentId]);
+  const selectedCourse = courses.find(course => course.id === form.course_id);
+  const selectedSemester = semesters.find(semester => semester.id === form.semester_id);
+  const coursePrograms = useMemo(() => departmentPrograms.filter(program => !selectedCourse?.program_id || program.id === selectedCourse.program_id), [departmentPrograms, selectedCourse?.program_id]);
   const selectedRoom = (roomId: number) => rooms.find(r => r.id === roomId);
+
+  function validateStep(stepIndex: number): string {
+    if (stepIndex === 0) {
+      if (!departmentId || !departments.some(department => department.id === departmentId)) return "Select an active department to continue.";
+      if (programId && !departmentPrograms.some(program => program.id === programId)) return "Select a program that belongs to the selected department.";
+      if (!form.course_id || !departmentCourses.some(course => course.id === form.course_id)) return "Select a course that belongs to the selected department.";
+      if (selectedCourse?.program_id && programId !== selectedCourse.program_id) return "Select the program assigned to this course.";
+      if (!form.semester_id || !semesters.some(semester => semester.id === form.semester_id)) return "Select an active or upcoming semester and academic year.";
+      if (!form.section_code.trim()) return "Enter a section name or code.";
+    }
+
+    if (stepIndex === 1) {
+      if (!teacherId || !departmentTeachers.some(teacher => teacher.id === teacherId)) return "Select an active teacher from the selected department.";
+      if (!Number.isInteger(form.capacity) || form.capacity < 1 || form.capacity > 500) return "Set a class capacity between 1 and 500 students.";
+    }
+
+    if (stepIndex === 2) {
+      if (!selectedBuilding || !buildings.some(building => building.id === selectedBuilding)) return "Select an active building.";
+      if (!selectedFloor || !floors.some(floor => floor.id === selectedFloor)) return "Select a floor from the selected building.";
+      if (scheduleRows.length === 0) return "Add at least one weekly timetable session.";
+      for (const [index, row] of scheduleRows.entries()) {
+        if (!days[row.day_of_week]) return `Select a day for timetable session ${index + 1}.`;
+        if (!row.start_time || !row.end_time || row.end_time <= row.start_time) return `Set a valid start and end time for timetable session ${index + 1}.`;
+        if (!row.classroom_id || !rooms.some(room => room.id === row.classroom_id)) return `Choose an active classroom on the selected floor for timetable session ${index + 1}.`;
+      }
+      if (!dateRange.start || !dateRange.end || dateRange.end < dateRange.start) return "Choose a valid class start and end date.";
+      if (selectedSemester?.start_date && dateRange.start < selectedSemester.start_date) return "The class start date cannot be before the selected semester.";
+      if (selectedSemester?.end_date && dateRange.end > selectedSemester.end_date) return "The class end date cannot be after the selected semester.";
+    }
+
+    return "";
+  }
+
+  function continueToNextStep() {
+    const message = validateStep(step);
+    if (message) {
+      setError(message);
+      return;
+    }
+    setError("");
+    setStep(current => Math.min(3, current + 1));
+  }
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (mode === "create") {
-      if (!form.course_id || !form.semester_id || !departmentId || !teacherId || !scheduleRows.length || scheduleRows.some(r => !r.classroom_id)) {
-        setError("Complete the course, semester, teacher, and classroom schedule fields before creating the class."); return;
+      for (let index = 0; index < 3; index += 1) {
+        const message = validateStep(index);
+        if (message) {
+          setStep(index);
+          setError(message);
+          return;
+        }
       }
-      if (!dateRange.start || !dateRange.end) { setError("Select the class date range."); return; }
     }
     setSaving(true); setError("");
     const payload: ClassSectionInput = {
@@ -119,18 +175,18 @@ export function ClassSectionFormView({ mode }: { mode: "create" | "edit" }) {
   return <>
     <PageHeader title={title} description={mode === "create" ? "Set up the class, assigned teacher, room, and weekly timetable." : "Update class section details."} actions={<Button variant="secondary" size="sm" onClick={() => router.push("/class-sections")}><ArrowLeft className="size-4"/>Back to sections</Button>}/>
     {loading ? <Card className="w-full p-8 text-sm text-muted">Loading section details…</Card> : <Card className="w-full p-5 sm:p-7">
-      {mode === "create" && <ol aria-label="Class setup progress" className="mb-6 grid grid-cols-2 gap-2 md:grid-cols-4">{stepNames.map((name, index) => <li key={name}><button type="button" onClick={() => setStep(index)} aria-current={step === index ? "step" : undefined} className={`w-full rounded-control border px-3 py-2 text-left text-xs font-semibold ${step === index ? "border-brand-500 bg-brand-50 text-brand-700" : "border-hairline text-muted"}`}><span className="mr-2">{index + 1}</span>{name}</button></li>)}</ol>}
+      {mode === "create" && <ol aria-label="Class setup progress" className="mb-6 grid grid-cols-2 gap-2 md:grid-cols-4">{stepNames.map((name, index) => <li key={name}><button type="button" disabled={index > step || saving} onClick={() => { if (index <= step) { setStep(index); setError(""); } }} aria-current={step === index ? "step" : undefined} className={`w-full rounded-control border px-3 py-2 text-left text-xs font-semibold disabled:cursor-not-allowed disabled:opacity-50 ${step === index ? "border-brand-500 bg-brand-50 text-brand-700" : index < step ? "border-success/40 bg-success-soft text-success" : "border-hairline text-muted"}`}><span className="mr-2">{index < step ? "✓" : index + 1}</span>{name}</button></li>)}</ol>}
       <form onSubmit={submit} className="grid gap-5 sm:grid-cols-2">
         {(mode === "edit" || step === 0) && <>
-          {select("1. Department", departmentId, setDepartmentId, departments.map(d => ({ id: d.id, label: `${d.code ?? ""} ${d.name}`.trim() })), "Select department")}
-          {select("2. Program", programId, setProgramId, departmentPrograms.map(p => ({ id: p.id, label: `${p.code ?? ""} ${p.name}`.trim() })), "Select program (optional)", !departmentId)}
+          {select("1. Department", departmentId, value => { setDepartmentId(value); setProgramId(0); setTeacherId(0); setForm(current => ({ ...current, course_id: 0 })); }, departments.map(d => ({ id: d.id, label: `${d.code ?? ""} ${d.name}`.trim() })), optionsLoading ? "Loading active departments…" : departments.length ? "Select department" : "No active departments available", optionsLoading)}
+          {select("2. Program", programId, setProgramId, coursePrograms.map(p => ({ id: p.id, label: `${p.code ?? ""} ${p.name}`.trim() })), selectedCourse?.program_id ? "Course program (required)" : departmentPrograms.length ? "Select program (optional)" : "No active programs for this department", optionsLoading || !departmentId || Boolean(selectedCourse?.program_id))}
           <label className="space-y-1.5 text-sm font-semibold">Student year<select value={yearLevel || ""} onChange={e => setYearLevel(Number(e.target.value))} className={fieldClass}><option value="">Any year</option>{Array.from({ length: 10 }, (_, i) => <option key={i + 1} value={i + 1}>Year {i + 1}</option>)}</select></label>
-          {select("3. Subject / Course", form.course_id, value => setForm({ ...form, course_id: value }), departmentCourses.map(c => ({ id: c.id, label: `${c.course_code} — ${c.name}` })), "Select course", !departmentId)}
-          {select("4–5. Academic year / Semester", form.semester_id, value => setForm({ ...form, semester_id: value }), semesters.map(s => ({ id: s.id, label: `${s.academic_year?.name ?? "Academic year"} · ${s.name}` })), "Select semester")}
+          {select("3. Subject / Course", form.course_id, value => { const course = courses.find(item => item.id === value); setForm(current => ({ ...current, course_id: value })); setProgramId(course?.program_id ?? 0); }, departmentCourses.map(c => ({ id: c.id, label: `${c.course_code} — ${c.name}` })), !departmentId ? "Select department first" : departmentCourses.length ? "Select course" : "No active courses for this department", optionsLoading || !departmentId)}
+          {select("4–5. Academic year / Semester", form.semester_id, value => { const semester = semesters.find(item => item.id === value); setForm(current => ({ ...current, semester_id: value })); setDateRange({ start: semester?.start_date ?? semester?.academic_year?.start_date ?? "", end: semester?.end_date ?? semester?.academic_year?.end_date ?? "" }); }, semesters.map(s => ({ id: s.id, label: `${s.academic_year?.name ?? "Academic year"} · ${s.name}` })), optionsLoading ? "Loading available semesters…" : semesters.length ? "Select active/upcoming semester" : "No active or upcoming semesters available", optionsLoading)}
           <Input label="6. Section" placeholder="e.g. A or 01" required maxLength={30} value={form.section_code} onChange={e => setForm({ ...form, section_code: e.target.value.toUpperCase() })}/>
         </>}
         {(mode === "edit" || step === 1) && <>
-          {select("7. Assigned teacher", teacherId, setTeacherId, departmentTeachers.map(t => ({ id: t.id, label: `${t.user?.name ?? t.teacher_code} (${t.teacher_code})` })), "Select teacher", !departmentId)}
+          {select("7. Assigned teacher", teacherId, setTeacherId, departmentTeachers.map(t => ({ id: t.id, label: `${t.user?.name ?? t.teacher_code} (${t.teacher_code})` })), !departmentId ? "Select department first" : departmentTeachers.length ? "Select active teacher" : "No active teachers for this department", optionsLoading || !departmentId)}
           <Input label="8. Maximum student capacity" type="number" min={1} max={500} required value={String(form.capacity)} onChange={e => setForm({ ...form, capacity: Number(e.target.value) })}/>
         </>}
         {(mode === "edit" || step === 2) && <>

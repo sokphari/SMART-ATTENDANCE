@@ -58,8 +58,11 @@ export async function apiFetch<T = unknown>(
         message?: string;
         errors?: Record<string, string[]>;
       };
+      const gatewayUnavailable = [502, 503, 504].includes(response.status);
       throw new ApiError(
-        record.message ?? `Request failed with status ${response.status}.`,
+        gatewayUnavailable
+          ? "The attendance server is temporarily unavailable. Check that the backend is running, then try again."
+          : record.message ?? `Request failed with status ${response.status}.`,
         response.status,
         record.errors ?? {},
       );

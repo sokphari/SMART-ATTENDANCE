@@ -17,7 +17,7 @@ const MODULE_DESCRIPTIONS: Record<string, string> = {
     "Start sessions and manage attendance for assigned classes.",
   attendance_history: "Review submitted attendance records.",
   attendance_reports: "View attendance reports for assigned classes.",
-  corrections: "Submit and review attendance correction requests.",
+  corrections: "Submit and track attendance correction requests.",
   profile: "View and update the teacher's own profile details.",
 };
 

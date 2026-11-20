@@ -1,5 +1,7 @@
 "use client";
 
+import { useLocale } from "@/i18n/LocaleProvider";
+
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   AlertCircle,
@@ -25,6 +27,7 @@ import { AdminAttendanceQrDialog } from "./AdminAttendanceQrDialog";
 import type { AttendanceRecord, SectionOption } from "../types";
 
 export function AttendanceView() {
+  const { t } = useLocale();
   const [items, setItems] = useState<AttendanceRecord[]>([]);
   const [qrDialogOpen, setQrDialogOpen] = useState(false);
   const [sections, setSections] = useState<SectionOption[]>([]);
@@ -231,13 +234,13 @@ export function AttendanceView() {
           <table className="w-full min-w-[850px] text-left text-sm">
             <thead className="bg-canvas text-xs font-bold uppercase tracking-wide text-muted">
               <tr>
-                <th className="px-5 py-3">Student</th>
-                <th className="px-5 py-3">Section & Course</th>
-                <th className="px-5 py-3">Status</th>
-                <th className="px-5 py-3">Verification</th>
-                <th className="px-5 py-3">Check-In Time</th>
-                <th className="px-5 py-3">Geofence / Accuracy</th>
-                <th className="px-5 py-3">Session Date</th>
+                <th className="px-5 py-3">{t("Student")}</th>
+                <th className="px-5 py-3">{t("Section & Course")}</th>
+                <th className="px-5 py-3">{t("Status")}</th>
+                <th className="px-5 py-3">{t("Verification")}</th>
+                <th className="px-5 py-3">{t("Check-In Time")}</th>
+                <th className="px-5 py-3">{t("Geofence / Accuracy")}</th>
+                <th className="px-5 py-3">{t("Session Date")}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-hairline">

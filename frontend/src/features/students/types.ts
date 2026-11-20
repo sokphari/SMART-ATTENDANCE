@@ -34,7 +34,7 @@ export type StudentInput = {
   status?: string;
   department_id: number;
   program_id?: number | null;
-  student_code: string;
+  student_code?: string;
   year_level: number;
   phone?: string;
   gender?: string | null;

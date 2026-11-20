@@ -1,10 +1,11 @@
 "use client";
 
+import { useLocale } from "@/i18n/LocaleProvider";
+
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { BookOpen, Plus, Search } from "lucide-react";
+import { AlertCircle, BookOpen, CheckCircle2, Plus, Search, X } from "lucide-react";
 import { ApiError } from "@/lib/api/client";
-import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Input } from "@/components/ui/Input";
@@ -12,10 +13,12 @@ import { PageHeader } from "@/components/ui/PageHeader";
 import { fetchCourses, fetchCourseDepartments } from "../api";
 import type { Course, DepartmentOption } from "../types";
 import { CourseRowActions } from "./CourseRowActions";
+import { CourseStatusToggle } from "./CourseStatusToggle";
 
 const NOTICE_KEY = "sa_course_notice";
 
 export function CoursesView() {
+  const { t } = useLocale();
   const router = useRouter();
   const [items, setItems] = useState<Course[]>([]);
   const [departments, setDepartments] = useState<DepartmentOption[]>([]);
@@ -186,15 +189,19 @@ export function CoursesView() {
             aria-atomic="true"
           >
             <div
-              className={`pointer-events-auto rounded-panel border bg-card p-4 text-sm font-semibold text-ink shadow-lift ${feedback.kind === "success" ? "border-success/30" : "border-danger/30"}`}
+              className={`pointer-events-auto flex items-start gap-3 rounded-panel border bg-card p-4 shadow-lift ${feedback.kind === "success" ? "border-success/30" : "border-danger/30"}`}
             >
-              {feedback.message}
+              <span className={feedback.kind === "success" ? "mt-0.5 text-success" : "mt-0.5 text-danger"}>
+                {feedback.kind === "success" ? <CheckCircle2 className="size-5" /> : <AlertCircle className="size-5" />}
+              </span>
+              <p className="flex-1 text-sm font-semibold text-ink">{feedback.message}</p>
               <button
                 type="button"
-                className="ml-3 underline"
+                aria-label="Dismiss notification"
+                className="rounded-control p-1 text-muted hover:bg-canvas hover:text-ink"
                 onClick={() => setFeedback(null)}
               >
-                Dismiss
+                <X className="size-4" />
               </button>
             </div>
           </div>
@@ -203,13 +210,13 @@ export function CoursesView() {
           <table className="w-full min-w-[900px] text-left text-sm">
             <thead className="bg-canvas text-xs font-bold uppercase tracking-wide text-muted">
               <tr>
-                <th className="px-5 py-3">Course</th>
-                <th className="px-5 py-3">Code</th>
-                <th className="px-5 py-3">Department</th>
-                <th className="px-5 py-3">Credits</th>
-                <th className="px-5 py-3">Status</th>
-                <th className="px-5 py-3">Description</th>
-                <th className="px-5 py-3 text-right">Actions</th>
+                <th className="px-5 py-3">{t("Course")}</th>
+                <th className="px-5 py-3">{t("Code")}</th>
+                <th className="px-5 py-3">{t("Department")}</th>
+                <th className="px-5 py-3">{t("Credits")}</th>
+                <th className="px-5 py-3">{t("Status")}</th>
+                <th className="px-5 py-3">{t("Description")}</th>
+                <th className="px-5 py-3 text-right">{t("Actions")}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-hairline">
@@ -241,7 +248,7 @@ export function CoursesView() {
                       </button>
                     </td>
                     <td className="px-5 py-4">
-                      <span className="rounded-md bg-brand-50 px-2 py-1 text-xs font-bold text-brand-700">
+                      <span className="inline-flex whitespace-nowrap rounded-pill border border-blue-300 bg-blue-100 px-2.5 py-1 font-mono text-xs font-bold tracking-wide text-blue-900 dark:border-blue-300/50 dark:bg-blue-500/25 dark:text-blue-100">
                         {course.course_code}
                       </span>
                     </td>
@@ -250,13 +257,11 @@ export function CoursesView() {
                     </td>
                     <td className="px-5 py-4">{course.credits}</td>
                     <td className="px-5 py-4">
-                      <Badge
-                        tone={
-                          course.status === "active" ? "success" : "neutral"
-                        }
-                      >
-                        {course.status}
-                      </Badge>
+                      <CourseStatusToggle
+                        course={course}
+                        onUpdated={(updated) => setItems((current) => current.map((item) => item.id === updated.id ? updated : item))}
+                        onFeedback={(message, kind) => setFeedback({ message, kind })}
+                      />
                     </td>
                     <td className="max-w-xs px-5 py-4 text-muted">
                       {course.description || "—"}
@@ -265,16 +270,6 @@ export function CoursesView() {
                       <CourseRowActions
                         course={course}
                         onEdit={() => router.push(`/courses/${course.id}/edit`)}
-                        onUpdated={(updated) =>
-                          setItems((current) =>
-                            current.map((item) =>
-                              item.id === updated.id ? updated : item,
-                            ),
-                          )
-                        }
-                        onFeedback={(message, kind) =>
-                          setFeedback({ message, kind })
-                        }
                       />
                     </td>
                   </tr>

@@ -1,5 +1,7 @@
 "use client";
 
+import { useLocale } from "@/i18n/LocaleProvider";
+
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   AlertCircle,
@@ -24,6 +26,7 @@ import { fetchCorrections, reviewCorrection } from "../api";
 import type { AttendanceCorrection } from "../types";
 
 export function CorrectionsView() {
+  const { t } = useLocale();
   const [items, setItems] = useState<AttendanceCorrection[]>([]);
   const [status, setStatus] = useState("pending");
   const [page, setPage] = useState(1);
@@ -218,12 +221,12 @@ export function CorrectionsView() {
           <table className="w-full min-w-[850px] text-left text-sm">
             <thead className="bg-canvas text-xs font-bold uppercase tracking-wide text-muted">
               <tr>
-                <th className="px-5 py-3">Student & Course</th>
-                <th className="px-5 py-3">Requested Change</th>
-                <th className="px-5 py-3">Reason</th>
-                <th className="px-5 py-3">Requested By</th>
-                <th className="px-5 py-3">Status</th>
-                <th className="px-5 py-3 text-right">Action / Review</th>
+                <th className="px-5 py-3">{t("Student & Course")}</th>
+                <th className="px-5 py-3">{t("Requested Change")}</th>
+                <th className="px-5 py-3">{t("Reason")}</th>
+                <th className="px-5 py-3">{t("Requested By")}</th>
+                <th className="px-5 py-3">{t("Status")}</th>
+                <th className="px-5 py-3 text-right">{t("Action / Review")}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-hairline">

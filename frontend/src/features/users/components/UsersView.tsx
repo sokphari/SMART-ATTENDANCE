@@ -1,8 +1,13 @@
 "use client";
 
+import { useLocale } from "@/i18n/LocaleProvider";
+
 import { useCallback, useEffect, useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import {
+  AlertCircle,
+  CheckCircle2,
+  Eye,
   KeyRound,
   Pencil,
   Plus,
@@ -10,20 +15,20 @@ import {
   ShieldCheck,
   UserRound,
   Users,
+  X,
 } from "lucide-react";
 import { ApiError } from "@/lib/api/client";
-import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Input } from "@/components/ui/Input";
 import { PageHeader } from "@/components/ui/PageHeader";
-import { deactivateUser, fetchUsers, updateUser } from "../api";
-
-import { ToggleLeft } from "lucide-react";
+import { fetchUsers, updateUser } from "../api";
 
 import type { ManagedUser } from "../types";
+import { UserStatusToggle } from "./UserStatusToggle";
 
 export function UsersView() {
+  const { t } = useLocale();
   const router = useRouter();
   const [users, setUsers] = useState<ManagedUser[]>([]);
   const [search, setSearch] = useState("");
@@ -36,8 +41,11 @@ export function UsersView() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
+  const [statusNotice, setStatusNotice] = useState<{
+    message: string;
+    kind: "success" | "error";
+  } | null>(null);
   const [editing, setEditing] = useState<ManagedUser | null>(null);
-  const [confirmingId, setConfirmingId] = useState<number | null>(null);
   const [form, setForm] = useState({
     name: "",
     email: "",
@@ -71,6 +79,15 @@ export function UsersView() {
   useEffect(() => {
     void load();
   }, [load]);
+
+  useEffect(() => {
+    if (!statusNotice) return;
+    const timer = window.setTimeout(
+      () => setStatusNotice(null),
+      statusNotice.kind === "error" ? 7000 : 4500,
+    );
+    return () => window.clearTimeout(timer);
+  }, [statusNotice]);
 
   const startEdit = (user: ManagedUser) => {
     setEditing(user);
@@ -106,29 +123,6 @@ export function UsersView() {
         caught instanceof ApiError
           ? caught.message
           : "Could not update this account.",
-      );
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  const disable = async (user: ManagedUser) => {
-    setSaving(true);
-    setError("");
-    try {
-      await deactivateUser(user.id);
-      setUsers((current) =>
-        current.map((item) =>
-          item.id === user.id ? { ...item, status: "inactive" } : item,
-        ),
-      );
-      setMessage(`${user.name}'s account was deactivated.`);
-      setConfirmingId(null);
-    } catch (caught) {
-      setError(
-        caught instanceof ApiError
-          ? caught.message
-          : "Could not deactivate this account.",
       );
     } finally {
       setSaving(false);
@@ -192,6 +186,30 @@ export function UsersView() {
           <Button variant="secondary" size="sm" onClick={() => void load()}>
             Try again
           </Button>
+        </div>
+      )}
+
+      {statusNotice && (
+        <div
+          className="pointer-events-none fixed top-20 right-4 z-[100] w-[min(24rem,calc(100vw-2rem))] animate-fade-up"
+          role={statusNotice.kind === "error" ? "alert" : "status"}
+          aria-live={statusNotice.kind === "error" ? "assertive" : "polite"}
+          aria-atomic="true"
+        >
+          <div className={`pointer-events-auto flex items-start gap-3 rounded-panel border bg-card p-4 shadow-lift ${statusNotice.kind === "success" ? "border-success/30" : "border-danger/30"}`}>
+            <span className={statusNotice.kind === "success" ? "mt-0.5 text-success" : "mt-0.5 text-danger"}>
+              {statusNotice.kind === "success" ? <CheckCircle2 className="size-5" /> : <AlertCircle className="size-5" />}
+            </span>
+            <p className="flex-1 text-sm font-semibold text-ink">{statusNotice.message}</p>
+            <button
+              type="button"
+              aria-label="Dismiss status notification"
+              className="rounded-control p-1 text-muted hover:bg-canvas hover:text-ink"
+              onClick={() => setStatusNotice(null)}
+            >
+              <X className="size-4" />
+            </button>
+          </div>
         </div>
       )}
 
@@ -315,11 +333,11 @@ export function UsersView() {
           <table className="w-full min-w-[760px] text-left text-sm">
             <thead className="bg-canvas text-xs font-bold uppercase tracking-wide text-muted">
               <tr>
-                <th className="px-5 py-3">Account</th>
-                <th className="px-5 py-3">Role</th>
-                <th className="px-5 py-3">Status</th>
-                <th className="px-5 py-3">Created</th>
-                <th className="px-5 py-3 text-right">Actions</th>
+                <th className="px-5 py-3">{t("Account")}</th>
+                <th className="px-5 py-3">{t("Role")}</th>
+                <th className="px-5 py-3">{t("Status")}</th>
+                <th className="px-5 py-3">{t("Created")}</th>
+                <th className="px-5 py-3 text-right">{t("Actions")}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-hairline">
@@ -344,17 +362,13 @@ export function UsersView() {
                     </td>
                     <td className="px-5 py-4 capitalize">{user.role}</td>
                     <td className="px-5 py-4">
-                      <Badge
-                        tone={
-                          user.status === "active"
-                            ? "success"
-                            : user.status === "suspended"
-                              ? "danger"
-                              : "neutral"
-                        }
-                      >
-                        {user.status}
-                      </Badge>
+                      <UserStatusToggle
+                        user={user}
+                        onUpdated={(updated) => setUsers((current) => current.map((item) => item.id === updated.id ? updated : item))}
+                        onFeedback={(feedbackMessage, kind) => {
+                          setStatusNotice({ message: feedbackMessage, kind });
+                        }}
+                      />
                     </td>
                     <td className="px-5 py-4 text-muted">
                       {user.created_at.slice(0, 10)}
@@ -362,14 +376,31 @@ export function UsersView() {
 
                     <td className="px-5 py-4">
                       <div className="flex items-center justify-end gap-2">
-                        {/* Manage User */}
+                        {user.role === "teacher" && user.teacher_id && (
+                          <Button
+                            type="button"
+                            variant="secondary"
+                            size="icon"
+                            onClick={() => router.push(`/teachers/${user.teacher_id}`)}
+                            aria-label={`View teacher details for ${user.name}`}
+                            title="View teacher details"
+                          >
+                            <Eye className="size-4" />
+                          </Button>
+                        )}
                         <Button
                           type="button"
                           variant="secondary"
                           size="icon"
-                          onClick={() => startEdit(user)}
+                          onClick={() => {
+                            if (user.role === "teacher" && user.teacher_id) {
+                              router.push(`/teachers/${user.teacher_id}/edit`);
+                            } else {
+                              startEdit(user);
+                            }
+                          }}
                           aria-label={`Manage account for ${user.name}`}
-                          title="Manage account"
+                          title={user.role === "teacher" && user.teacher_id ? "Edit teacher profile" : "Manage account"}
                           className="
                         border-blue-500/20
                         bg-blue-500/10 text-blue-400
@@ -382,28 +413,6 @@ export function UsersView() {
                           <Pencil className="size-4" />
                         </Button>
 
-                        {/* Deactivate User */}
-                        {user.status === "active" && (
-                          <Button
-                            type="button"
-                            variant="secondary"
-                            size="icon"
-                            disabled={saving}
-                            onClick={() => setConfirmingId(user.id)}
-                            aria-label={`Deactivate account for ${user.name}`}
-                            title="Deactivate account"
-                            className="
-                          border-red-500/20
-                          bg-red-500/10 text-red-400
-                          shadow-none
-                          hover:border-red-500/30
-                          hover:bg-red-500/20
-                          hover:text-red-300
-                        "
-                          >
-                            <ToggleLeft className="size-5" />
-                          </Button>
-                        )}
                       </div>
                     </td>
                   </tr>

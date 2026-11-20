@@ -1,5 +1,7 @@
 "use client";
 
+import { useLocale } from "@/i18n/LocaleProvider";
+
 import { useCallback, useEffect, useState, type FormEvent } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { ArrowLeft, BookOpen, Plus } from "lucide-react";
@@ -12,6 +14,7 @@ import { createEnrollment, fetchClassSections, fetchStudent, fetchStudentEnrollm
 import type { Student } from "../types";
 
 export function StudentEnrollmentsView() {
+  const { t } = useLocale();
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
   const [student, setStudent] = useState<Student | null>(null);
@@ -48,6 +51,6 @@ export function StudentEnrollmentsView() {
       <form onSubmit={submit} className="mt-4 flex flex-col gap-3 sm:flex-row"><select aria-label="Class section" required value={sectionId} onChange={(event) => setSectionId(event.target.value)} className="h-11 min-w-0 flex-1 rounded-control border border-hairline bg-card px-3 text-sm text-ink"><option value="">Select a class section</option>{sections.map((section) => <option key={section.id} value={section.id}>{section.course?.course_code ?? "Course"} · {section.course?.name ?? ""} · {section.section_code}</option>)}</select><Button type="submit" loading={saving} disabled={!sections.length}><Plus className="size-4" />Enroll student</Button></form>
       {!loading && !sections.length && <p className="mt-3 text-xs text-muted">No active class sections are available.</p>}
     </Card>
-    <Card className="mt-5 w-full overflow-hidden"><div className="border-b border-hairline p-5"><h2 className="font-display font-bold">Current and past enrollments</h2></div>{loading ? <p className="p-6 text-sm text-muted">Loading enrollments…</p> : enrollments.length === 0 ? <div className="p-8 text-center"><BookOpen className="mx-auto size-6 text-muted" /><p className="mt-2 text-sm text-muted">No enrollments recorded.</p></div> : <div className="overflow-x-auto"><table className="w-full min-w-[600px] text-left text-sm"><thead className="bg-canvas text-xs font-bold uppercase text-muted"><tr><th className="px-5 py-3">Course</th><th className="px-5 py-3">Section</th><th className="px-5 py-3">Semester</th><th className="px-5 py-3">Date</th><th className="px-5 py-3">Status</th></tr></thead><tbody className="divide-y divide-hairline">{enrollments.map((enrollment) => <tr key={enrollment.id}><td className="px-5 py-4">{enrollment.class_section?.course?.name ?? enrollment.class_section?.course?.course_code ?? "—"}</td><td className="px-5 py-4">{enrollment.class_section?.section_code ?? "—"}</td><td className="px-5 py-4">{enrollment.class_section?.semester?.name ?? "—"}</td><td className="px-5 py-4">{enrollment.enrollment_date}</td><td className="px-5 py-4"><Badge tone={enrollment.status === "enrolled" ? "success" : "neutral"}>{enrollment.status}</Badge></td></tr>)}</tbody></table></div>}</Card>
+    <Card className="mt-5 w-full overflow-hidden"><div className="border-b border-hairline p-5"><h2 className="font-display font-bold">Current and past enrollments</h2></div>{loading ? <p className="p-6 text-sm text-muted">Loading enrollments…</p> : enrollments.length === 0 ? <div className="p-8 text-center"><BookOpen className="mx-auto size-6 text-muted" /><p className="mt-2 text-sm text-muted">No enrollments recorded.</p></div> : <div className="overflow-x-auto"><table className="w-full min-w-[600px] text-left text-sm"><thead className="bg-canvas text-xs font-bold uppercase text-muted"><tr><th className="px-5 py-3">{t("Course")}</th><th className="px-5 py-3">{t("Section")}</th><th className="px-5 py-3">{t("Semester")}</th><th className="px-5 py-3">{t("Date")}</th><th className="px-5 py-3">{t("Status")}</th></tr></thead><tbody className="divide-y divide-hairline">{enrollments.map((enrollment) => <tr key={enrollment.id}><td className="px-5 py-4">{enrollment.class_section?.course?.name ?? enrollment.class_section?.course?.course_code ?? "—"}</td><td className="px-5 py-4">{enrollment.class_section?.section_code ?? "—"}</td><td className="px-5 py-4">{enrollment.class_section?.semester?.name ?? "—"}</td><td className="px-5 py-4">{enrollment.enrollment_date}</td><td className="px-5 py-4"><Badge tone={enrollment.status === "enrolled" ? "success" : "neutral"}>{enrollment.status}</Badge></td></tr>)}</tbody></table></div>}</Card>
   </>;
 }

@@ -11,7 +11,7 @@ import { PageHeader } from "@/components/ui/PageHeader";
 import { createStudent, fetchDepartments } from "../api";
 import type { DepartmentOption, StudentInput } from "../types";
 
-const initialForm: StudentInput = { name: "", email: "", password: "", student_code: "", department_id: 0, year_level: 1, phone: "", gender: null, status: "active" };
+const initialForm: StudentInput = { name: "", email: "", password: "", department_id: 0, year_level: 1, phone: "", gender: null, status: "active" };
 
 export function StudentCreateView() {
   const router = useRouter();
@@ -46,7 +46,6 @@ export function StudentCreateView() {
         <form onSubmit={submit} className="grid gap-5 sm:grid-cols-2">
           <Input label="Full name" placeholder="e.g. Dara Sok" required autoComplete="name" value={form.name} onChange={(event) => setForm({ ...form, name: event.target.value })} />
           <Input label="Email" type="email" placeholder="e.g. dara.sok@example.com" required autoComplete="email" value={form.email} onChange={(event) => setForm({ ...form, email: event.target.value })} />
-          <Input label="Student ID" placeholder="e.g. STU-2026-001" required value={form.student_code} onChange={(event) => setForm({ ...form, student_code: event.target.value })} />
           <Input label="Temporary password" type="password" placeholder="At least 8 characters" minLength={8} required autoComplete="new-password" value={form.password} onChange={(event) => setForm({ ...form, password: event.target.value })} />
           <label className="space-y-1.5 text-sm font-semibold">Department<select required value={form.department_id || ""} onChange={(event) => setForm({ ...form, department_id: Number(event.target.value), program_id: null })} className="h-11 w-full rounded-control border border-hairline bg-card px-3.5 text-sm font-normal text-ink"><option value="" disabled>Select department</option>{departments.map((department) => <option key={department.id} value={department.id}>{department.name} ({department.code})</option>)}</select></label>
           <label className="space-y-1.5 text-sm font-semibold">Program <span className="font-normal text-muted">(optional)</span><select value={form.program_id ?? ""} onChange={event => setForm({ ...form, program_id: event.target.value ? Number(event.target.value) : null })} className="h-11 w-full rounded-control border border-hairline bg-card px-3.5 text-sm font-normal text-ink"><option value="">Select program</option>{programs.filter(p => p.department_id === form.department_id).map(p => <option key={p.id} value={p.id}>{p.name} ({p.code})</option>)}</select></label>

@@ -26,6 +26,7 @@ class UserServices
     public function paginate(array $filters = []): LengthAwarePaginator
     {
         return User::query()
+            ->with('teacher:id,user_id')
             ->when($filters['search'] ?? null, function ($query, string $search): void {
                 $term = '%'.strtolower($search).'%';
 
@@ -67,7 +68,7 @@ class UserServices
         $user->fill($data);
         $user->save();
 
-        return $user->refresh();
+        return $user->refresh()->load('teacher:id,user_id');
     }
 
     public function deactivate(User $user): void
