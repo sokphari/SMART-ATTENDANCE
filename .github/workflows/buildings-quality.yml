@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - feat/buildings-wizard-review-save
+      - fix/attendance-student-qr-popup
   pull_request:
     paths:
       - "frontend/**"
@@ -37,6 +38,8 @@ jobs:
           php artisan key:generate
       - name: Laravel Buildings and Rooms tests
         run: php artisan test --filter='BuildingSetupApiTest|BuildingListApiTest|ClassroomApiTest'
+      - name: Attendance QR and check-in feature tests
+        run: php artisan test --filter='AttendanceQrApiTest|TeacherAttendanceSessionApiTest|StudentAttendanceCheckInApiTest'
       - name: Laravel unit test suite
         run: php artisan test --testsuite=Unit
 
