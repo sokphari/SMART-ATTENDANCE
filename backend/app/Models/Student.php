@@ -39,6 +39,19 @@ class Student extends Model
     /**
      * @return BelongsTo<User, $this>
      */
+    /**
+     * Permanent 9-digit attendance identifier derived from the unique
+     * student primary key. Existing student_code values remain unchanged.
+     */
+    public function attendanceId(): string
+    {
+        if ($this->id === null || $this->id > 999999999) {
+            throw new \RuntimeException('Student ID is outside the supported 9-digit range.');
+        }
+
+        return str_pad((string) $this->id, 9, '0', STR_PAD_LEFT);
+    }
+
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
