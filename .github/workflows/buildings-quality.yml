@@ -4,7 +4,7 @@ on:
   push:
     branches:
       - feat/buildings-wizard-review-save
-      - feat/i18n-english-khmer
+      - fix/attendance-student-qr-popup
   pull_request:
     paths:
       - "frontend/**"
@@ -38,6 +38,10 @@ jobs:
           php artisan key:generate
       - name: Laravel Buildings and Rooms tests
         run: php artisan test --filter='BuildingSetupApiTest|BuildingListApiTest|ClassroomApiTest'
+      - name: Attendance QR and check-in feature tests
+        run: php artisan test --filter='AttendanceQrApiTest|TeacherAttendanceSessionApiTest|StudentAttendanceCheckInApiTest'
+      - name: Telegram attendance notification tests
+        run: php artisan test --filter='TelegramAttendanceNotificationTest'
       - name: Laravel unit test suite
         run: php artisan test --testsuite=Unit
 
@@ -58,8 +62,8 @@ jobs:
         run: npm ci --no-audit --no-fund
       - name: Test breadcrumb navigation
         run: node --experimental-strip-types --test tests/breadcrumbs.test.mjs
-      - name: Test Khmer translations
-        run: node --experimental-strip-types --test tests/i18n.test.mjs
+      - name: Test teacher QR window logic
+        run: node --experimental-strip-types --test tests/teacherQrWindow.test.mjs
       - name: Type-check frontend
         run: npx tsc --noEmit
       - name: Build Next.js

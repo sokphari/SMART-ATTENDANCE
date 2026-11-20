@@ -5,8 +5,10 @@ import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent } fro
 import { ArrowLeft, Check, CheckCircle2, Clipboard, Clock3, FileCheck2, QrCode, RefreshCw, Search, XCircle } from "lucide-react";
 import { QRCodeSVG } from "qrcode.react";
 import { Button } from "@/components/ui/Button";
-import { closeTeacherSession, generateSessionQrToken, getSessionAttendance, getTeacherSession, markSessionAttendance } from "../api";
+import { closeTeacherSession, generateSessionQrToken, getSessionAttendance, getTeacherSession, markSessionAttendance, startLocalQrTest } from "../api";
 import type { AttendanceSummary, SessionAttendance, SessionAttendanceStatus, TeacherAttendanceSession } from "../types";
+import { getQrWindowPhase, readableCountdown, secondsUntil } from "../qrWindow";
+import { studentScanUrl, phoneScanUrlWarning } from "@/features/attendance/studentScanLink";
 
 const STATUS_OPTIONS = [
   { status: "present", label: "Present", icon: CheckCircle2, style: "border-emerald-200 text-emerald-700 hover:bg-emerald-50 dark:border-emerald-500/30 dark:text-emerald-300 dark:hover:bg-emerald-500/10" },
@@ -63,14 +65,17 @@ export function TeacherSessionDetailView({ sessionId }: { sessionId: number }) {
   const [permissionReason, setPermissionReason] = useState("");
   const [qrToken, setQrToken] = useState<{ token: string; expires_at: string } | null>(null);
   const [qrDialogOpen, setQrDialogOpen] = useState(false);
+  const [studentScanBase, setStudentScanBase] = useState("");
   const [qrError, setQrError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [closing, setClosing] = useState(false);
   const [generatingQr, setGeneratingQr] = useState(false);
+  const [startingLocalTest, setStartingLocalTest] = useState(false);
   const [copied, setCopied] = useState(false);
   const [clock, setClock] = useState(() => Date.now());
+  const qrRequestId = useRef(0);
   const attendanceRequestId = useRef(0);
   const permissionDialog = useRef<HTMLDialogElement>(null);
   const qrDialog = useRef<HTMLDialogElement>(null);
@@ -121,39 +126,59 @@ export function TeacherSessionDetailView({ sessionId }: { sessionId: number }) {
     if (!permissionStudent && dialog.open) dialog.close();
   }, [permissionStudent]);
 
-  const qrCanGenerate = useMemo(() => {
-    if (!session || session.status !== "open") return false;
-    return clock >= new Date(session.starts_at).getTime() && clock <= new Date(session.closes_at).getTime();
-  }, [clock, session]);
-  const secondsUntilQrClose = session ? Math.max(0, Math.ceil((new Date(session.closes_at).getTime() - clock) / 1000)) : 0;
+  const qrPhase = useMemo(() => getQrWindowPhase(session, clock), [clock, session]);
+  const qrCanGenerate = qrPhase === "active";
+  const secondsUntilQrClose = session ? secondsUntil(session.closes_at, clock) : 0;
+  const secondsUntilQrOpens = session ? secondsUntil(session.starts_at, clock) : 0;
+  const qrWindowHint = !session ? "Session information is unavailable."
+    : qrPhase === "upcoming" ? `QR check-in opens at ${formatTime(session.starts_at)} (in ${readableCountdown(secondsUntilQrOpens)}).`
+    : qrPhase === "active" ? `QR check-in is open · closes in ${readableCountdown(secondsUntilQrClose)}.`
+    : qrPhase === "waiting" ? "Waiting for this attendance session to open."
+    : qrPhase === "ended" ? `QR check-in ended at ${formatTime(session.closes_at)}. Attendance review is still available.`
+    : "This attendance session is not available for QR check-in.";
 
   const refreshQr = useCallback(async () => {
+    const requestId = ++qrRequestId.current;
     setGeneratingQr(true);
     setQrError(null);
     try {
       const response = await generateSessionQrToken(sessionId);
+      if (qrRequestId.current !== requestId) return;
       setQrToken(response.data);
     } catch (caught) {
+      if (qrRequestId.current !== requestId) return;
       setQrError(caught instanceof Error ? caught.message : "Unable to generate the attendance QR token.");
       setQrToken(null);
     } finally {
-      setGeneratingQr(false);
+      if (qrRequestId.current === requestId) setGeneratingQr(false);
     }
   }, [sessionId]);
 
   useEffect(() => {
-    if (!qrToken || !qrDialogOpen || session?.status !== "open") return;
+    if (!qrDialogOpen || !qrCanGenerate || generatingQr || qrError) return;
+    // Once the check-in window opens, generate without requiring another click.
+    if (!qrToken || new Date(qrToken.expires_at).getTime() <= clock) {
+      void refreshQr();
+      return;
+    }
     const untilExpiry = new Date(qrToken.expires_at).getTime() - Date.now();
     const timer = window.setTimeout(() => void refreshQr(), Math.max(1000, untilExpiry - 1500));
     return () => window.clearTimeout(timer);
-  }, [qrDialogOpen, qrToken, refreshQr, session?.status]);
+  }, [qrDialogOpen, qrCanGenerate, qrToken, generatingQr, qrError, clock, refreshQr]);
+
+  useEffect(() => {
+    // Never display an expired or previously issued token when QR check-in closes.
+    if (qrPhase === "active" || !qrToken) return;
+    setQrToken(null);
+    qrRequestId.current += 1;
+  }, [qrPhase, qrToken]);
 
   useEffect(() => {
     const dialog = qrDialog.current;
     if (!dialog) return;
-    if (qrDialogOpen && qrToken && !dialog.open) dialog.showModal();
+    if (qrDialogOpen && !dialog.open) dialog.showModal();
     if (!qrDialogOpen && dialog.open) dialog.close();
-  }, [qrDialogOpen, qrToken]);
+  }, [qrDialogOpen]);
 
   useEffect(() => {
     const dialog = saveSummaryDialog.current;
@@ -200,6 +225,27 @@ export function TeacherSessionDetailView({ sessionId }: { sessionId: number }) {
     setPermissionReason("");
   }
 
+  async function handleStartLocalQrTest() {
+    if (!session?.local_qr_testing_available || startingLocalTest) return;
+    setStartingLocalTest(true);
+    setQrError(null);
+    try {
+      const response = await startLocalQrTest(sessionId);
+      setSession(response.data);
+      setClock(Date.now());
+      setQrToken(null);
+      qrRequestId.current += 1;
+      setQrError(null);
+      // Keep the modal visible; the regular QR refresh effect will fetch
+      // a new token from the server after the session becomes active.
+      setNotice("Local QR testing is active for 30 minutes. Scan using a student test account.");
+    } catch (caught) {
+      setQrError(caught instanceof Error ? caught.message : "Unable to start the local QR test.");
+    } finally {
+      setStartingLocalTest(false);
+    }
+  }
+
   async function handleClose() {
     if (Object.keys(pendingAttendance).length > 0) {
       setError("Save attendance before closing the session.");
@@ -212,6 +258,8 @@ export function TeacherSessionDetailView({ sessionId }: { sessionId: number }) {
       setSession(response.data);
       setSummary(response.summary);
       setQrToken(null);
+      setQrDialogOpen(false);
+      qrRequestId.current += 1;
       setNotice("Session closed. Remaining enrolled students were marked absent.");
       await refresh(page);
     } catch (caught) {
@@ -228,11 +276,11 @@ export function TeacherSessionDetailView({ sessionId }: { sessionId: number }) {
     window.setTimeout(() => setCopied(false), 1800);
   }
 
-  async function openQrDialog() {
-    if (!qrToken || new Date(qrToken.expires_at).getTime() <= Date.now()) {
-      await refreshQr();
-    }
+  function openQrDialog() {
+    setStudentScanBase(window.location.origin);
     setQrDialogOpen(true);
+    setQrError(null);
+    // QR generation is handled by the active-window effect, not the click.
   }
 
   function displayedStatus(row: SessionAttendance): SessionAttendanceStatus {
@@ -256,14 +304,14 @@ export function TeacherSessionDetailView({ sessionId }: { sessionId: number }) {
 
       <section className="rounded-panel border border-hairline bg-card p-5 shadow-soft sm:p-7">
         <div className="flex flex-wrap items-start justify-between gap-4"><div><p className="text-xs font-bold uppercase tracking-wide text-brand-600">{className}</p><h1 className="mt-1 font-display text-2xl font-extrabold tracking-tight">{course?.name ?? "Attendance session"}</h1><p className="mt-2 text-sm text-muted">{formatDate(session.session_date)} · {formatTime(session.starts_at)}–{formatTime(session.closes_at)} · {session.classroom?.room_code ?? "Classroom"}</p></div><span className={`rounded-pill px-3 py-1.5 text-xs font-semibold capitalize ${session.status === "open" ? STATUS_STYLE_OPEN : "bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300"}`}>{session.status}</span></div>
-        {session.status === "scheduled" && <p role="status" className="mt-4 rounded-control bg-brand-50 p-3 text-sm text-brand-800 dark:bg-brand-500/10 dark:text-brand-200">Attendance will open automatically at {formatTime(session.starts_at)}. QR check-in is configured to close at {formatTime(session.closes_at)}.</p>}
-        {session.status === "open" && <p role="status" className="mt-4 rounded-control bg-emerald-50 p-3 text-sm text-emerald-800 dark:bg-emerald-500/10 dark:text-emerald-200">{qrCanGenerate ? `QR check-in is open · closes in ${Math.floor(secondsUntilQrClose / 60)}m ${secondsUntilQrClose % 60}s.` : `QR check-in is closed. The session remains open until ${formatTime(session.session_ends_at ?? session.closes_at)} for attendance review.`}</p>}
+        {session.status === "scheduled" && <p role="status" className="mt-4 rounded-control bg-brand-50 p-3 text-sm text-brand-800 dark:bg-brand-500/10 dark:text-brand-200">{qrWindowHint}</p>}
+        {session.status === "open" && <p role="status" className="mt-4 rounded-control bg-emerald-50 p-3 text-sm text-emerald-800 dark:bg-emerald-500/10 dark:text-emerald-200">{qrWindowHint}</p>}
         <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">{summary && ([['Present', summary.present], ['Late', summary.late], ['Absent', summary.absent], ['Permission', summary.excused], ['Pending', summary.unmarked], ['Enrolled', summary.total]] as const).map(([label, count]) => <div key={label} className="rounded-control bg-canvas p-3"><p className="text-xs text-muted">{label}</p><p className="mt-1 font-display text-xl font-bold">{count}</p></div>)}</div>
       </section>
 
       {session.status === "open" && <section className="rounded-panel border border-hairline bg-card p-5 shadow-soft sm:p-6">
         <div>
-          <div className="flex flex-wrap items-start justify-between gap-3"><div><h2 className="font-display text-lg font-bold">Manual attendance</h2><p className="mt-1 text-sm text-muted">Ask students to scan the QR or mark them manually below.</p></div><div className="flex flex-wrap gap-2">{pendingCount > 0 && <Button onClick={() => void savePendingAttendance()} loading={savingAttendance}><Check className="size-4" />Save attendance ({pendingCount})</Button>}<Button variant="secondary" onClick={() => void openQrDialog()} loading={generatingQr} disabled={!qrCanGenerate}><QrCode className="size-4" />Open QR for students</Button></div></div>
+          <div className="flex flex-wrap items-start justify-between gap-3"><div><h2 className="font-display text-lg font-bold">Manual attendance</h2><p className="mt-1 text-sm text-muted">Ask students to scan the QR or mark them manually below.</p></div><div className="flex flex-wrap gap-2">{pendingCount > 0 && <Button onClick={() => void savePendingAttendance()} loading={savingAttendance}><Check className="size-4" />Save attendance ({pendingCount})</Button>}<Button variant="secondary" onClick={openQrDialog}><QrCode className="size-4" />Open QR for students</Button></div></div>
           {qrError && <p role="alert" className="mt-3 text-sm text-danger">{qrError}</p>}
           <div className="mt-4 grid gap-3 sm:grid-cols-[minmax(0,1fr)_12rem]">
             <label className="relative"><Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted" /><input value={search} onChange={(event) => { setSearch(event.target.value); setPage(1); }} placeholder="Search student name or ID" aria-label="Search students" className="h-11 w-full rounded-control border border-hairline bg-card pl-10 pr-3 text-sm" /></label>
@@ -287,7 +335,34 @@ export function TeacherSessionDetailView({ sessionId }: { sessionId: number }) {
       </dialog>
 
       <dialog ref={qrDialog} aria-labelledby="qr-dialog-title" onCancel={(event) => { event.preventDefault(); setQrDialogOpen(false); }} onClose={() => setQrDialogOpen(false)} className="m-auto w-[min(92vw,28rem)] rounded-panel border border-hairline bg-card p-0 text-ink shadow-lift backdrop:bg-ink/50">
-        {qrToken && <div className="p-6 text-center"><div className="flex items-start justify-between gap-4 text-left"><div><h2 id="qr-dialog-title" className="font-display text-lg font-bold">Student attendance QR</h2><p className="mt-1 text-sm text-muted">Students can scan this code to check in.</p></div><button type="button" aria-label="Close QR popup" onClick={() => setQrDialogOpen(false)} className="rounded-control px-2 py-1 text-muted hover:bg-canvas">×</button></div><div className="mx-auto mt-5 flex w-fit rounded-xl bg-white p-3"><QRCodeSVG value={qrToken.token} size={240} level="M" includeMargin /></div><p className="mt-3 text-xs text-muted">Expires {new Date(qrToken.expires_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" })}</p><div className="mt-4 flex justify-center gap-2"><Button size="sm" variant="secondary" onClick={() => void copyToken()}>{copied ? <Check className="size-4" /> : <Clipboard className="size-4" />}{copied ? "Copied" : "Copy token"}</Button><Button size="sm" onClick={() => void refreshQr()} loading={generatingQr}><RefreshCw className="size-4" />Refresh QR</Button></div><Button className="mt-4 w-full" variant="secondary" onClick={() => setQrDialogOpen(false)}>Close</Button></div>}
+        <div className="p-6 text-center">
+          <div className="flex items-start justify-between gap-4 text-left">
+            <div><h2 id="qr-dialog-title" className="font-display text-lg font-bold">Student attendance QR</h2><p className="mt-1 text-sm text-muted">Students can scan this code during the scheduled attendance window.</p></div>
+            <button type="button" aria-label="Close QR popup" onClick={() => setQrDialogOpen(false)} className="rounded-control px-2 py-1 text-muted hover:bg-canvas">×</button>
+          </div>
+          {qrError && <p role="alert" className="mt-4 rounded-control bg-danger-soft p-3 text-left text-sm text-danger">{qrError}</p>}
+          {session.local_qr_testing_available && !qrCanGenerate && session.status === "open" && (
+            <div className="mt-4 rounded-control border border-amber-300 bg-amber-50 p-3 text-left text-sm text-amber-900">
+              <p className="font-semibold">Local development test only</p>
+              <p className="mt-1">Start a temporary 30-minute QR window for this session. This changes only its attendance times and invalidates existing QR tokens.</p>
+              <Button className="mt-3" size="sm" disabled={startingLocalTest} loading={startingLocalTest} onClick={() => void handleStartLocalQrTest()}>
+                <QrCode className="size-4" />Start QR test now
+              </Button>
+            </div>
+          )}
+          <p role="status" className="mt-4 rounded-control bg-brand-50 p-3 text-sm text-brand-800 dark:bg-brand-500/10 dark:text-brand-200">{qrWindowHint}</p>
+          <div className="mx-auto mt-5 flex min-h-64 w-fit min-w-64 items-center justify-center rounded-xl bg-white p-3">
+            {qrToken && qrCanGenerate && Date.parse(qrToken.expires_at) > clock ? <QRCodeSVG value={studentScanUrl(qrToken.token, studentScanBase || window.location.origin, process.env.NEXT_PUBLIC_STUDENT_SCAN_BASE_URL)} size={240} level="M" includeMargin /> :
+              <p role="status" className="max-w-48 text-sm text-slate-600">{qrPhase !== "active" ? qrWindowHint : generatingQr ? "Generating student QR…" : "No QR available. Refresh to retry."}</p>}
+          </div>
+          {studentScanBase && phoneScanUrlWarning(studentScanUrl("preview", studentScanBase, process.env.NEXT_PUBLIC_STUDENT_SCAN_BASE_URL)) && <p role="status" className="mt-3 rounded-control bg-warning-soft p-3 text-left text-xs text-amber-800 dark:text-amber-200">{phoneScanUrlWarning(studentScanUrl("preview", studentScanBase, process.env.NEXT_PUBLIC_STUDENT_SCAN_BASE_URL))}</p>}
+          {qrToken && qrCanGenerate && <p className="mt-3 text-xs text-muted">Expires {new Date(qrToken.expires_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" })}</p>}
+          <div className="mt-4 flex justify-center gap-2">
+            <Button size="sm" variant="secondary" disabled={!qrToken || !qrCanGenerate || Date.parse(qrToken.expires_at) <= clock} onClick={() => void copyToken()}>{copied ? <Check className="size-4" /> : <Clipboard className="size-4" />}{copied ? "Copied" : "Copy token"}</Button>
+            <Button size="sm" onClick={() => void refreshQr()} loading={generatingQr} disabled={!qrCanGenerate}><RefreshCw className="size-4" />Refresh QR</Button>
+          </div>
+          <Button className="mt-4 w-full" variant="secondary" onClick={() => setQrDialogOpen(false)}>Close</Button>
+        </div>
       </dialog>
 
       <dialog ref={saveSummaryDialog} aria-labelledby="save-summary-title" onCancel={(event) => { event.preventDefault(); setSaveSummaryDialogOpen(false); }} onClose={() => setSaveSummaryDialogOpen(false)} className="m-auto w-[min(92vw,34rem)] rounded-panel border border-hairline bg-card p-0 text-ink shadow-lift backdrop:bg-ink/50">

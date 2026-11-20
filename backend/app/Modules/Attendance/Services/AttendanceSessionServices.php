@@ -160,10 +160,10 @@ class AttendanceSessionServices
             'teacher_id' => $teacher->id,
             'classroom_id' => $classroom->id,
             'session_date' => Carbon::parse($data['session_date'])->toDateString(),
-            'starts_at' => $data['starts_at'],
-            'late_after' => $data['late_after'],
-            'closes_at' => $data['closes_at'],
-            'session_ends_at' => $data['session_ends_at'] ?? $data['closes_at'],
+            'starts_at' => Carbon::parse($data['starts_at'])->utc(),
+            'late_after' => Carbon::parse($data['late_after'])->utc(),
+            'closes_at' => Carbon::parse($data['closes_at'])->utc(),
+            'session_ends_at' => Carbon::parse($data['session_ends_at'] ?? $data['closes_at'])->utc(),
             'closed_at' => null,
             'status' => AttendanceSessionStatus::Open->value,
             'allowed_latitude' => $classroom->latitude,
@@ -175,11 +175,72 @@ class AttendanceSessionServices
     }
 
     /**
+     * Development-only: make a teacher-owned open session scannable for a short
+     * test window, without weakening QR validation for normal sessions.
+     * This modifies a session, never the timetable or any attendance records.
+     */
+    public function startLocalQrTest(AttendanceSession $session, Teacher $teacher): AttendanceSession
+    {
+        abort_unless(
+            app()->environment('local') && config('attendance.allow_local_qr_testing', false),
+            404,
+            'Local QR testing is not enabled.'
+        );
+        $this->ensureOwnedBy($session, $teacher);
+
+        return DB::transaction(function () use ($session, $teacher): AttendanceSession {
+            $locked = AttendanceSession::query()->lockForUpdate()->findOrFail($session->id);
+            $this->ensureOwnedBy($locked, $teacher);
+
+            if (! $locked->isOpen()) {
+                abort(409, 'Only open attendance sessions can enter local QR test mode.');
+            }
+            if ($locked->session_date->toDateString() !== now('Asia/Phnom_Penh')->toDateString()) {
+                abort(409, 'Local QR test mode is only available for sessions dated today.');
+            }
+
+            $now = now();
+            $start = $now->copy()->subMinute();
+            $cutoff = $start->copy()->addMinutes(15);
+            $end = $start->copy()->addMinutes(30);
+            $locked->update([
+                'starts_at' => $start,
+                'late_after' => $cutoff,
+                'closes_at' => $end,
+                'session_ends_at' => $end,
+            ]);
+            // Previously issued QR tokens must never survive a new test window.
+            $locked->qrTokens()->whereNull('revoked_at')->update(['revoked_at' => $now]);
+
+            return $locked->refresh()->load($this->relations());
+        });
+    }
+
+    /**
      * @return array{token: string, expires_at: string}
      */
     public function generateQrToken(AttendanceSession $session, Teacher $teacher): array
     {
         $this->ensureOwnedBy($session, $teacher);
+
+        return $this->issueQrToken($session);
+    }
+
+    /**
+     * Allows authorized admins to project QR codes for existing sessions.
+     * Does not grant permission to open a session or bypass its time window.
+     *
+     * @return array{token: string, expires_at: string}
+     */
+    public function generateQrTokenForAdmin(AttendanceSession $session): array
+    {
+        return $this->issueQrToken($session);
+    }
+
+    /** @return array{token: string, expires_at: string} */
+    private function issueQrToken(AttendanceSession $session): array
+    {
+        $session->refresh();
 
         if (! $session->isOpen()) {
             abort(409, 'The attendance session is not open.');

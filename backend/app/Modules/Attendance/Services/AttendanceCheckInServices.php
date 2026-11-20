@@ -2,6 +2,7 @@
 
 namespace App\Modules\Attendance\Services;
 
+use App\Jobs\NotifyTelegramAttendance;
 use App\Enums\AttendanceStatus;
 use App\Enums\EnrollmentStatus;
 use App\Enums\VerificationMethod;
@@ -107,6 +108,10 @@ class AttendanceCheckInServices
             ]);
         } catch (UniqueConstraintViolationException) {
             abort(409, 'Attendance has already been recorded for this session.');
+        }
+
+        if (config('services.telegram_attendance.bot_token') && config('services.telegram_attendance.chat_id')) {
+            NotifyTelegramAttendance::dispatch($attendance->id)->afterResponse();
         }
 
         return $attendance->load([

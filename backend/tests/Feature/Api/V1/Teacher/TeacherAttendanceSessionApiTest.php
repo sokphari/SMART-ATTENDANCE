@@ -109,6 +109,102 @@ class TeacherAttendanceSessionApiTest extends TestCase
         ]);
     }
 
+    public function test_teacher_session_preserves_cambodia_local_times_when_stored_in_utc(): void
+    {
+        [, $classSection, $classroom] = $this->assignedTeacher();
+
+        $response = $this->postJson('/api/v1/teacher/attendance-sessions', [
+            'class_section_id' => $classSection->id,
+            'classroom_id' => $classroom->id,
+            'session_date' => '2026-11-20',
+            'starts_at' => '2026-11-20T14:00:00+07:00',
+            'late_after' => '2026-11-20T14:15:00+07:00',
+            'closes_at' => '2026-11-20T15:30:00+07:00',
+        ])->assertCreated();
+
+        $session = AttendanceSession::findOrFail($response->json('data.id'));
+
+        $this->assertSame('2026-11-20 07:00:00', $session->starts_at->utc()->format('Y-m-d H:i:s'));
+        $this->assertSame('2026-11-20 07:15:00', $session->late_after->utc()->format('Y-m-d H:i:s'));
+        $this->assertSame('2026-11-20 08:30:00', $session->closes_at->utc()->format('Y-m-d H:i:s'));
+        $this->assertSame('2026-11-20T07:00:00+00:00', $response->json('data.starts_at'));
+    }
+
+    public function test_local_qr_test_is_disabled_by_default_even_for_teacher(): void
+    {
+        [$teacher, $section, $room] = $this->assignedTeacher();
+        $session = AttendanceSession::factory()->create([
+            'teacher_id' => $teacher->id,
+            'class_section_id' => $section->id,
+            'classroom_id' => $room->id,
+        ]);
+        config()->set('attendance.allow_local_qr_testing', false);
+
+        $this->postJson("/api/v1/teacher/attendance-sessions/{$session->id}/local-qr-test")
+            ->assertNotFound();
+    }
+
+    public function test_local_qr_test_updates_only_owned_open_session_and_issues_valid_qr(): void
+    {
+        [$teacher, $section, $room] = $this->assignedTeacher();
+        app()->detectEnvironment(fn () => 'local');
+        config()->set('attendance.allow_local_qr_testing', true);
+
+        $session = AttendanceSession::factory()->create([
+            'teacher_id' => $teacher->id,
+            'class_section_id' => $section->id,
+            'classroom_id' => $room->id,
+            'session_date' => now('Asia/Phnom_Penh')->toDateString(),
+            'starts_at' => now()->addHours(6),
+            'late_after' => now()->addHours(6)->addMinutes(15),
+            'closes_at' => now()->addHours(8),
+            'session_ends_at' => now()->addHours(8),
+        ]);
+
+        $this->postJson("/api/v1/teacher/attendance-sessions/{$session->id}/local-qr-test")
+            ->assertOk()
+            ->assertJsonPath('data.id', $session->id)
+            ->assertJsonPath('data.local_qr_testing_available', true);
+
+        $session->refresh();
+        $this->assertTrue(now()->between($session->starts_at, $session->closes_at));
+        $this->assertTrue(now()->between($session->starts_at, $session->late_after));
+        $this->assertSame(30, (int) round($session->starts_at->diffInMinutes($session->closes_at)));
+
+        $this->postJson("/api/v1/teacher/attendance-sessions/{$session->id}/qr-token")
+            ->assertCreated()
+            ->assertJsonStructure(['data' => ['token', 'expires_at']]);
+    }
+
+    public function test_local_qr_test_rejects_other_teachers_session(): void
+    {
+        app()->detectEnvironment(fn () => 'local');
+        config()->set('attendance.allow_local_qr_testing', true);
+        $session = AttendanceSession::factory()->create([
+            'session_date' => now('Asia/Phnom_Penh')->toDateString(),
+        ]);
+        Sanctum::actingAs(Teacher::factory()->create()->user);
+
+        $this->postJson("/api/v1/teacher/attendance-sessions/{$session->id}/local-qr-test")
+            ->assertForbidden();
+    }
+
+    public function test_local_qr_test_rejects_closed_session(): void
+    {
+        [$teacher, $section, $room] = $this->assignedTeacher();
+        app()->detectEnvironment(fn () => 'local');
+        config()->set('attendance.allow_local_qr_testing', true);
+        $session = AttendanceSession::factory()->closed()->create([
+            'teacher_id' => $teacher->id,
+            'class_section_id' => $section->id,
+            'classroom_id' => $room->id,
+            'session_date' => now('Asia/Phnom_Penh')->toDateString(),
+        ]);
+
+        $this->postJson("/api/v1/teacher/attendance-sessions/{$session->id}/local-qr-test")
+            ->assertStatus(409);
+    }
+
     public function test_unassigned_teacher_cannot_open_attendance_session(): void
     {
         $teacher = Teacher::factory()->create();

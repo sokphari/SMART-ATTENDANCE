@@ -75,6 +75,13 @@ class TeacherAttendanceSessionController extends Controller
         ]);
     }
 
+    public function startLocalQrTest(Request $request, AttendanceSession $attendanceSession): AttendanceSessionResource
+    {
+        return new AttendanceSessionResource(
+            $this->sessions->startLocalQrTest($attendanceSession, $this->teacher($request))
+        );
+    }
+
     public function qrToken(Request $request, AttendanceSession $attendanceSession): JsonResponse
     {
         $token = $this->sessions->generateQrToken(
