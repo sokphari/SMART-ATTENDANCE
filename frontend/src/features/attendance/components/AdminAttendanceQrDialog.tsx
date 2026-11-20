@@ -78,15 +78,6 @@ export function AdminAttendanceQrDialog({ open, onClose }: Props) {
     void issueQr(Number(sessionId));
   }, [open, loading, sessions, sessionId, issueQr, reopenCount]);
 
-  useEffect(() => {
-    if (!open || !qr || !sessionId) return;
-    const expiry = new Date(qr.expires_at).getTime();
-    const remaining = expiry - Date.now();
-    if (remaining <= 0) return;
-    const timer = window.setTimeout(() => void issueQr(Number(sessionId)), Math.max(1000, remaining - 2000));
-    return () => window.clearTimeout(timer);
-  }, [open, qr, sessionId, issueQr]);
-
   function dismiss() {
     generationRef.current++;
     onClose();
@@ -105,7 +96,7 @@ export function AdminAttendanceQrDialog({ open, onClose }: Props) {
       <div className="flex items-start justify-between border-b border-hairline p-4">
         <div>
           <h2 id="admin-qr-title" className="text-lg font-bold">Student attendance QR</h2>
-          <p className="mt-1 text-xs text-muted">Show a rotating QR to students in an open class.</p>
+          <p className="mt-1 text-xs text-muted">Show one QR to students for up to one hour.</p>
         </div>
         <button aria-label="Close QR popup" type="button" onClick={dismiss} className="rounded-control p-2 text-muted hover:bg-canvas"><X className="size-4" /></button>
       </div>
@@ -142,7 +133,7 @@ export function AdminAttendanceQrDialog({ open, onClose }: Props) {
                 <p role="status" className="max-w-48 text-center text-sm text-slate-600">{generating ? "Generating QR…" : "QR unavailable"}</p>}
             </div>
             {studentScanBase && phoneScanUrlWarning(studentScanUrl("preview", studentScanBase, process.env.NEXT_PUBLIC_STUDENT_SCAN_BASE_URL)) && <p role="status" className="rounded-control bg-warning-soft p-3 text-xs text-amber-800 dark:text-amber-200">{phoneScanUrlWarning(studentScanUrl("preview", studentScanBase, process.env.NEXT_PUBLIC_STUDENT_SCAN_BASE_URL))}</p>}
-            <p className="text-center text-xs text-muted">{qr ? `QR expires at ${new Date(qr.expires_at).toLocaleTimeString()}. It refreshes automatically.` : "Only open sessions within the check-in window can generate a QR."}</p>
+            <p className="text-center text-xs text-muted">{qr ? `QR expires at ${new Date(qr.expires_at).toLocaleTimeString()}. The QR does not rotate.` : "Only open sessions within the check-in window can generate a QR."}</p>
             <div className="flex justify-center gap-2">
               <Button variant="secondary" size="sm" disabled={!qr} onClick={() => {
                 if (!qr) return;
@@ -150,9 +141,7 @@ export function AdminAttendanceQrDialog({ open, onClose }: Props) {
               }}>
                 {copied ? <Check className="size-4" /> : <Clipboard className="size-4" />}{copied ? "Copied" : "Copy token"}
               </Button>
-              <Button size="sm" disabled={generating} loading={generating} onClick={() => void issueQr(Number(sessionId))}>
-                <RefreshCw className="size-4" />Refresh QR
-              </Button>
+              <p className="self-center text-xs text-muted">Fixed QR until expiry</p>
             </div>
           </>
         )}
