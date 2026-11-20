@@ -1,6 +1,7 @@
 "use client";
 
 import { Breadcrumb } from "@/components/ui/Breadcrumb";
+import { useLocale } from "@/i18n/LocaleProvider";
 import { ALL_NAV_ITEMS, TEACHER_NAV_ITEMS } from "@/config/nav";
 import { buildBreadcrumbs } from "@/lib/navigation/breadcrumbs";
 
@@ -14,6 +15,7 @@ type AppBreadcrumbsProps = {
  * BuildingsView supplies its own breadcrumb to reflect the in-page wizard.
  */
 export function AppBreadcrumbs({ pathname, role }: AppBreadcrumbsProps) {
+  const { t } = useLocale();
   if (pathname === "/buildings") return null;
 
   const teacherArea = role?.toLowerCase() === "teacher";
@@ -21,5 +23,5 @@ export function AppBreadcrumbs({ pathname, role }: AppBreadcrumbsProps) {
   const items = teacherArea ? TEACHER_NAV_ITEMS : ALL_NAV_ITEMS;
   const breadcrumbs = buildBreadcrumbs(pathname, rootHref, items);
 
-  return <Breadcrumb items={breadcrumbs} className="mb-3" />;
+  return <Breadcrumb items={breadcrumbs.map((item) => ({ ...item, label: t(item.label) }))} className="mb-3" />;
 }
