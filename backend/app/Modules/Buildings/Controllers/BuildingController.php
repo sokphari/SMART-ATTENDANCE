@@ -31,7 +31,7 @@ class BuildingController extends Controller
 
     public function show(Building $building): BuildingResource
     {
-        return new BuildingResource($building->load(['floors' => fn ($q) => $q->withCount('classrooms')])->loadCount('floors'));
+        return new BuildingResource($building->load(['floors' => fn ($q) => $q->withCount('classrooms')])->loadCount(['floors', 'classrooms'])->loadSum('classrooms', 'capacity'));
     }
 
     public function update(RequestUpdate $request, Building $building): BuildingResource
