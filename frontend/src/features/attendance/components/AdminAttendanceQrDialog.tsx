@@ -60,6 +60,8 @@ export function AdminAttendanceQrDialog({ open, onClose }: Props) {
     if (!open && dialog.open) dialog.close();
     if (open) {
       setQr(null);
+      setSessionId("");
+      setCopied(false);
       setReopenCount((current) => current + 1);
       void loadSessions();
     } else {
@@ -68,10 +70,10 @@ export function AdminAttendanceQrDialog({ open, onClose }: Props) {
   }, [open, loadSessions]);
 
   useEffect(() => {
-    if (!open || !sessionId) return;
+    if (!open || loading || !sessionId || !sessions.some((item) => String(item.id) === sessionId)) return;
     setQr(null);
     void issueQr(Number(sessionId));
-  }, [open, sessionId, issueQr, reopenCount]);
+  }, [open, loading, sessions, sessionId, issueQr, reopenCount]);
 
   useEffect(() => {
     if (!open || !qr || !sessionId) return;
