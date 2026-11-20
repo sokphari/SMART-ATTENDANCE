@@ -7,6 +7,7 @@ import { NAV_SECTIONS, TEACHER_NAV_SECTIONS } from "@/config/nav";
 import { getInitials } from "@/lib/utils/name";
 import type { AuthUser } from "@/types/auth";
 import { cx } from "@/lib/utils/cx";
+import { useLocale } from "@/i18n/LocaleProvider";
 
 type SidebarProps = {
   collapsed: boolean;
@@ -16,6 +17,7 @@ type SidebarProps = {
 
 export function Sidebar({ collapsed, user, teacherModules = [] }: SidebarProps) {
   const pathname = usePathname();
+  const { t } = useLocale();
   const sections = user?.role?.toLowerCase() === "teacher"
     ? TEACHER_NAV_SECTIONS.map((section) => ({
         ...section,
@@ -57,7 +59,7 @@ export function Sidebar({ collapsed, user, teacherModules = [] }: SidebarProps) 
 
       <nav className="flex-1 space-y-6 overflow-y-auto overflow-x-hidden px-3 py-5">
         {sections.map((section) => (
-          <div key={section.label}>
+          <div key={t(section.label)}>
             {!collapsed && (
               <p className="mb-2 px-3 text-[11px] font-bold tracking-[0.08em] text-slate-400 uppercase">
                 {section.label}
@@ -71,8 +73,8 @@ export function Sidebar({ collapsed, user, teacherModules = [] }: SidebarProps) 
                   <li key={item.href}>
                     <Link
                       href={item.href}
-                      title={collapsed ? item.label : undefined}
-                      aria-label={item.label}
+                      title={collapsed ? t(item.label) : undefined}
+                      aria-label={t(item.label)}
                       className={cx(
                         "group relative flex h-10 items-center rounded-control text-sm font-medium transition-all duration-200",
                         collapsed ? "justify-center" : "gap-3 px-3",
@@ -89,7 +91,7 @@ export function Sidebar({ collapsed, user, teacherModules = [] }: SidebarProps) 
                       />
                       {!collapsed && (
                         <>
-                          <span className="truncate">{item.label}</span>
+                          <span className="truncate">{t(item.label)}</span>
                           {active && (
                             <span className="ml-auto size-1.5 rounded-pill bg-white/90" />
                           )}
@@ -120,7 +122,7 @@ export function Sidebar({ collapsed, user, teacherModules = [] }: SidebarProps) 
               <div className="min-w-0 flex-1">
                 <p className="truncate text-sm font-bold">{user.name}</p>
                 <p className="truncate text-xs font-medium text-muted capitalize">
-                  {user.role ?? "user"}
+                  {t(user.role ?? "user")}
                 </p>
               </div>
             </div>
