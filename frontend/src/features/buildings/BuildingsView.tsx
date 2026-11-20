@@ -76,9 +76,9 @@ const steps = [
   { label: "Review & Save", icon: CheckCircle2 },
 ] as const;
 
-const labelStyle = "mb-1.5 block text-xs font-semibold text-muted";
+const labelStyle = "mb-1 block text-xs font-semibold text-muted";
 const selectStyle =
-  "h-11 w-full rounded-control border border-hairline bg-card px-3 text-sm text-ink outline-none focus-visible:border-brand-500 focus-visible:ring-2 focus-visible:ring-brand-100";
+  "h-9 w-full rounded-control border border-hairline bg-card px-3 text-sm text-ink outline-none focus-visible:border-brand-500 focus-visible:ring-2 focus-visible:ring-brand-100";
 const roomTypes: RoomDraft["room_type"][] = ["classroom", "laboratory", "lecture_hall"];
 const roomTypeLabel = (type: string) =>
   ({ classroom: "Classroom", laboratory: "Laboratory", lecture_hall: "Lecture hall" })[type] ?? type;
@@ -102,6 +102,7 @@ export function BuildingsView() {
   const [browseError, setBrowseError] = useState("");
 
   const [wizardOpen, setWizardOpen] = useState(false);
+  const [showDescription, setShowDescription] = useState(false);
   const [step, setStep] = useState(1);
   const [saving, setSaving] = useState(false);
   const [formError, setFormError] = useState("");
@@ -204,6 +205,7 @@ export function BuildingsView() {
 
   function openWizard() {
     setBuildingForm({ code: "", name: "", description: "" });
+    setShowDescription(false);
     setDraftFloors([makeFloor(0)]);
     setFormError("");
     setCreated(null);
@@ -374,9 +376,10 @@ export function BuildingsView() {
         <p className="text-sm text-muted">
           Organize classrooms by building and floor. GPS is optional for rooms.
         </p>
-        <Button onClick={openWizard}>
-          <Plus className="size-4" />
-          Create Building
+        <Button variant={wizardOpen ? "secondary" : "primary"} disabled={saving}
+          onClick={wizardOpen ? closeWizard : openWizard}>
+          {wizardOpen ? <ArrowLeft className="size-4" /> : <Plus className="size-4" />}
+          {wizardOpen ? "Back to Buildings" : "Create Building"}
         </Button>
       </div>
 
@@ -387,13 +390,13 @@ export function BuildingsView() {
       )}
 
       {wizardOpen && (
-        <Card className="mb-6 overflow-hidden">
-          <div className="flex items-start justify-between gap-4 border-b border-hairline p-5">
+        <Card className="mx-auto mb-4 w-full max-w-4xl overflow-hidden">
+          <div className="flex items-start justify-between gap-3 border-b border-hairline p-3 sm:px-4">
             <div>
-              <h2 className="text-lg font-bold">
+              <h2 className="text-base font-bold">
                 {step === 5 ? "Building created" : "Create a new building"}
               </h2>
-              <p className="mt-1 text-sm text-muted">
+              <p className="mt-0.5 text-xs text-muted">
                 {step === 5 ? "Your building and classrooms are ready." : "Complete each step, then review before saving."}
               </p>
             </div>
@@ -403,7 +406,7 @@ export function BuildingsView() {
           </div>
 
           {step < 5 && (
-            <ol className="grid grid-cols-4 gap-2 border-b border-hairline p-4 sm:gap-4">
+            <ol className="grid grid-cols-4 gap-1 border-b border-hairline px-3 py-2 sm:gap-2 sm:px-4">
               {steps.map((item, index) => {
                 const current = index + 1;
                 const Icon = item.icon;
@@ -414,16 +417,16 @@ export function BuildingsView() {
                       disabled={current > step || saving}
                       onClick={() => { setStep(current); setFormError(""); }}
                       aria-current={current === step ? "step" : undefined}
-                      className="flex w-full flex-col items-center gap-2 disabled:cursor-default"
+                      className="flex w-full flex-col items-center justify-center gap-1 rounded-control px-1 py-1 sm:flex-row sm:gap-2 disabled:cursor-default"
                     >
-                      <span className={`flex size-9 items-center justify-center rounded-full border text-sm font-bold transition-colors ${
+                      <span className={`flex size-7 shrink-0 items-center justify-center rounded-full border text-xs font-bold transition-colors ${
                         current < step
                           ? "border-emerald-500 bg-emerald-500 text-white"
                           : current === step
                             ? "border-brand-600 bg-brand-600 text-white"
                             : "border-hairline bg-canvas text-muted"
                       }`}>
-                        {current < step ? <Check className="size-4" /> : <Icon className="size-4" />}
+                        {current < step ? <Check className="size-3.5" /> : <Icon className="size-3.5" />}
                       </span>
                       <span className={`text-center text-[11px] font-semibold sm:text-xs ${
                         current === step ? "text-ink" : "text-muted"
@@ -435,12 +438,12 @@ export function BuildingsView() {
             </ol>
           )}
 
-          <div className="space-y-5 p-5">
+          <div className="space-y-3 p-3 sm:p-4">
             {step === 1 && (
-              <div className="grid gap-4 md:grid-cols-2">
+              <div className="grid gap-3 md:grid-cols-2">
                 <div>
                   <label htmlFor="setup-building-code" className={labelStyle}>Building code *</label>
-                  <Input id="setup-building-code" maxLength={30} placeholder="e.g. A1" value={buildingForm.code}
+                  <Input className="h-9" id="setup-building-code" maxLength={30} placeholder="e.g. A1" value={buildingForm.code}
                     onChange={(event) => {
                       setBuildingForm((value) => ({ ...value, code: event.target.value.toUpperCase() }));
                       setFormError("");
@@ -448,38 +451,48 @@ export function BuildingsView() {
                 </div>
                 <div>
                   <label htmlFor="setup-building-name" className={labelStyle}>Building name *</label>
-                  <Input id="setup-building-name" maxLength={150} placeholder="e.g. Building A" value={buildingForm.name}
+                  <Input className="h-9" id="setup-building-name" maxLength={150} placeholder="e.g. Building A" value={buildingForm.name}
                     onChange={(event) => {
                       setBuildingForm((value) => ({ ...value, name: event.target.value }));
                       setFormError("");
                     }} />
                 </div>
                 <div className="md:col-span-2">
-                  <label htmlFor="setup-building-description" className={labelStyle}>Description (optional)</label>
-                  <textarea id="setup-building-description" rows={3} maxLength={5000}
-                    className={`${selectStyle} h-auto min-h-24 py-3`}
-                    placeholder="Where is this building located?"
-                    value={buildingForm.description}
-                    onChange={(event) => setBuildingForm((value) => ({ ...value, description: event.target.value }))} />
+                  <button type="button" aria-expanded={showDescription} aria-controls="setup-description-panel"
+                    className="flex items-center gap-1.5 text-xs font-semibold text-brand-700 hover:underline"
+                    onClick={() => setShowDescription((value) => !value)}>
+                    <ChevronDown className={`size-3.5 transition-transform ${showDescription ? "rotate-180" : ""}`} />
+                    {showDescription ? "Hide description" : "Add description (optional)"}
+                  </button>
+                  {showDescription && (
+                    <div id="setup-description-panel" className="mt-2">
+                      <label htmlFor="setup-building-description" className={labelStyle}>Description (optional)</label>
+                      <textarea id="setup-building-description" rows={2} maxLength={5000}
+                        className={`${selectStyle} h-auto min-h-16 py-2`}
+                        placeholder="Where is this building located?"
+                        value={buildingForm.description}
+                        onChange={(event) => setBuildingForm((value) => ({ ...value, description: event.target.value }))} />
+                    </div>
+                  )}
                 </div>
               </div>
             )}
 
             {step === 2 && (
-              <div className="space-y-4">
-                <p className="text-sm text-muted">
+              <div className="space-y-3">
+                <p className="text-xs text-muted">
                   Add floors for <strong className="text-ink">{buildingForm.name}</strong>. Use 0 for ground floor.
                 </p>
                 {draftFloors.map((floor, index) => (
-                  <div key={floor.key} className="grid gap-3 rounded-control border border-hairline p-4 sm:grid-cols-[1fr_120px_auto] sm:items-end">
+                  <div key={floor.key} className="grid gap-2 rounded-control border border-hairline p-3 sm:grid-cols-[1fr_100px_auto] sm:items-end">
                     <div>
                       <label htmlFor={`floor-name-${floor.key}`} className={labelStyle}>Floor name *</label>
-                      <Input id={`floor-name-${floor.key}`} value={floor.name}
+                      <Input className="h-9" id={`floor-name-${floor.key}`} value={floor.name}
                         onChange={(event) => updateFloor(floor.key, { name: event.target.value })} />
                     </div>
                     <div>
                       <label htmlFor={`floor-number-${floor.key}`} className={labelStyle}>Number *</label>
-                      <Input id={`floor-number-${floor.key}`} type="number" min={-2} max={200} value={floor.floor_number}
+                      <Input className="h-9" id={`floor-number-${floor.key}`} type="number" min={-2} max={200} value={floor.floor_number}
                         onChange={(event) => updateFloor(floor.key, { floor_number: event.target.value })} />
                     </div>
                     <Button variant="secondary" size="icon" aria-label={`Remove floor ${index + 1}`}
@@ -500,30 +513,30 @@ export function BuildingsView() {
             )}
 
             {step === 3 && (
-              <div className="space-y-5">
-                <p className="text-sm text-muted">
+              <div className="space-y-3">
+                <p className="text-xs text-muted">
                   Add one or more rooms to each floor. Coordinates are only needed for GPS-based attendance.
                 </p>
                 {draftFloors.map((floor) => (
                   <section key={floor.key} className="overflow-hidden rounded-card border border-hairline">
-                    <div className="flex items-center justify-between bg-canvas-subtle px-4 py-3">
+                    <div className="flex items-center justify-between bg-canvas-subtle px-3 py-2">
                       <h3 className="font-semibold">{floor.name}</h3>
                       <span className="rounded-full bg-brand-50 px-2.5 py-1 text-xs font-semibold text-brand-700">
                         {floor.rooms.length} {floor.rooms.length === 1 ? "room" : "rooms"}
                       </span>
                     </div>
-                    <div className="space-y-3 p-4">
+                    <div className="space-y-2 p-3">
                       {floor.rooms.map((room) => (
-                        <div key={room.key} className="rounded-control border border-hairline p-3">
-                          <div className="grid gap-3 sm:grid-cols-[1.3fr_0.8fr_1fr_auto] sm:items-end">
+                        <div key={room.key} className="rounded-control border border-hairline p-2.5">
+                          <div className="grid gap-2 sm:grid-cols-[1.3fr_0.8fr_1fr_auto] sm:items-end">
                             <div>
                               <label htmlFor={`room-code-${room.key}`} className={labelStyle}>Room code *</label>
-                              <Input id={`room-code-${room.key}`} maxLength={50} placeholder="A-101" value={room.room_code}
+                              <Input className="h-9" id={`room-code-${room.key}`} maxLength={50} placeholder="A-101" value={room.room_code}
                                 onChange={(event) => updateRoom(floor.key, room.key, { room_code: event.target.value.toUpperCase() })} />
                             </div>
                             <div>
                               <label htmlFor={`room-seats-${room.key}`} className={labelStyle}>Seats *</label>
-                              <Input id={`room-seats-${room.key}`} type="number" min={1} max={2000} value={room.capacity}
+                              <Input className="h-9" id={`room-seats-${room.key}`} type="number" min={1} max={2000} value={room.capacity}
                                 onChange={(event) => updateRoom(floor.key, room.key, { capacity: event.target.value })} />
                             </div>
                             <div>
@@ -576,8 +589,8 @@ export function BuildingsView() {
             )}
 
             {step === 4 && (
-              <div className="space-y-4">
-                <div className="flex flex-wrap items-center gap-3 rounded-card bg-brand-50 p-4">
+              <div className="space-y-3">
+                <div className="flex flex-wrap items-center gap-2 rounded-card bg-brand-50 p-3">
                   <Building2 className="size-7 text-brand-700" />
                   <div className="min-w-0 flex-1">
                     <h3 className="font-bold">{buildingForm.name}</h3>
@@ -591,7 +604,7 @@ export function BuildingsView() {
                     { label: "Rooms", count: totalRooms, icon: DoorOpen },
                     { label: "Total seats", count: totalSeats, icon: Users },
                   ].map((stat) => (
-                    <div key={stat.label} className="rounded-control border border-hairline p-3 text-center">
+                    <div key={stat.label} className="rounded-control border border-hairline p-2 text-center">
                       <stat.icon className="mx-auto mb-2 size-4 text-brand-600" />
                       <p className="text-xl font-bold">{stat.count}</p>
                       <p className="text-xs text-muted">{stat.label}</p>
@@ -600,13 +613,13 @@ export function BuildingsView() {
                 </div>
                 {draftFloors.map((floor) => (
                   <div key={floor.key} className="overflow-hidden rounded-control border border-hairline">
-                    <div className="flex items-center justify-between border-b border-hairline bg-canvas-subtle px-4 py-3">
+                    <div className="flex items-center justify-between border-b border-hairline bg-canvas-subtle px-3 py-2">
                       <span className="font-semibold">{floor.name}</span>
                       <span className="text-xs text-muted">{floor.rooms.length} rooms</span>
                     </div>
-                    <div className="divide-y divide-hairline px-4">
+                    <div className="divide-y divide-hairline px-3">
                       {floor.rooms.map((room) => (
-                        <div key={room.key} className="flex flex-wrap items-center justify-between gap-2 py-3 text-sm">
+                        <div key={room.key} className="flex flex-wrap items-center justify-between gap-2 py-2 text-sm">
                           <span className="font-semibold">{room.room_code.toUpperCase()}</span>
                           <span className="text-muted">{roomTypeLabel(room.room_type)} · {room.capacity} seats</span>
                           <span className="flex items-center gap-1 text-xs text-muted">
@@ -647,7 +660,7 @@ export function BuildingsView() {
           </div>
 
           {step < 5 && (
-            <div className="flex flex-wrap items-center justify-between gap-3 border-t border-hairline p-4">
+            <div className="flex flex-wrap items-center justify-between gap-2 border-t border-hairline px-3 py-2.5 sm:px-4">
               <Button variant="secondary" disabled={step === 1 || saving} onClick={() => { setStep((value) => value - 1); setFormError(""); }}>
                 <ArrowLeft className="size-4" /> Back
               </Button>
@@ -663,7 +676,7 @@ export function BuildingsView() {
         </Card>
       )}
 
-      <Card className="overflow-hidden">
+      {!wizardOpen && <Card className="overflow-hidden">
         <div className="flex flex-wrap items-center justify-between gap-3 border-b border-hairline p-4">
           <h2 className="font-semibold">Existing Buildings</h2>
           <div className="relative w-full sm:w-64">
@@ -751,7 +764,7 @@ export function BuildingsView() {
             </div>
           </div>
         )}
-      </Card>
+      </Card>}
     </>
   );
 }
