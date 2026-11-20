@@ -201,8 +201,8 @@ class AttendanceSessionServices
 
             $now = now();
             $start = $now->copy()->subMinute();
-            $cutoff = $now->copy()->addMinutes(15);
-            $end = $now->copy()->addMinutes(30);
+            $cutoff = $start->copy()->addMinutes(15);
+            $end = $start->copy()->addMinutes(30);
             $locked->update([
                 'starts_at' => $start,
                 'late_after' => $cutoff,
