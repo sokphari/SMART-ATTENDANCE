@@ -2,6 +2,7 @@
 
 namespace App\Modules\Attendance\Services;
 
+use App\Enums\AttendanceStatus;
 use App\Models\Attendance;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
@@ -9,40 +10,64 @@ use Illuminate\Support\Facades\Log;
 class TelegramAttendanceNotifier
 {
     /**
-     * Send a minimal attendance event to a configured Telegram chat.
-     * Never include a student's GPS coordinates, token, or private contact details.
-     * Telegram is optional and notification delivery must not affect check-in.
+     * Notify the configured private Telegram chat after a successful student QR
+     * check-in. Never include GPS coordinates, QR tokens or student contacts.
+     * A Telegram failure must never change a saved attendance record.
      */
     public function notify(Attendance $attendance): void
     {
-        $config = config('services.telegram_attendance');
-        $token = $config['bot_token'] ?? null;
-        $chatId = $config['chat_id'] ?? null;
+        $token = config('services.telegram_attendance.bot_token');
+        $chatId = config('services.telegram_attendance.chat_id');
 
-        if (! is_string($token) || $token === '' || ! is_string($chatId) || $chatId === '') {
+        if (! is_string($token) || trim($token) === '' || ! is_scalar($chatId) || (string) $chatId === '') {
             return;
         }
 
-        $attendance->loadMissing(['attendanceSession.classSection.course']);
-        $class = $attendance->attendanceSession?->classSection;
-        $course = $class?->course;
-        $courseName = $course?->name ?? 'Class';
-        $status = $attendance->status?->value ?? 'present';
+        $attendance->loadMissing(['student.user', 'attendanceSession']);
+        $student = $attendance->student;
+        $session = $attendance->attendanceSession;
 
-        // Telegram text uses plain strings. Never interpolate the bot token into logs.
+        if ($student === null || $session === null || $attendance->checked_in_at === null) {
+            return;
+        }
+
+        $studentName = $student->user?->name ?? 'Unknown student';
+        $gender = match (strtolower((string) ($student->gender ?? ''))) {
+            'male', 'm' => 'Male',
+            'female', 'f' => 'Female',
+            'other' => 'Other',
+            default => 'Not specified',
+        };
+
+        $status = match ($attendance->status) {
+            AttendanceStatus::Late => 'Late ('.$this->minutesAfterLateThreshold($attendance).' minutes)',
+            AttendanceStatus::Present => 'Present',
+            default => ucfirst($attendance->status?->value ?? 'unknown'),
+        };
+
+        $timezone = 'Asia/Phnom_Penh';
+        // The class can continue after QR check-in closes. Prefer the actual
+        // end of the scheduled session over the QR scan cutoff.
+        $startsAt = $session->starts_at->copy()->timezone($timezone);
+        $endsAt = ($session->session_ends_at ?? $session->closes_at)->copy()->timezone($timezone);
+        $schedule = $startsAt->format('g:i A').' – '.$endsAt->format('g:i A');
+        $date = ($session->session_date ?? $attendance->checked_in_at)->copy()
+            ->timezone($timezone)->format('d/m/Y');
+
         $text = implode("\n", [
-            'Smart Attendance',
-            'Class: '.$courseName,
-            'Section: '.($class?->section_code ?? '-'),
-            'Status: '.ucfirst($status),
-            'Attendance record #'.$attendance->id,
+            '📌 STUDENT ATTENDANCE NOTIFICATION',
+            '',
+            '👤 Student: '.$studentName,
+            '⚧ Gender: '.$gender,
+            '⚠️ Status: '.$status,
+            '🕒 Schedule: '.$schedule,
+            '📅 Date: '.$date,
         ]);
 
         try {
-            $response = Http::timeout(4)
-                ->retry(1, 200)
+            $response = Http::timeout(5)
                 ->post('https://api.telegram.org/bot'.$token.'/sendMessage', [
-                    'chat_id' => $chatId,
+                    'chat_id' => (string) $chatId,
                     'text' => $text,
                     'disable_web_page_preview' => true,
                 ]);
@@ -54,10 +79,20 @@ class TelegramAttendanceNotifier
                 ]);
             }
         } catch (\Throwable $exception) {
+            // Never log the token, full request URL, or student identity.
             Log::warning('Telegram attendance notification failed.', [
                 'attendance_id' => $attendance->id,
                 'error_type' => get_class($exception),
             ]);
         }
+    }
+
+    private function minutesAfterLateThreshold(Attendance $attendance): int
+    {
+        $lateThreshold = $attendance->attendanceSession->late_after;
+        $seconds = $attendance->checked_in_at->getTimestamp() - $lateThreshold->getTimestamp();
+
+        // For 'Late', show completed minutes past the configured grace deadline.
+        return max(1, (int) ceil(max(0, $seconds) / 60));
     }
 }
