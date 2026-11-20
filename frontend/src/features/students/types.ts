@@ -3,6 +3,7 @@ export type Student = {
   user_id: number;
   user: { id: number; name: string; email: string; status: string } | null;
   department_id: number;
+  program_id?: number | null;
   department: { id: number; name: string; code: string } | null;
   student_code: string;
   year_level: number;
@@ -32,6 +33,7 @@ export type StudentInput = {
   password?: string;
   status?: string;
   department_id: number;
+  program_id?: number | null;
   student_code: string;
   year_level: number;
   phone?: string;

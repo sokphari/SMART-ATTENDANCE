@@ -1,6 +1,7 @@
 export type Course = {
   id: number;
   department_id: number;
+  program_id?: number | null;
   department: { id: number; name: string; code: string } | null;
   course_code: string;
   name: string;
@@ -13,6 +14,7 @@ export type Course = {
 
 export type CourseInput = {
   department_id: number;
+  program_id?: number | null;
   course_code: string;
   name: string;
   description?: string | null;

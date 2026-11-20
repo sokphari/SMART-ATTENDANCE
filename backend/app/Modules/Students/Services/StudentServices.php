@@ -26,6 +26,8 @@ class StudentServices
             ->with([
                 'user',
                 'department',
+                'program',
+                'program',
                 'enrollments' => fn ($query) => $query->where('status', EnrollmentStatus::Enrolled->value)
                     ->with(['classSection.course.department', 'classSection.semester.academicYear']),
             ])
@@ -80,6 +82,9 @@ class StudentServices
                     'department_id' => ['Choose an active department.'],
                 ]);
             }
+            if (! empty($data['program_id']) && ! \App\Models\Program::query()->whereKey($data['program_id'])->where('department_id', $department->id)->where('status', 'active')->exists()) {
+                throw ValidationException::withMessages(['program_id' => ['Select an active program from the selected department.']]);
+            }
 
             $user = User::create([
                 'name' => $data['name'],
@@ -92,6 +97,7 @@ class StudentServices
             $student = Student::create([
                 'user_id' => $user->id,
                 'department_id' => $data['department_id'],
+                'program_id' => $data['program_id'] ?? null,
                 'student_code' => $data['student_code'],
                 'year_level' => $data['year_level'],
                 'phone' => $data['phone'] ?? null,
@@ -130,14 +136,21 @@ class StudentServices
 
             $profileData = array_intersect_key(
                 $data,
-                array_flip(['department_id', 'student_code', 'year_level', 'phone', 'gender'])
+                array_flip(['department_id', 'program_id', 'student_code', 'year_level', 'phone', 'gender'])
             );
+
+            if (! empty($profileData['program_id'])) {
+                $departmentId = $profileData['department_id'] ?? $student->department_id;
+                if (! \App\Models\Program::query()->whereKey($profileData['program_id'])->where('department_id', $departmentId)->where('status', 'active')->exists()) {
+                    throw ValidationException::withMessages(['program_id' => ['Select an active program from the selected department.']]);
+                }
+            }
 
             if ($profileData !== []) {
                 $student->fill($profileData)->save();
             }
 
-            return $student->refresh()->load(['user', 'department']);
+            return $student->refresh()->load(['user', 'department', 'program']);
         });
     }
 

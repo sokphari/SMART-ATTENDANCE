@@ -11,7 +11,7 @@ import { PageHeader } from "@/components/ui/PageHeader";
 import { createTeacher, fetchTeacher, fetchTeacherDepartments, updateTeacher } from "../api";
 import type { DepartmentOption, TeacherInput } from "../types";
 
-const blankForm: TeacherInput = { name: "", email: "", password: "", teacher_code: "", department_id: 0, phone: "", status: "active" };
+const blankForm: TeacherInput = { name: "", email: "", password: "", teacher_code: "", department_id: 0, phone: "", qualifications: "", status: "active" };
 const NOTICE_KEY = "sa_teacher_notice";
 
 export function TeacherFormView({ mode }: { mode: "create" | "edit" }) {
@@ -33,7 +33,7 @@ export function TeacherFormView({ mode }: { mode: "create" | "edit" }) {
     Promise.all([fetchTeacher(id), fetchTeacherDepartments()]).then(([teacherResponse, departmentResponse]) => {
       const teacher = teacherResponse.data;
       setDepartments(departmentResponse.data);
-      setForm({ name: teacher.user?.name ?? "", email: teacher.user?.email ?? "", teacher_code: teacher.teacher_code, department_id: teacher.department_id, phone: teacher.phone ?? "", status: teacher.user?.status ?? "active", password: "" });
+      setForm({ name: teacher.user?.name ?? "", email: teacher.user?.email ?? "", teacher_code: teacher.teacher_code, department_id: teacher.department_id, phone: teacher.phone ?? "", qualifications: teacher.qualifications ?? "", status: teacher.user?.status ?? "active", password: "" });
     }).catch((caught) => setError(caught instanceof ApiError ? caught.message : "Could not load teacher." )).finally(() => setLoading(false));
   }, [id, mode]);
 
@@ -62,6 +62,7 @@ export function TeacherFormView({ mode }: { mode: "create" | "edit" }) {
       <Input label={mode === "create" ? "Temporary password" : "New password (optional)"} type="password" placeholder={mode === "create" ? "At least 8 characters" : "Leave blank to keep current password"} minLength={8} required={mode === "create"} autoComplete="new-password" value={form.password} onChange={(event) => setForm({ ...form, password: event.target.value })} />
       <label className="space-y-1.5 text-sm font-semibold">Department<select required value={form.department_id || ""} onChange={(event) => setForm({ ...form, department_id: Number(event.target.value) })} className="h-11 w-full rounded-control border border-hairline bg-card px-3.5 text-sm font-normal text-ink"><option value="" disabled>Select department</option>{departments.map((department) => <option key={department.id} value={department.id}>{department.name} ({department.code})</option>)}</select></label>
       <Input label="Phone (optional)" type="tel" placeholder="e.g. +855 12 345 678" autoComplete="tel" value={form.phone} onChange={(event) => setForm({ ...form, phone: event.target.value })} />
+      <label className="space-y-1.5 text-sm font-semibold sm:col-span-2">Qualifications <span className="font-normal text-muted">(optional)</span><textarea rows={3} placeholder="Degrees, certifications, or teaching credentials" value={form.qualifications ?? ""} onChange={event => setForm({ ...form, qualifications: event.target.value })} className="w-full rounded-control border border-hairline bg-card px-3.5 py-3 text-sm font-normal text-ink outline-none focus-visible:ring-4 focus-visible:ring-brand-100" /></label>
       {mode === "edit" && <label className="space-y-1.5 text-sm font-semibold">Account status<select value={form.status} onChange={(event) => setForm({ ...form, status: event.target.value })} className="h-11 w-full rounded-control border border-hairline bg-card px-3.5 text-sm font-normal text-ink"><option value="active">Active</option><option value="inactive">Inactive</option><option value="suspended">Suspended</option></select></label>}
       {error && <p role="alert" className="rounded-control bg-danger-soft px-3 py-2 text-sm text-danger sm:col-span-2">{error}</p>}
       <div className="flex justify-end gap-2 border-t border-hairline pt-4 sm:col-span-2"><Button type="button" variant="secondary" onClick={() => router.push("/teachers")}>Cancel</Button><Button type="submit" loading={saving}><Save className="size-4" />{mode === "create" ? "Create teacher" : "Save changes"}</Button></div>

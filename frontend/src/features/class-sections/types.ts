@@ -19,6 +19,8 @@ export type ClassSection = {
     status: string;
   } | null;
   section_code: string;
+  class_start_date?: string | null;
+  class_end_date?: string | null;
   capacity: number;
   status: "active" | "inactive" | "pending_setup";
   enrolled_count?: number;
@@ -47,12 +49,19 @@ export type ClassSectionInput = {
   section_code: string;
   capacity: number;
   status?: "active" | "inactive" | "pending_setup";
+  program_id?: number | null;
+  year_level?: number | null;
+  teacher_id?: number;
+  class_start_date?: string;
+  class_end_date?: string;
+  schedules?: { classroom_id: number; day_of_week: number; start_time: string; end_time: string; effective_from?: string; effective_until?: string }[];
 };
 
 export type CourseOption = {
   id: number;
   course_code: string;
   name: string;
+  department_id?: number;
 };
 
 export type SemesterOption = {

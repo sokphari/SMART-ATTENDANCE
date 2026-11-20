@@ -4,8 +4,10 @@ namespace App\Modules\Classrooms\Requests;
 
 use App\Enums\ClassroomStatus;
 use App\Models\Classroom;
+use App\Models\Floor;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\Validator;
 
 class RequestUpdate extends FormRequest
 {
@@ -53,10 +55,24 @@ class RequestUpdate extends FormRequest
             ],
             'building' => ['sometimes', 'nullable', 'string', 'max:100'],
             'floor' => ['sometimes', 'nullable', 'string', 'max:20'],
+            'floor_id' => ['sometimes', 'nullable', 'integer', 'exists:floors,id'],
+            'capacity' => ['sometimes', 'required', 'integer', 'between:1,2000'],
+            'room_type' => ['sometimes', 'required', 'string', 'max:50'],
             'latitude' => ['sometimes', 'required', 'numeric', 'between:-90,90'],
             'longitude' => ['sometimes', 'required', 'numeric', 'between:-180,180'],
             'allowed_radius_meters' => ['sometimes', 'required', 'integer', 'between:10,1000'],
             'status' => ['sometimes', 'required', Rule::enum(ClassroomStatus::class)],
         ];
+    }
+
+    public function after(): array
+    {
+        return [function (Validator $validator): void {
+            if ($validator->errors()->isNotEmpty() || ! $this->filled('floor_id')) return;
+            $floor = Floor::query()->with('building')->find($this->integer('floor_id'));
+            if (! $floor?->isActive() || ! $floor->building?->isActive()) {
+                $validator->errors()->add('floor_id', 'Choose a floor in an active building.');
+            }
+        }];
     }
 }

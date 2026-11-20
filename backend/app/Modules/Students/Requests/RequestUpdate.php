@@ -57,6 +57,7 @@ class RequestUpdate extends FormRequest
             'password' => ['sometimes', 'nullable', 'string', 'min:8'],
             'status' => ['sometimes', 'required', Rule::enum(AccountStatus::class)],
             'department_id' => ['sometimes', 'required', 'integer', 'exists:departments,id'],
+            'program_id' => ['sometimes', 'nullable', 'integer', 'exists:programs,id'],
             'student_code' => [
                 'sometimes',
                 'required',

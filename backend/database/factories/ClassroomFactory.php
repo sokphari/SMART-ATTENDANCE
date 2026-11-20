@@ -22,6 +22,8 @@ class ClassroomFactory extends Factory
             'room_code' => strtoupper(fake()->unique()->bothify('RM-###')),
             'building' => fake()->randomElement(['Building A', 'Building B', 'Building C']),
             'floor' => (string) fake()->numberBetween(1, 5),
+            'capacity' => 500,
+            'room_type' => 'classroom',
             'latitude' => fake()->latitude(11.5, 11.6),
             'longitude' => fake()->longitude(104.85, 104.95),
             'allowed_radius_meters' => fake()->numberBetween(10, 1000),

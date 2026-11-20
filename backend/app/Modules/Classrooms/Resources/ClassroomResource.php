@@ -15,8 +15,17 @@ class ClassroomResource extends JsonResource
         return [
             'id' => $this->id,
             'room_code' => $this->room_code,
+            'floor_id' => $this->floor_id,
+            'floor_details' => $this->whenLoaded('floorRecord', fn () => [
+                'id' => $this->floorRecord?->id,
+                'name' => $this->floorRecord?->name,
+                'floor_number' => $this->floorRecord?->floor_number,
+                'building' => $this->floorRecord?->building ? ['id' => $this->floorRecord->building->id, 'code' => $this->floorRecord->building->code, 'name' => $this->floorRecord->building->name] : null,
+            ]),
             'building' => $this->building,
             'floor' => $this->floor,
+            'capacity' => $this->capacity,
+            'room_type' => $this->room_type,
             'latitude' => (float) $this->latitude,
             'longitude' => (float) $this->longitude,
             'allowed_radius_meters' => $this->allowed_radius_meters,

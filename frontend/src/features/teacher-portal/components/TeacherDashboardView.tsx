@@ -19,7 +19,7 @@ export function TeacherDashboardView() {
       const response = await getTeacherDashboard();
       setDashboard(response.data);
     } catch (caught) {
-      setError(caught instanceof Error ? caught.message : "Unable to load your teacher dashboard.");
+      setError(caught instanceof Error ? caught.message : "Unable to load your Dashboard.");
     } finally {
       if (!silent) setLoading(false);
     }

@@ -6,6 +6,7 @@ export type Teacher = {
   department: { id: number; name: string; code: string } | null;
   teacher_code: string;
   phone: string | null;
+  qualifications?: string | null;
   created_at: string;
   updated_at: string;
 };
@@ -18,6 +19,7 @@ export type TeacherInput = {
   department_id: number;
   teacher_code: string;
   phone?: string;
+  qualifications?: string | null;
 };
 
 export type DepartmentOption = { id: number; name: string; code: string };

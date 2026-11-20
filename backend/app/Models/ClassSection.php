@@ -21,7 +21,12 @@ class ClassSection extends Model
         'course_id',
         'semester_id',
         'section_code',
+        'class_code',
+        'program_id',
         'capacity',
+        'year_level',
+        'class_start_date',
+        'class_end_date',
         'status',
     ];
 
@@ -32,6 +37,9 @@ class ClassSection extends Model
     {
         return [
             'capacity' => 'integer',
+            'year_level' => 'integer',
+            'class_start_date' => 'date',
+            'class_end_date' => 'date',
             'status' => ClassSectionStatus::class,
         ];
     }
@@ -44,6 +52,11 @@ class ClassSection extends Model
     public function semester(): BelongsTo
     {
         return $this->belongsTo(Semester::class);
+    }
+
+    public function program(): BelongsTo
+    {
+        return $this->belongsTo(Program::class);
     }
 
     public function teacherAssignments(): HasMany

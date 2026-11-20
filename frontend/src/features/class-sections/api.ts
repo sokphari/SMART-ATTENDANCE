@@ -88,3 +88,8 @@ export function fetchDepartmentsOptions() {
   );
 }
 
+export type SetupOption = { id: number; name: string; code?: string; status?: string; capacity?: number; department_id?: number; building_id?: number; floor_id?: number };
+export function fetchSetupOptions(path: string) {
+  return apiFetch<Paginated<SetupOption>>(`/api/v1/admin/${path}?status=active&per_page=100`);
+}
+

@@ -1,6 +1,8 @@
 import type { NextConfig } from "next";
 
-const fallbackApiProxyUrl = "http://localhost:8002";
+// Local Laravel development uses port 8001; Compose overrides this with its
+// internal nginx hostname when building the containerized frontend.
+const fallbackApiProxyUrl = "http://localhost:8001";
 const configuredApiProxyUrl = process.env.API_PROXY_URL?.trim();
 
 function resolveApiProxyUrl(value: string | undefined): string {

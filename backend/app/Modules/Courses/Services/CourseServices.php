@@ -4,7 +4,9 @@ namespace App\Modules\Courses\Services;
 
 use App\Enums\CourseStatus;
 use App\Models\Course;
+use App\Models\Program;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Validation\ValidationException;
 
 class CourseServices
 {
@@ -14,7 +16,7 @@ class CourseServices
     public function paginate(array $filters = []): LengthAwarePaginator
     {
         return Course::query()
-            ->with('department')
+            ->with(['department', 'program'])
             ->when($filters['search'] ?? null, function ($query, string $search): void {
                 $term = '%'.strtolower($search).'%';
 
@@ -41,8 +43,10 @@ class CourseServices
      */
     public function create(array $data): Course
     {
+        $this->assertProgramDepartment($data['program_id'] ?? null, (int) $data['department_id']);
         $course = Course::create([
             'department_id' => $data['department_id'],
+            'program_id' => $data['program_id'] ?? null,
             'course_code' => $data['course_code'],
             'name' => $data['name'],
             'description' => $data['description'] ?? null,
@@ -50,7 +54,7 @@ class CourseServices
             'status' => $data['status'] ?? CourseStatus::Active->value,
         ]);
 
-        return $course->load('department');
+        return $course->load(['department', 'program']);
     }
 
     /**
@@ -58,14 +62,23 @@ class CourseServices
      */
     public function update(Course $course, array $data): Course
     {
+        $this->assertProgramDepartment($data['program_id'] ?? null, (int) ($data['department_id'] ?? $course->department_id));
         $course->fill($data);
         $course->save();
 
-        return $course->refresh()->load('department');
+        return $course->refresh()->load(['department', 'program']);
     }
 
     public function deactivate(Course $course): void
     {
         $course->update(['status' => CourseStatus::Inactive->value]);
+    }
+
+    private function assertProgramDepartment(mixed $programId, int $departmentId): void
+    {
+        if ($programId === null || $programId === '') return;
+        if (! Program::query()->whereKey($programId)->where('department_id', $departmentId)->where('status', 'active')->exists()) {
+            throw ValidationException::withMessages(['program_id' => ['Select an active program from the selected department.']]);
+        }
     }
 }

@@ -6,7 +6,7 @@ This document describes the teacher experience in the Android app, separates exi
 
 The Android teacher navigation includes:
 
-- Teacher dashboard
+- Dashboard
 - Courses
 - Attendance sessions and session details
 - QR attendance
@@ -139,7 +139,7 @@ For manual marking, validate the entire request before applying changes and comm
 
 Return `409` for duplicate/conflicting state, `403` for a teacher outside the assignment, `404` for inaccessible/missing resources, and `422` for invalid fields. Do not accept client-supplied `teacher_id`, verification method, or marked-by identity.
 
-### Priority 3 — Session lifecycle and teacher dashboard
+### Priority 3 — Session lifecycle and Dashboard
 
 Wire the existing close operation into Android and expose a server-backed summary for dashboard/session details:
 

@@ -41,6 +41,7 @@ class RequestUpdate extends FormRequest
 
         return [
             'department_id' => ['sometimes', 'required', 'integer', 'exists:departments,id'],
+            'program_id' => ['sometimes', 'nullable', 'integer', 'exists:programs,id'],
             'course_code' => [
                 'sometimes',
                 'required',

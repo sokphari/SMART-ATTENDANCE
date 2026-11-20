@@ -19,7 +19,7 @@ class ClassroomController extends Controller
     public function index(Request $request): AnonymousResourceCollection
     {
         $classrooms = $this->classrooms->paginate(
-            $request->only(['search', 'status', 'per_page'])
+            $request->only(['search', 'status', 'building_id', 'floor_id', 'per_page'])
         );
 
         return ClassroomResource::collection($classrooms);

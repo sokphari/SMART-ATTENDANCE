@@ -2,6 +2,7 @@ import {
   BarChart3,
   BookOpen,
   Building2,
+  Blocks,
   CalendarClock,
   CalendarDays,
   CalendarRange,
@@ -67,6 +68,8 @@ export const ALL_NAV_ITEMS: NavItem[] = [
     description: "The full course catalog, organized by department.",
     endpoint: "/api/v1/admin/courses",
   },
+  { label: "Programs", href: "/programs", icon: GraduationCap, description: "Programs and academic paths by department.", endpoint: "/api/v1/admin/programs" },
+  { label: "Buildings & Rooms", href: "/buildings", icon: Blocks, description: "Manage buildings, floors, rooms, and room capacity.", endpoint: "/api/v1/admin/buildings" },
   {
     label: "Academic Years",
     href: "/academic-years",
@@ -141,7 +144,7 @@ export const ALL_NAV_ITEMS: NavItem[] = [
 
 export const TEACHER_NAV_ITEMS: NavItem[] = [
   {
-    label: "Teacher dashboard",
+    label: "Dashboard",
     href: "/teacher/dashboard",
     icon: Gauge,
     description: "Your assigned classes and attendance activity.",
@@ -225,7 +228,7 @@ export const NAV_SECTIONS: NavSection[] = [
   {
     label: "Academics",
     items: ALL_NAV_ITEMS.filter((item) =>
-      ["/departments", "/courses", "/academic-years", "/semesters", "/class-sections", "/schedules"].includes(
+      ["/departments", "/courses", "/programs", "/buildings", "/academic-years", "/semesters", "/class-sections", "/schedules"].includes(
         item.href,
       ),
     ),

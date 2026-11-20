@@ -1,19 +1,23 @@
 "use client";
 
-import { useCallback, useEffect, useState, type FormEvent } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { CalendarDays, ClipboardList, History, Search } from "lucide-react";
 import { Button } from "@/components/ui/Button";
-import type { AttendanceRecord, SectionOption } from "@/features/attendance/types";
-import { getTeacherAttendance, getTeacherSectionOptions, requestTeacherCorrection } from "../api";
-import type { TeacherCorrection } from "../types";
+import type {
+  AttendanceRecord,
+  SectionOption,
+} from "@/features/attendance/types";
+import { getTeacherAttendance, getTeacherSectionOptions } from "../api";
 
 const STATUS_STYLE: Record<AttendanceRecord["status"], string> = {
-  present: "bg-emerald-50 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300",
+  present:
+    "bg-emerald-50 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300",
   late: "bg-amber-50 text-amber-700 dark:bg-amber-500/15 dark:text-amber-300",
   absent: "bg-rose-50 text-rose-700 dark:bg-rose-500/15 dark:text-rose-300",
-  excused: "bg-violet-50 text-violet-700 dark:bg-violet-500/15 dark:text-violet-300",
+  excused:
+    "bg-violet-50 text-violet-700 dark:bg-violet-500/15 dark:text-violet-300",
 };
 
 export function TeacherAttendanceHistoryView() {
@@ -22,7 +26,9 @@ export function TeacherAttendanceHistoryView() {
   const [sections, setSections] = useState<SectionOption[]>([]);
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState("");
-  const [sectionId, setSectionId] = useState(() => searchParams.get("class_section_id") ?? "");
+  const [sectionId, setSectionId] = useState(
+    () => searchParams.get("class_section_id") ?? "",
+  );
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
   const [page, setPage] = useState(1);
@@ -30,12 +36,6 @@ export function TeacherAttendanceHistoryView() {
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [selectedRecord, setSelectedRecord] = useState<AttendanceRecord | null>(null);
-  const [requestedStatus, setRequestedStatus] = useState<TeacherCorrection["requested_status"]>("present");
-  const [reason, setReason] = useState("");
-  const [correctionError, setCorrectionError] = useState<string | null>(null);
-  const [correctionNotice, setCorrectionNotice] = useState<string | null>(null);
-  const [savingCorrection, setSavingCorrection] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -52,64 +52,258 @@ export function TeacherAttendanceHistoryView() {
       setTotal(response.meta?.total ?? response.data.length);
       setLastPage(response.meta?.last_page ?? 1);
     } catch (caught) {
-      setError(caught instanceof Error ? caught.message : "Unable to load your attendance history.");
+      setError(
+        caught instanceof Error
+          ? caught.message
+          : "Unable to load your attendance history.",
+      );
     } finally {
       setLoading(false);
     }
   }, [dateFrom, dateTo, page, search, sectionId, status]);
 
-  useEffect(() => { void load(); }, [load]);
-  useEffect(() => { void getTeacherSectionOptions().then((response) => setSections(response.data)).catch(() => setSections([])); }, []);
+  useEffect(() => {
+    void load();
+  }, [load]);
+  useEffect(() => {
+    void getTeacherSectionOptions()
+      .then((response) => setSections(response.data))
+      .catch(() => setSections([]));
+  }, []);
 
   const resetPage = () => setPage(1);
 
-  function startCorrection(record: AttendanceRecord) {
-    setSelectedRecord(record);
-    setRequestedStatus((["present", "late", "absent", "excused"] as const).find((value) => value !== record.status) ?? "present");
-    setReason("");
-    setCorrectionError(null);
-    setCorrectionNotice(null);
-  }
-
-  async function submitCorrection(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    if (!selectedRecord) return;
-    setSavingCorrection(true);
-    setCorrectionError(null);
-    setCorrectionNotice(null);
-    try {
-      await requestTeacherCorrection({
-        attendance_id: selectedRecord.id,
-        requested_status: requestedStatus,
-        reason: reason.trim(),
-      });
-      setCorrectionNotice("Correction request sent to the administrator for review.");
-      setSelectedRecord(null);
-    } catch (caught) {
-      setCorrectionError(caught instanceof Error ? caught.message : "Unable to submit the correction request.");
-    } finally {
-      setSavingCorrection(false);
-    }
-  }
-
   return (
     <div className="w-full space-y-6">
-      <header className="flex flex-wrap items-end justify-between gap-4"><div><p className="text-sm font-semibold text-brand-600">Teacher workspace</p><h1 className="mt-1 font-display text-3xl font-extrabold tracking-tight">Attendance history</h1><p className="mt-2 text-sm text-muted">Review records and request corrections for closed sessions.</p></div><Link href="/teacher/corrections" className="inline-flex h-10 items-center gap-2 rounded-control border border-hairline bg-card px-3 text-sm font-semibold text-brand-700 hover:bg-brand-50"><ClipboardList className="size-4" />My correction requests</Link></header>
-      <div className="grid gap-4 sm:grid-cols-2"><div className="rounded-panel border border-hairline bg-card p-5 shadow-soft"><span className="flex size-10 items-center justify-center rounded-control bg-brand-50 text-brand-600 dark:bg-brand-500/15 dark:text-brand-300"><History className="size-5" /></span><p className="mt-4 text-sm text-muted">Matching records</p><p className="mt-1 font-display text-3xl font-extrabold">{total.toLocaleString()}</p></div><div className="rounded-panel border border-hairline bg-card p-5 shadow-soft"><span className="flex size-10 items-center justify-center rounded-control bg-indigo-50 text-indigo-600 dark:bg-indigo-500/15 dark:text-indigo-300"><CalendarDays className="size-5" /></span><p className="mt-4 text-sm text-muted">Showing page</p><p className="mt-1 font-display text-3xl font-extrabold">{page} <span className="text-base font-semibold text-muted">of {lastPage}</span></p></div></div>
+      <header className="flex flex-wrap items-end justify-between gap-4">
+        <div>
+          <p className="text-sm font-semibold text-brand-600">
+            Teacher workspace
+          </p>
+          <h1 className="mt-1 font-display text-3xl font-extrabold tracking-tight">
+            Attendance history
+          </h1>
+          <p className="mt-2 text-sm text-muted">
+            Review attendance records for your assigned classes.
+          </p>
+        </div>
+        {/* <Link
+          href="/teacher/corrections"
+          className="inline-flex h-10 items-center gap-2 rounded-control border border-hairline bg-card px-3 text-sm font-semibold text-brand-700 hover:bg-brand-50"
+        >
+          <ClipboardList className="size-4" />My correction requests
+        </Link> */}
+      </header>
+      <div className="grid gap-4 sm:grid-cols-2">
+        <div className="rounded-panel border border-hairline bg-card p-5 shadow-soft">
+          <span className="flex size-10 items-center justify-center rounded-control bg-brand-50 text-brand-600 dark:bg-brand-500/15 dark:text-brand-300">
+            <History className="size-5" />
+          </span>
+          <p className="mt-4 text-sm text-muted">Matching records</p>
+          <p className="mt-1 font-display text-3xl font-extrabold">
+            {total.toLocaleString()}
+          </p>
+        </div>
+        <div className="rounded-panel border border-hairline bg-card p-5 shadow-soft">
+          <span className="flex size-10 items-center justify-center rounded-control bg-indigo-50 text-indigo-600 dark:bg-indigo-500/15 dark:text-indigo-300">
+            <CalendarDays className="size-5" />
+          </span>
+          <p className="mt-4 text-sm text-muted">Showing page</p>
+          <p className="mt-1 font-display text-3xl font-extrabold">
+            {page}{" "}
+            <span className="text-base font-semibold text-muted">
+              of {lastPage}
+            </span>
+          </p>
+        </div>
+      </div>
 
       <section className="rounded-panel border border-hairline bg-card shadow-soft">
         <div className="grid gap-3 border-b border-hairline p-4 sm:grid-cols-2 xl:grid-cols-6">
-          <label className="relative sm:col-span-2 xl:col-span-2"><span className="sr-only">Search students</span><Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted" /><input value={search} onChange={(event) => { setSearch(event.target.value); resetPage(); }} placeholder="Search student name, code, or email" className="h-11 w-full rounded-control border border-hairline bg-card pl-10 pr-3 text-sm outline-none focus:border-brand-400" /></label>
-          <label><span className="sr-only">Class section</span><select value={sectionId} onChange={(event) => { setSectionId(event.target.value); resetPage(); }} className="h-11 w-full rounded-control border border-hairline bg-card px-3 text-sm"><option value="">All my classes</option>{sections.map((section) => <option key={section.id} value={section.id}>{section.course?.course_code} · {section.section_code}</option>)}</select></label>
-          <label><span className="sr-only">Attendance status</span><select value={status} onChange={(event) => { setStatus(event.target.value); resetPage(); }} className="h-11 w-full rounded-control border border-hairline bg-card px-3 text-sm"><option value="">All statuses</option><option value="present">Present</option><option value="late">Late</option><option value="absent">Absent</option><option value="excused">Excused</option></select></label>
-          <label><span className="sr-only">From date</span><input aria-label="From date" type="date" value={dateFrom} onChange={(event) => { setDateFrom(event.target.value); resetPage(); }} className="h-11 w-full rounded-control border border-hairline bg-card px-3 text-sm" /></label>
-          <label><span className="sr-only">To date</span><input aria-label="To date" type="date" min={dateFrom || undefined} value={dateTo} onChange={(event) => { setDateTo(event.target.value); resetPage(); }} className="h-11 w-full rounded-control border border-hairline bg-card px-3 text-sm" /></label>
+          <label className="relative sm:col-span-2 xl:col-span-2">
+            <span className="sr-only">Search students</span>
+            <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted" />
+            <input
+              value={search}
+              onChange={(event) => {
+                setSearch(event.target.value);
+                resetPage();
+              }}
+              placeholder="Search student name, code, or email"
+              className="h-11 w-full rounded-control border border-hairline bg-card pl-10 pr-3 text-sm outline-none focus:border-brand-400"
+            />
+          </label>
+          <label>
+            <span className="sr-only">Class section</span>
+            <select
+              value={sectionId}
+              onChange={(event) => {
+                setSectionId(event.target.value);
+                resetPage();
+              }}
+              className="h-11 w-full rounded-control border border-hairline bg-card px-3 text-sm"
+            >
+              <option value="">All my classes</option>
+              {sections.map((section) => (
+                <option key={section.id} value={section.id}>
+                  {section.course?.course_code} · {section.section_code}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label>
+            <span className="sr-only">Attendance status</span>
+            <select
+              value={status}
+              onChange={(event) => {
+                setStatus(event.target.value);
+                resetPage();
+              }}
+              className="h-11 w-full rounded-control border border-hairline bg-card px-3 text-sm"
+            >
+              <option value="">All statuses</option>
+              <option value="present">Present</option>
+              <option value="late">Late</option>
+              <option value="absent">Absent</option>
+              <option value="excused">Excused</option>
+            </select>
+          </label>
+          <label>
+            <span className="sr-only">From date</span>
+            <input
+              aria-label="From date"
+              type="date"
+              value={dateFrom}
+              onChange={(event) => {
+                setDateFrom(event.target.value);
+                resetPage();
+              }}
+              className="h-11 w-full rounded-control border border-hairline bg-card px-3 text-sm"
+            />
+          </label>
+          <label>
+            <span className="sr-only">To date</span>
+            <input
+              aria-label="To date"
+              type="date"
+              min={dateFrom || undefined}
+              value={dateTo}
+              onChange={(event) => {
+                setDateTo(event.target.value);
+                resetPage();
+              }}
+              className="h-11 w-full rounded-control border border-hairline bg-card px-3 text-sm"
+            />
+          </label>
         </div>
-        {error && <p role="alert" className="m-4 rounded-control bg-danger-soft p-3 text-sm text-danger">{error}</p>}
-        {correctionNotice && <p role="status" className="mx-4 mt-4 rounded-control bg-emerald-50 p-3 text-sm text-emerald-800 dark:bg-emerald-500/10 dark:text-emerald-300">{correctionNotice}</p>}
-        {selectedRecord && <form onSubmit={submitCorrection} className="m-4 rounded-panel border border-brand-200 bg-brand-50/50 p-4 dark:border-brand-500/20 dark:bg-brand-500/5"><div className="flex flex-wrap items-start justify-between gap-3"><div><h2 className="font-display font-bold">Request an attendance correction</h2><p className="mt-1 text-sm text-muted">{selectedRecord.student?.user?.name} · current status: <span className="font-semibold capitalize">{selectedRecord.status}</span></p></div><button type="button" onClick={() => setSelectedRecord(null)} className="text-sm font-semibold text-muted hover:text-ink">Cancel</button></div>{correctionError && <p role="alert" className="mt-3 rounded-control bg-danger-soft p-3 text-sm text-danger">{correctionError}</p>}<div className="mt-4 grid gap-4 md:grid-cols-2"><label className="text-sm font-semibold">Requested status<select value={requestedStatus} onChange={(event) => setRequestedStatus(event.target.value as TeacherCorrection["requested_status"])} className="mt-1 h-11 w-full rounded-control border border-hairline bg-card px-3 text-sm">{(["present", "late", "absent", "excused"] as const).filter((value) => value !== selectedRecord.status).map((value) => <option key={value} value={value}>{value[0].toUpperCase() + value.slice(1)}</option>)}</select></label><label className="text-sm font-semibold md:row-span-2">Reason<textarea required minLength={5} maxLength={2000} rows={3} value={reason} onChange={(event) => setReason(event.target.value)} placeholder="Explain why this attendance record needs to be corrected" className="mt-1 w-full rounded-control border border-hairline bg-card p-3 text-sm outline-none focus:border-brand-400" /></label></div><div className="mt-4 flex justify-end"><Button type="submit" loading={savingCorrection}>Send request</Button></div></form>}
-        <div className="overflow-x-auto"><table className="w-full min-w-[980px] text-left text-sm"><thead className="bg-canvas text-xs uppercase tracking-wide text-muted"><tr><th className="px-4 py-3">Student</th><th className="px-4 py-3">Class</th><th className="px-4 py-3">Session date</th><th className="px-4 py-3">Status</th><th className="px-4 py-3">Method</th><th className="px-4 py-3">Remarks</th><th className="px-4 py-3">Action</th></tr></thead><tbody className="divide-y divide-hairline">{loading ? <tr><td colSpan={7} className="px-4 py-12 text-center text-muted">Loading attendance records…</td></tr> : records.length === 0 ? <tr><td colSpan={7} className="px-4 py-12 text-center text-muted">No attendance records match these filters.</td></tr> : records.map((record) => <tr key={record.id} className="hover:bg-canvas/60"><td className="px-4 py-3"><p className="font-semibold">{record.student?.user?.name ?? "Student"}</p><p className="text-xs text-muted">{record.student?.student_code}</p></td><td className="px-4 py-3"><p className="font-medium">{record.session?.class_section?.course?.course_code ?? "Class"} · {record.session?.class_section?.section_code}</p><p className="text-xs text-muted">{record.session?.class_section?.course?.name}</p></td><td className="px-4 py-3">{record.session?.session_date ? new Date(`${record.session.session_date}T00:00:00`).toLocaleDateString() : "—"}</td><td className="px-4 py-3"><span className={`rounded-pill px-2.5 py-1 text-xs font-semibold capitalize ${STATUS_STYLE[record.status]}`}>{record.status}</span></td><td className="px-4 py-3 text-xs capitalize text-muted">{record.verification_method.replaceAll("_", " ")}</td><td className="max-w-56 truncate px-4 py-3 text-xs text-muted" title={record.remarks ?? undefined}>{record.remarks || "—"}</td><td className="px-4 py-3">{record.session?.status === "closed" ? <button type="button" onClick={() => startCorrection(record)} className="rounded-control border border-hairline px-2.5 py-2 text-xs font-semibold text-brand-700 hover:bg-brand-50">Request correction</button> : <span className="text-xs text-muted">Available after close</span>}</td></tr>)}</tbody></table></div>
-        <div className="flex flex-wrap items-center justify-between gap-3 border-t border-hairline p-4"><p className="text-sm text-muted">{total ? `Showing ${(page - 1) * 15 + 1}–${Math.min(page * 15, total)} of ${total}` : "No records"}</p><div className="flex gap-2"><Button variant="secondary" size="sm" disabled={page <= 1 || loading} onClick={() => setPage((current) => current - 1)}>Previous</Button><Button variant="secondary" size="sm" disabled={page >= lastPage || loading} onClick={() => setPage((current) => current + 1)}>Next</Button></div></div>
+        {error && (
+          <p
+            role="alert"
+            className="m-4 rounded-control bg-danger-soft p-3 text-sm text-danger"
+          >
+            {error}
+          </p>
+        )}
+        <div className="overflow-x-auto">
+          <table className="w-full min-w-[900px] text-left text-sm">
+            <thead className="bg-canvas text-xs uppercase tracking-wide text-muted">
+              <tr>
+                <th className="px-4 py-3">Student</th>
+                <th className="px-4 py-3">Class</th>
+                <th className="px-4 py-3">Session date</th>
+                <th className="px-4 py-3">Status</th>
+                <th className="px-4 py-3">Method</th>
+                <th className="px-4 py-3">Remarks</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-hairline">
+              {loading ? (
+                <tr>
+                  <td colSpan={6} className="px-4 py-12 text-center text-muted">
+                    Loading attendance records…
+                  </td>
+                </tr>
+              ) : records.length === 0 ? (
+                <tr>
+                  <td colSpan={6} className="px-4 py-12 text-center text-muted">
+                    No attendance records match these filters.
+                  </td>
+                </tr>
+              ) : (
+                records.map((record) => (
+                  <tr key={record.id} className="hover:bg-canvas/60">
+                    <td className="px-4 py-3">
+                      <p className="font-semibold">
+                        {record.student?.user?.name ?? "Student"}
+                      </p>
+                      <p className="text-xs text-muted">
+                        {record.student?.student_code}
+                      </p>
+                    </td>
+                    <td className="px-4 py-3">
+                      <p className="font-medium">
+                        {record.session?.class_section?.course?.course_code ??
+                          "Class"}{" "}
+                        · {record.session?.class_section?.section_code}
+                      </p>
+                      <p className="text-xs text-muted">
+                        {record.session?.class_section?.course?.name}
+                      </p>
+                    </td>
+                    <td className="px-4 py-3">
+                      {record.session?.session_date
+                        ? new Date(
+                            `${record.session.session_date}T00:00:00`,
+                          ).toLocaleDateString()
+                        : "—"}
+                    </td>
+                    <td className="px-4 py-3">
+                      <span
+                        className={`rounded-pill px-2.5 py-1 text-xs font-semibold capitalize ${STATUS_STYLE[record.status]}`}
+                      >
+                        {record.status}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 text-xs capitalize text-muted">
+                      {record.verification_method.replaceAll("_", " ")}
+                    </td>
+                    <td
+                      className="max-w-56 truncate px-4 py-3 text-xs text-muted"
+                      title={record.remarks ?? undefined}
+                    >
+                      {record.remarks || "—"}
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+        <div className="flex flex-wrap items-center justify-between gap-3 border-t border-hairline p-4">
+          <p className="text-sm text-muted">
+            {total
+              ? `Showing ${(page - 1) * 15 + 1}–${Math.min(page * 15, total)} of ${total}`
+              : "No records"}
+          </p>
+          <div className="flex gap-2">
+            <Button
+              variant="secondary"
+              size="sm"
+              disabled={page <= 1 || loading}
+              onClick={() => setPage((current) => current - 1)}
+            >
+              Previous
+            </Button>
+            <Button
+              variant="secondary"
+              size="sm"
+              disabled={page >= lastPage || loading}
+              onClick={() => setPage((current) => current + 1)}
+            >
+              Next
+            </Button>
+          </div>
+        </div>
       </section>
     </div>
   );

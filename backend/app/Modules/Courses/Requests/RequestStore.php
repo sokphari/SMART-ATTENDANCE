@@ -37,6 +37,7 @@ class RequestStore extends FormRequest
     {
         return [
             'department_id' => ['required', 'integer', 'exists:departments,id'],
+            'program_id' => ['sometimes', 'nullable', 'integer', 'exists:programs,id'],
             'course_code' => ['required', 'string', 'max:50', 'unique:courses,course_code'],
             'name' => ['required', 'string', 'max:150'],
             'description' => ['sometimes', 'nullable', 'string'],

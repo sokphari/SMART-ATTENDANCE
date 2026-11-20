@@ -19,6 +19,8 @@ class StudentResource extends JsonResource
             'user_id' => $this->user_id,
             'user' => new UserResource($this->whenLoaded('user')),
             'department_id' => $this->department_id,
+            'program_id' => $this->program_id,
+            'program' => $this->whenLoaded('program', fn () => ['id' => $this->program?->id, 'code' => $this->program?->code, 'name' => $this->program?->name]),
             'department' => new DepartmentResource($this->whenLoaded('department')),
             'student_code' => $this->student_code,
             'year_level' => $this->year_level,

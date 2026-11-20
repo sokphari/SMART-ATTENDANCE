@@ -40,7 +40,9 @@ export function Topbar({
 }: TopbarProps) {
   const pathname = usePathname();
   const current = findNavItem(pathname);
-  const isTeacher = user?.role?.toLowerCase() === "teacher";
+  const role = user?.role?.toLowerCase();
+  const isTeacher = role === "teacher";
+  const canViewNotifications = role !== "teacher" && role !== "student";
   const [profileOpen, setProfileOpen] = useState(false);
   const [search, setSearch] = useState("");
   const [semesters, setSemesters] = useState<SemesterOption[]>([]);
@@ -213,7 +215,7 @@ export function Topbar({
           )}
         </button>
 
-        <NotificationBell />
+        {canViewNotifications && <NotificationBell />}
         {user && (
           <div className="relative">
             <button

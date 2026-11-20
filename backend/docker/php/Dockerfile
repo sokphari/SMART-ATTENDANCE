@@ -10,8 +10,10 @@ RUN apt-get update && apt-get install -y \
     libonig-dev \
     libxml2-dev \
     libzip-dev \
+    libsqlite3-dev \
     && docker-php-ext-install \
         pdo_pgsql \
+        pdo_sqlite \
         mbstring \
         bcmath \
         xml \

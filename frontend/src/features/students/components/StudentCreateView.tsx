@@ -3,7 +3,7 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, Plus } from "lucide-react";
-import { ApiError } from "@/lib/api/client";
+import { ApiError, apiFetch } from "@/lib/api/client";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Input } from "@/components/ui/Input";
@@ -17,11 +17,13 @@ export function StudentCreateView() {
   const router = useRouter();
   const [form, setForm] = useState<StudentInput>(initialForm);
   const [departments, setDepartments] = useState<DepartmentOption[]>([]);
+  const [programs, setPrograms] = useState<{ id: number; department_id: number; name: string; code: string }[]>([]);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
 
   useEffect(() => {
     fetchDepartments().then((result) => setDepartments(result.data)).catch(() => setError("Could not load departments. Please refresh and try again."));
+    apiFetch<{ data: { id: number; department_id: number; name: string; code: string }[] }>("/api/v1/admin/programs?status=active&per_page=100").then(result => setPrograms(result.data)).catch(() => setPrograms([]));
   }, []);
 
   async function submit(event: FormEvent<HTMLFormElement>) {
@@ -46,7 +48,8 @@ export function StudentCreateView() {
           <Input label="Email" type="email" placeholder="e.g. dara.sok@example.com" required autoComplete="email" value={form.email} onChange={(event) => setForm({ ...form, email: event.target.value })} />
           <Input label="Student ID" placeholder="e.g. STU-2026-001" required value={form.student_code} onChange={(event) => setForm({ ...form, student_code: event.target.value })} />
           <Input label="Temporary password" type="password" placeholder="At least 8 characters" minLength={8} required autoComplete="new-password" value={form.password} onChange={(event) => setForm({ ...form, password: event.target.value })} />
-          <label className="space-y-1.5 text-sm font-semibold">Department<select required value={form.department_id || ""} onChange={(event) => setForm({ ...form, department_id: Number(event.target.value) })} className="h-11 w-full rounded-control border border-hairline bg-card px-3.5 text-sm font-normal text-ink"><option value="" disabled>Select department</option>{departments.map((department) => <option key={department.id} value={department.id}>{department.name} ({department.code})</option>)}</select></label>
+          <label className="space-y-1.5 text-sm font-semibold">Department<select required value={form.department_id || ""} onChange={(event) => setForm({ ...form, department_id: Number(event.target.value), program_id: null })} className="h-11 w-full rounded-control border border-hairline bg-card px-3.5 text-sm font-normal text-ink"><option value="" disabled>Select department</option>{departments.map((department) => <option key={department.id} value={department.id}>{department.name} ({department.code})</option>)}</select></label>
+          <label className="space-y-1.5 text-sm font-semibold">Program <span className="font-normal text-muted">(optional)</span><select value={form.program_id ?? ""} onChange={event => setForm({ ...form, program_id: event.target.value ? Number(event.target.value) : null })} className="h-11 w-full rounded-control border border-hairline bg-card px-3.5 text-sm font-normal text-ink"><option value="">Select program</option>{programs.filter(p => p.department_id === form.department_id).map(p => <option key={p.id} value={p.id}>{p.name} ({p.code})</option>)}</select></label>
           <label className="space-y-1.5 text-sm font-semibold">Year level<select value={form.year_level} onChange={(event) => setForm({ ...form, year_level: Number(event.target.value) })} className="h-11 w-full rounded-control border border-hairline bg-card px-3.5 text-sm font-normal text-ink">{Array.from({ length: 10 }, (_, index) => <option key={index + 1} value={index + 1}>Year {index + 1}</option>)}</select></label>
           <Input label="Phone (optional)" type="tel" placeholder="e.g. +855 12 345 678" autoComplete="tel" value={form.phone} onChange={(event) => setForm({ ...form, phone: event.target.value })} />
           <label className="space-y-1.5 text-sm font-semibold">Gender<select required value={form.gender ?? ""} onChange={(event) => setForm({ ...form, gender: event.target.value })} className="h-11 w-full rounded-control border border-hairline bg-card px-3.5 text-sm font-normal text-ink"><option value="" disabled>Select gender</option><option value="male">Male</option><option value="female">Female</option></select></label>

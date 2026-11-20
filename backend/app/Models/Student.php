@@ -19,6 +19,7 @@ class Student extends Model
     protected $fillable = [
         'user_id',
         'department_id',
+        'program_id',
         'student_code',
         'year_level',
         'phone',
@@ -49,6 +50,11 @@ class Student extends Model
     public function department(): BelongsTo
     {
         return $this->belongsTo(Department::class);
+    }
+
+    public function program(): BelongsTo
+    {
+        return $this->belongsTo(Program::class);
     }
 
     public function attendances(): HasMany

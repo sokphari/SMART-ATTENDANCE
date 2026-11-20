@@ -57,10 +57,22 @@ class ScheduleConflictService
         if ($classroom->status !== ClassroomStatus::Active) {
             $this->fail('classroom_id', 'Select an active classroom.');
         }
+        $roomFloor = $classroom->floor_id ? \App\Models\Floor::query()->with('building')->lockForUpdate()->find($classroom->floor_id) : null;
+        if ($classroom->floor_id && (! $roomFloor?->isActive() || ! $roomFloor->building?->isActive())) {
+            $this->fail('classroom_id', 'Select a classroom on an active floor and building.');
+        }
+        if ((int) $classroom->capacity < (int) $section->capacity) {
+            $this->fail('classroom_id', "Classroom {$classroom->room_code} capacity is below this section's maximum capacity.");
+        }
 
         $semester = Semester::query()->whereKey($section->semester_id)->lockForUpdate()->firstOrFail();
         $semesterStart = $semester->start_date->toDateString();
         $semesterEnd = $semester->end_date->toDateString();
+        $sectionStart = $section->class_start_date?->toDateString() ?? $semesterStart;
+        $sectionEnd = $section->class_end_date?->toDateString() ?? $semesterEnd;
+        if (($from !== null && $from < $sectionStart) || ($until !== null && $until > $sectionEnd)) {
+            $this->fail('effective_from', "Schedule dates must stay within the class date range ({$sectionStart} to {$sectionEnd}).");
+        }
         if (($from !== null && $from < $semesterStart)
             || ($until !== null && $until > $semesterEnd)) {
             $this->fail('effective_from', "Schedule dates must stay within {$semester->name} ({$semesterStart} to {$semesterEnd}).");

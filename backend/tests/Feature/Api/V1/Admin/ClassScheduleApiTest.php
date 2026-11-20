@@ -72,23 +72,23 @@ class ClassScheduleApiTest extends TestCase
             'class_section_id' => $classSection->id,
             'classroom_id' => $classroom->id,
             'day_of_week' => 1,
-            'start_time' => '08:00',
-            'end_time' => '09:30',
+            'start_time' => '10:00',
+            'end_time' => '11:30',
             'effective_from' => '2025-02-01',
         ])->assertCreated()
             ->assertJsonPath('data.class_section_id', $classSection->id)
             ->assertJsonPath('data.classroom_id', $classroom->id)
             ->assertJsonPath('data.day_of_week', 1)
-            ->assertJsonPath('data.start_time', '08:00:00')
-            ->assertJsonPath('data.end_time', '09:30:00')
+            ->assertJsonPath('data.start_time', '10:00:00')
+            ->assertJsonPath('data.end_time', '11:30:00')
             ->assertJsonPath('data.effective_from', '2025-02-01');
 
         $this->assertDatabaseHas('class_schedules', [
             'class_section_id' => $classSection->id,
             'classroom_id' => $classroom->id,
             'day_of_week' => 1,
-            'start_time' => '08:00:00',
-            'end_time' => '09:30:00',
+            'start_time' => '10:00:00',
+            'end_time' => '11:30:00',
         ]);
     }
 
@@ -212,16 +212,16 @@ class ClassScheduleApiTest extends TestCase
         $existing = ClassSchedule::factory()->create([
             'classroom_id' => $classroom->id,
             'day_of_week' => 1,
-            'start_time' => '08:00:00',
-            'end_time' => '09:00:00',
+            'start_time' => '10:00:00',
+            'end_time' => '11:00:00',
         ]);
 
         $this->postJson('/api/v1/admin/class-schedules', [
             'class_section_id' => ClassSection::factory()->create()->id,
             'classroom_id' => $classroom->id,
             'day_of_week' => 1,
-            'start_time' => '08:30',
-            'end_time' => '09:30',
+            'start_time' => '10:30',
+            'end_time' => '11:30',
         ])->assertStatus(422)->assertJsonValidationErrors('classroom_id');
 
         $this->assertDatabaseCount('class_schedules', 1);
@@ -235,16 +235,16 @@ class ClassScheduleApiTest extends TestCase
         ClassSchedule::factory()->create([
             'classroom_id' => $classroom->id,
             'day_of_week' => 1,
-            'start_time' => '08:00:00',
-            'end_time' => '09:00:00',
+            'start_time' => '10:00:00',
+            'end_time' => '11:00:00',
         ]);
 
         $this->postJson('/api/v1/admin/class-schedules', [
             'class_section_id' => ClassSection::factory()->create()->id,
             'classroom_id' => $classroom->id,
             'day_of_week' => 1,
-            'start_time' => '09:00',
-            'end_time' => '10:00',
+            'start_time' => '11:00',
+            'end_time' => '12:00',
         ])->assertCreated();
     }
 
@@ -266,16 +266,16 @@ class ClassScheduleApiTest extends TestCase
             'class_section_id' => $sectionA->id,
             'classroom_id' => Classroom::factory()->create()->id,
             'day_of_week' => 2,
-            'start_time' => '08:00:00',
-            'end_time' => '09:00:00',
+            'start_time' => '10:00:00',
+            'end_time' => '11:00:00',
         ]);
 
         $this->postJson('/api/v1/admin/class-schedules', [
             'class_section_id' => $sectionB->id,
             'classroom_id' => Classroom::factory()->create()->id,
             'day_of_week' => 2,
-            'start_time' => '08:30',
-            'end_time' => '09:30',
+            'start_time' => '10:30',
+            'end_time' => '11:30',
         ])->assertStatus(422)->assertJsonValidationErrors('class_section_id');
     }
 

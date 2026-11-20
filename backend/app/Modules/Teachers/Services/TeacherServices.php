@@ -67,6 +67,7 @@ class TeacherServices
                 'department_id' => $data['department_id'],
                 'teacher_code' => $data['teacher_code'],
                 'phone' => $data['phone'] ?? null,
+                'qualifications' => $data['qualifications'] ?? null,
             ]);
 
             return $teacher->load(['user', 'department']);
@@ -91,7 +92,7 @@ class TeacherServices
 
             $profileData = array_intersect_key(
                 $data,
-                array_flip(['department_id', 'teacher_code', 'phone'])
+                array_flip(['department_id', 'teacher_code', 'phone', 'qualifications'])
             );
 
             if ($profileData !== []) {

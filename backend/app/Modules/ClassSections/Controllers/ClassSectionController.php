@@ -45,6 +45,21 @@ class ClassSectionController extends Controller
         return new ClassSectionResource($classSection);
     }
 
+    public function eligibleStudents(Request $request, ClassSection $classSection): JsonResponse
+    {
+        $students = $this->classSections->eligibleStudents($classSection->load('course'), $request->only(['search', 'per_page']));
+        return response()->json([
+            'data' => $students->getCollection()->map(fn ($student) => [
+                'id' => $student->id,
+                'student_code' => $student->student_code,
+                'name' => $student->user?->name,
+                'email' => $student->user?->email,
+                'year_level' => $student->year_level,
+            ]),
+            'meta' => ['current_page' => $students->currentPage(), 'last_page' => $students->lastPage(), 'total' => $students->total()],
+        ]);
+    }
+
     public function update(RequestUpdate $request, ClassSection $classSection): ClassSectionResource
     {
         return new ClassSectionResource(

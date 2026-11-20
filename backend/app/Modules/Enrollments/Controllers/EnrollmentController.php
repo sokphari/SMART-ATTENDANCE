@@ -52,11 +52,10 @@ class EnrollmentController extends Controller
         );
     }
 
-    public function transfer(RequestTransfer $request, Enrollment $enrollment): EnrollmentResource
+    public function transfer(RequestTransfer $request, Enrollment $enrollment): JsonResponse
     {
-        return new EnrollmentResource(
-            $this->enrollments->transfer($enrollment, (int) $request->validated('target_class_section_id'))
-        );
+        $transferred = $this->enrollments->transfer($enrollment, (int) $request->validated('target_class_section_id'));
+        return (new EnrollmentResource($transferred))->response()->setStatusCode(200);
     }
 
     public function destroy(Enrollment $enrollment): JsonResponse

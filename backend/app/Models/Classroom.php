@@ -17,6 +17,9 @@ class Classroom extends Model
      */
     protected $fillable = [
         'room_code',
+        'floor_id',
+        'capacity',
+        'room_type',
         'building',
         'floor',
         'latitude',
@@ -34,6 +37,7 @@ class Classroom extends Model
             'latitude' => 'decimal:7',
             'longitude' => 'decimal:7',
             'allowed_radius_meters' => 'integer',
+            'capacity' => 'integer',
             'status' => ClassroomStatus::class,
         ];
     }
@@ -41,5 +45,10 @@ class Classroom extends Model
     public function isActive(): bool
     {
         return $this->status === ClassroomStatus::Active;
+    }
+
+    public function floorRecord(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    {
+        return $this->belongsTo(Floor::class, 'floor_id');
     }
 }

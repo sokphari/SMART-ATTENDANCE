@@ -18,6 +18,7 @@ class Course extends Model
      */
     protected $fillable = [
         'department_id',
+        'program_id',
         'course_code',
         'name',
         'description',
@@ -39,6 +40,11 @@ class Course extends Model
     public function department(): BelongsTo
     {
         return $this->belongsTo(Department::class);
+    }
+
+    public function program(): BelongsTo
+    {
+        return $this->belongsTo(Program::class);
     }
 
     public function isActive(): bool

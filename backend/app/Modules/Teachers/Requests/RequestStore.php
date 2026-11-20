@@ -47,6 +47,7 @@ class RequestStore extends FormRequest
             'department_id' => ['required', 'integer', 'exists:departments,id'],
             'teacher_code' => ['required', 'string', 'max:50', 'unique:teachers,teacher_code'],
             'phone' => ['sometimes', 'nullable', 'string', 'max:30'],
+            'qualifications' => ['sometimes', 'nullable', 'string', 'max:5000'],
         ];
     }
 }
