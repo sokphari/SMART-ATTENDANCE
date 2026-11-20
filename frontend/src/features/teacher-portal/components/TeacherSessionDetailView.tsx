@@ -5,7 +5,7 @@ import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent } fro
 import { ArrowLeft, Check, CheckCircle2, Clipboard, Clock3, FileCheck2, QrCode, RefreshCw, Search, XCircle } from "lucide-react";
 import { QRCodeSVG } from "qrcode.react";
 import { Button } from "@/components/ui/Button";
-import { closeTeacherSession, generateSessionQrToken, getSessionAttendance, getTeacherSession, markSessionAttendance } from "../api";
+import { closeTeacherSession, generateSessionQrToken, getSessionAttendance, getTeacherSession, markSessionAttendance, startLocalQrTest } from "../api";
 import type { AttendanceSummary, SessionAttendance, SessionAttendanceStatus, TeacherAttendanceSession } from "../types";
 import { getQrWindowPhase, readableCountdown, secondsUntil } from "../qrWindow";
 import { studentScanUrl, phoneScanUrlWarning } from "@/features/attendance/studentScanLink";
@@ -72,6 +72,7 @@ export function TeacherSessionDetailView({ sessionId }: { sessionId: number }) {
   const [loading, setLoading] = useState(true);
   const [closing, setClosing] = useState(false);
   const [generatingQr, setGeneratingQr] = useState(false);
+  const [startingLocalTest, setStartingLocalTest] = useState(false);
   const [copied, setCopied] = useState(false);
   const [clock, setClock] = useState(() => Date.now());
   const qrRequestId = useRef(0);
@@ -224,6 +225,27 @@ export function TeacherSessionDetailView({ sessionId }: { sessionId: number }) {
     setPermissionReason("");
   }
 
+  async function handleStartLocalQrTest() {
+    if (!session?.local_qr_testing_available || startingLocalTest) return;
+    setStartingLocalTest(true);
+    setQrError(null);
+    try {
+      const response = await startLocalQrTest(sessionId);
+      setSession(response.data);
+      setClock(Date.now());
+      setQrToken(null);
+      qrRequestId.current += 1;
+      setQrError(null);
+      // Keep the modal visible; the regular QR refresh effect will fetch
+      // a new token from the server after the session becomes active.
+      setNotice("Local QR testing is active for 30 minutes. Scan using a student test account.");
+    } catch (caught) {
+      setQrError(caught instanceof Error ? caught.message : "Unable to start the local QR test.");
+    } finally {
+      setStartingLocalTest(false);
+    }
+  }
+
   async function handleClose() {
     if (Object.keys(pendingAttendance).length > 0) {
       setError("Save attendance before closing the session.");
@@ -319,6 +341,15 @@ export function TeacherSessionDetailView({ sessionId }: { sessionId: number }) {
             <button type="button" aria-label="Close QR popup" onClick={() => setQrDialogOpen(false)} className="rounded-control px-2 py-1 text-muted hover:bg-canvas">×</button>
           </div>
           {qrError && <p role="alert" className="mt-4 rounded-control bg-danger-soft p-3 text-left text-sm text-danger">{qrError}</p>}
+          {session.local_qr_testing_available && !qrCanGenerate && session.status === "open" && (
+            <div className="mt-4 rounded-control border border-amber-300 bg-amber-50 p-3 text-left text-sm text-amber-900">
+              <p className="font-semibold">Local development test only</p>
+              <p className="mt-1">Start a temporary 30-minute QR window for this session. This changes only its attendance times and invalidates existing QR tokens.</p>
+              <Button className="mt-3" size="sm" disabled={startingLocalTest} loading={startingLocalTest} onClick={() => void handleStartLocalQrTest()}>
+                <QrCode className="size-4" />Start QR test now
+              </Button>
+            </div>
+          )}
           <p role="status" className="mt-4 rounded-control bg-brand-50 p-3 text-sm text-brand-800 dark:bg-brand-500/10 dark:text-brand-200">{qrWindowHint}</p>
           <div className="mx-auto mt-5 flex min-h-64 w-fit min-w-64 items-center justify-center rounded-xl bg-white p-3">
             {qrToken && qrCanGenerate && Date.parse(qrToken.expires_at) > clock ? <QRCodeSVG value={studentScanUrl(qrToken.token, studentScanBase || window.location.origin, process.env.NEXT_PUBLIC_STUDENT_SCAN_BASE_URL)} size={240} level="M" includeMargin /> :
