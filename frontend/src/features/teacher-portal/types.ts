@@ -56,6 +56,7 @@ export type TeacherAttendanceSession = {
   session_ends_at?: string | null;
   closed_at: string | null;
   status: "scheduled" | "open" | "closed" | "cancelled";
+  local_qr_testing_available?: boolean;
 };
 
 export type SessionAttendanceStatus = "present" | "late" | "absent" | "excused" | "unmarked";
