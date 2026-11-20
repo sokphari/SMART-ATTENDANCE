@@ -36,16 +36,16 @@ class TelegramAttendanceNotificationTest extends TestCase
         $student->user->update(['name' => 'Sokha Meas']);
         $session = AttendanceSession::factory()->create([
             'session_date' => '2026-11-20',
-            'starts_at' => Carbon::parse('2026-11-20T19:30:00+07:00'),
-            'late_after' => Carbon::parse('2026-11-20T19:45:00+07:00'),
-            'closes_at' => Carbon::parse('2026-11-20T21:00:00+07:00'),
-            'session_ends_at' => Carbon::parse('2026-11-20T22:45:00+07:00'),
+            'starts_at' => Carbon::parse('2026-11-20T19:30:00+07:00')->utc(),
+            'late_after' => Carbon::parse('2026-11-20T19:45:00+07:00')->utc(),
+            'closes_at' => Carbon::parse('2026-11-20T21:00:00+07:00')->utc(),
+            'session_ends_at' => Carbon::parse('2026-11-20T22:45:00+07:00')->utc(),
         ]);
         $attendance = Attendance::factory()->create([
             'student_id' => $student->id,
             'attendance_session_id' => $session->id,
             'status' => AttendanceStatus::Late,
-            'checked_in_at' => Carbon::parse('2026-11-20T19:53:00+07:00'),
+            'checked_in_at' => Carbon::parse('2026-11-20T19:53:00+07:00')->utc(),
         ]);
 
         $notifier->notify($attendance);
