@@ -1,0 +1,25 @@
+"use client";
+
+import { Breadcrumb } from "@/components/ui/Breadcrumb";
+import { ALL_NAV_ITEMS, TEACHER_NAV_ITEMS } from "@/config/nav";
+import { buildBreadcrumbs } from "@/lib/navigation/breadcrumbs";
+
+type AppBreadcrumbsProps = {
+  pathname: string;
+  role: string | null;
+};
+
+/**
+ * Renders consistent breadcrumbs across authenticated pages.
+ * BuildingsView supplies its own breadcrumb to reflect the in-page wizard.
+ */
+export function AppBreadcrumbs({ pathname, role }: AppBreadcrumbsProps) {
+  if (pathname === "/buildings") return null;
+
+  const teacherArea = role?.toLowerCase() === "teacher";
+  const rootHref = teacherArea ? "/teacher/dashboard" : "/dashboard";
+  const items = teacherArea ? TEACHER_NAV_ITEMS : ALL_NAV_ITEMS;
+  const breadcrumbs = buildBreadcrumbs(pathname, rootHref, items);
+
+  return <Breadcrumb items={breadcrumbs} className="mb-3" />;
+}
