@@ -162,7 +162,7 @@ useEffect(() => {
         "Phone",
       ],
       ...students.map((student) => [
-        student.student_code,
+        student.attendance_id ?? String(student.id).padStart(9, "0"),
         student.user?.name ?? "",
         student.user?.email ?? "",
         student.gender ?? "",
@@ -387,8 +387,9 @@ useEffect(() => {
                     </td>
                     <td className="px-5 py-4">
                       <span className="rounded-md bg-brand-50 px-2 py-1 text-xs font-semibold text-brand-700">
-                        {student.student_code}
+                        {student.attendance_id ?? String(student.id).padStart(9, "0")}
                       </span>
+                      <p className="mt-1 text-xs text-muted">Code: {student.student_code}</p>
                     </td>
                     <td className="px-5 py-4">
                       <span
