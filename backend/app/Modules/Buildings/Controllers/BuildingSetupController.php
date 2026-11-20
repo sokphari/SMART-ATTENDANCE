@@ -23,7 +23,10 @@ class BuildingSetupController extends Controller
         $input = $request->validated();
 
         $summary = DB::transaction(function () use ($input): array {
-            $building = $this->buildings->create($input['building']);
+            $building = $this->buildings->create([
+                ...$input['building'],
+                'status' => 'active',
+            ]);
             $floorCount = 0;
             $roomCount = 0;
             $seatCount = 0;
