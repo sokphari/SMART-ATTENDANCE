@@ -164,7 +164,7 @@ export function StudentScanView() {
                       <MapPin className="mt-0.5 size-5 shrink-0 text-brand-600" />
                       <p className="text-sm text-muted">Your phone will ask for your current location. You must be inside the classroom's allowed radius to check in.</p>
                     </div>
-                    <Button block disabled={busy} loading={busy} className="w-full" onClick={() => void checkIn()}>
+                    <Button disabled={busy} loading={busy} className="w-full" onClick={() => void checkIn()}>
                       <LocateFixed className="size-4" /> {busy ? "Checking in..." : "Confirm attendance"}
                     </Button>
                   </div>
