@@ -17,12 +17,9 @@ import { ApiError } from "@/lib/api/client";
 import { getStoredUser, getToken, setSession } from "@/lib/api/session";
 import { setAuthCookie } from "@/app/actions/auth";
 import { login } from "../api";
-<<<<<<< HEAD
-import { useLocale } from "@/i18n/LocaleProvider";
-import { LanguageSwitcher } from "@/components/shared/LanguageSwitcher";
-=======
 import { hasPendingStudentScan } from "@/features/attendance/studentScanPending";
->>>>>>> fix/attendance-student-qr-popup
+import { LanguageSwitcher } from "@/components/shared/LanguageSwitcher";
+import { useLocale } from "@/i18n/LocaleProvider";
 
 const HIGHLIGHTS = [
   {
