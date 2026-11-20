@@ -390,7 +390,7 @@ export function BuildingsView() {
       )}
 
       {wizardOpen && (
-        <Card className="mx-auto mb-4 w-full max-w-4xl overflow-hidden">
+        <Card className="mb-4 w-full overflow-hidden">
           <div className="flex items-start justify-between gap-3 border-b border-hairline p-3 sm:px-4">
             <div>
               <h2 className="text-base font-bold">
