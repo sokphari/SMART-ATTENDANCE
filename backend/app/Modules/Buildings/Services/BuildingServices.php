@@ -9,7 +9,9 @@ class BuildingServices
 {
     public function paginate(array $filters = []): LengthAwarePaginator
     {
-        return Building::query()->withCount('floors')
+        return Building::query()
+            ->withCount(['floors', 'classrooms'])
+            ->withSum('classrooms', 'capacity')
             ->when($filters['search'] ?? null, function ($q, string $search): void {
                 $term = '%'.strtolower($search).'%';
                 $q->where(fn ($query) => $query->whereRaw('LOWER(code) LIKE ?', [$term])->orWhereRaw('LOWER(name) LIKE ?', [$term]));
@@ -20,13 +22,17 @@ class BuildingServices
 
     public function create(array $data): Building
     {
-        return Building::create($data)->loadCount('floors');
+        return Building::create($data)
+            ->loadCount(['floors', 'classrooms'])
+            ->loadSum('classrooms', 'capacity');
     }
 
     public function update(Building $building, array $data): Building
     {
         $building->fill($data)->save();
-        return $building->refresh()->loadCount('floors');
+        return $building->refresh()
+            ->loadCount(['floors', 'classrooms'])
+            ->loadSum('classrooms', 'capacity');
     }
 
     public function deactivate(Building $building): void
