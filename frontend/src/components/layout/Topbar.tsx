@@ -19,6 +19,8 @@ import { findNavItem } from "@/config/nav";
 import type { AuthUser } from "@/types/auth";
 import { BackendStatus } from "@/components/shared/BackendStatus";
 import { NotificationBell } from "@/components/layout/NotificationBell";
+import { LanguageSwitcher } from "@/components/shared/LanguageSwitcher";
+import { useLocale } from "@/i18n/LocaleProvider";
 import { getInitials } from "@/lib/utils/name";
 import { chooseInitialSemester, fetchSemesterOptions, MANUAL_SEMESTER_SELECTION_KEY, SELECTED_SEMESTER_KEY } from "@/features/schedules/api";
 import type { SemesterOption } from "@/features/schedules/types";
@@ -39,6 +41,7 @@ export function Topbar({
   onLogout,
 }: TopbarProps) {
   const pathname = usePathname();
+  const { t } = useLocale();
   const current = findNavItem(pathname);
   const role = user?.role?.toLowerCase();
   const isTeacher = role === "teacher";
@@ -105,7 +108,7 @@ export function Topbar({
         <button
           type="button"
           onClick={onToggleSidebar}
-          aria-label="Toggle sidebar"
+          aria-label={t("Toggle sidebar")}
           className="hidden size-9 cursor-pointer items-center justify-center rounded-control text-slate-500 transition-colors duration-200 hover:bg-brand-50 hover:text-brand-700 lg:flex"
         >
           <PanelLeft className="size-5" />
@@ -126,7 +129,7 @@ export function Topbar({
 
         {current && (
           <span className="font-display hidden text-sm font-bold text-slate-400 lg:inline">
-            {current.label}
+            {t(current.label)}
           </span>
         )}
 
@@ -136,10 +139,10 @@ export function Topbar({
         >
           <Search className="pointer-events-none absolute top-1/2 left-3 size-3.5 -translate-y-1/2 text-muted" />
           <input
-            aria-label="Global search"
+            aria-label={t("Global search")}
             value={search}
             onChange={(event) => setSearch(event.target.value)}
-            placeholder="Search workspace"
+            placeholder={t("Search workspace")}
             className="h-9 w-52 rounded-control border border-hairline bg-card pl-9 pr-3 text-xs text-ink outline-none transition focus:border-brand-400 focus:ring-4 focus:ring-brand-100"
           />
         </form>
@@ -148,7 +151,7 @@ export function Topbar({
       <div className="flex items-center gap-3">
         {!isTeacher && (
           <select
-            aria-label="Academic term"
+            aria-label={t("Academic term")}
             value={selectedSemesterId}
             onChange={(event) => {
               const value = event.target.value;
@@ -159,7 +162,7 @@ export function Topbar({
             }}
             className="hidden h-9 rounded-control border border-hairline bg-card px-2 text-xs font-semibold text-muted outline-none lg:block"
           >
-            {semesters.length === 0 && <option value="">No semesters</option>}
+            {semesters.length === 0 && <option value="">{t("No semesters")}</option>}
             {semesters.map((semester) => (
               <option key={semester.id} value={semester.id}>
                 {semester.name} · {semester.academic_year?.name ?? `${semester.start_date}–${semester.end_date}`}
@@ -173,15 +176,16 @@ export function Topbar({
             className="hidden h-9 items-center gap-1.5 rounded-control bg-brand-600 px-3 text-xs font-bold text-white transition hover:bg-brand-700 md:flex"
           >
             <ScanLine className="size-3.5" />
-            Quick Scan
+            {t("Quick Scan")}
           </Link>
         )}
+        <LanguageSwitcher compact />
         <BackendStatus />
         <button
           type="button"
           onClick={onToggleTheme}
-          aria-label={`Switch to ${darkMode ? "light" : "dark"} mode`}
-          title={`Switch to ${darkMode ? "light" : "dark"} mode`}
+          aria-label={t(darkMode ? "Switch to light mode" : "Switch to dark mode")}
+          title={t(darkMode ? "Switch to light mode" : "Switch to dark mode")}
           className="flex size-9 cursor-pointer items-center justify-center rounded-control border border-hairline bg-card text-slate-500 transition-colors duration-200 hover:bg-brand-50 hover:text-brand-700"
         >
           {darkMode ? <Sun className="size-4" /> : <Moon className="size-4" />}
@@ -191,7 +195,7 @@ export function Topbar({
         <button
           type="button"
           onClick={() => void toggleFullscreen()}
-          aria-label={isFullscreen ? "Exit fullscreen" : "Enter fullscreen"}
+          aria-label={t(isFullscreen ? "Exit fullscreen" : "Enter fullscreen")}
           aria-pressed={isFullscreen}
           title={
             isFullscreen
@@ -221,7 +225,7 @@ export function Topbar({
             <button
               type="button"
               onClick={() => setProfileOpen((open) => !open)}
-              aria-label="Open profile menu"
+              aria-label={t("Open profile menu")}
               aria-haspopup="menu"
               aria-expanded={profileOpen}
               className="flex cursor-pointer items-center gap-2.5 rounded-pill border border-hairline bg-card py-1.5 pr-3 pl-1.5 transition-colors hover:bg-brand-50"
@@ -259,7 +263,7 @@ export function Topbar({
                       className="mt-1 flex w-full items-center gap-2.5 rounded-control px-3 py-2.5 text-sm font-semibold text-ink transition-colors hover:bg-canvas"
                     >
                       <UserRound className="size-4" />
-                      My profile
+                      {t("My profile")}
                     </Link>
                   )}
                   <button
@@ -272,7 +276,7 @@ export function Topbar({
                     className="mt-1 flex w-full cursor-pointer items-center gap-2.5 rounded-control px-3 py-2.5 text-left text-sm font-semibold text-danger transition-colors hover:bg-danger-soft"
                   >
                     <LogOut className="size-4" />
-                    Sign out
+                    {t("Sign out")}
                   </button>
                 </div>
               </>
