@@ -1,0 +1,59 @@
+name: Buildings and Rooms checks
+
+on:
+  push:
+    branches:
+      - feat/buildings-wizard-review-save
+  pull_request:
+    paths:
+      - "frontend/**"
+      - "backend/**"
+      - ".github/workflows/buildings-quality.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  laravel-buildings-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.3"
+          extensions: mbstring, pdo_sqlite, sqlite3
+          coverage: none
+          tools: composer:v2
+      - name: Install backend dependencies
+        run: composer install --no-interaction --prefer-dist --no-progress
+      - name: Prepare application
+        run: |
+          cp .env.example .env
+          php artisan key:generate
+      - name: Laravel Buildings and Rooms tests
+        run: php artisan test --filter='BuildingSetupApiTest|BuildingListApiTest|ClassroomApiTest'
+
+  nextjs-typecheck-and-build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - name: Install frontend dependencies
+        run: npm ci --no-audit --no-fund
+      - name: Type-check frontend
+        run: npx tsc --noEmit
+      - name: Build Next.js
+        run: npm run build
