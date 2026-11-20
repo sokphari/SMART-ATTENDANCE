@@ -147,6 +147,7 @@ class TeacherAttendanceSessionApiTest extends TestCase
     public function test_local_qr_test_updates_only_owned_open_session_and_issues_valid_qr(): void
     {
         [$teacher, $section, $room] = $this->assignedTeacher();
+        app()->detectEnvironment(fn () => 'local');
         config()->set('attendance.allow_local_qr_testing', true);
 
         $session = AttendanceSession::factory()->create([
@@ -177,6 +178,7 @@ class TeacherAttendanceSessionApiTest extends TestCase
 
     public function test_local_qr_test_rejects_other_teachers_session(): void
     {
+        app()->detectEnvironment(fn () => 'local');
         config()->set('attendance.allow_local_qr_testing', true);
         $session = AttendanceSession::factory()->create([
             'session_date' => now('Asia/Phnom_Penh')->toDateString(),
@@ -190,6 +192,7 @@ class TeacherAttendanceSessionApiTest extends TestCase
     public function test_local_qr_test_rejects_closed_session(): void
     {
         [$teacher, $section, $room] = $this->assignedTeacher();
+        app()->detectEnvironment(fn () => 'local');
         config()->set('attendance.allow_local_qr_testing', true);
         $session = AttendanceSession::factory()->closed()->create([
             'teacher_id' => $teacher->id,
