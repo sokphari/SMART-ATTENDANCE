@@ -17,6 +17,8 @@ import { ApiError } from "@/lib/api/client";
 import { getStoredUser, getToken, setSession } from "@/lib/api/session";
 import { setAuthCookie } from "@/app/actions/auth";
 import { login } from "../api";
+import { useLocale } from "@/i18n/LocaleProvider";
+import { LanguageSwitcher } from "@/components/shared/LanguageSwitcher";
 
 const HIGHLIGHTS = [
   {
@@ -38,6 +40,7 @@ const HIGHLIGHTS = [
 
 export function LoginForm() {
   const router = useRouter();
+  const { t } = useLocale();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -79,7 +82,7 @@ export function LoginForm() {
       setError(
         caught instanceof ApiError
           ? caught
-          : new ApiError("Something went wrong. Please try again.", 0),
+          : new ApiError(t("Something went wrong. Please try again."), 0),
       );
     } finally {
       setLoading(false);
@@ -109,11 +112,10 @@ export function LoginForm() {
 
         <div className="relative max-w-md">
           <h1 className="font-display text-4xl leading-[1.1] font-extrabold tracking-tight xl:text-5xl">
-            Attendance that runs <span className="text-brand-200">itself.</span>
+            {t("Attendance that runs")} <span className="text-brand-200">{t("itself.")}</span>
           </h1>
           <p className="mt-5 text-base leading-relaxed text-brand-100/90">
-            Teachers open a session, students scan a live QR code, and GPS does
-            the honesty check — no roll calls, no paper, no arguments.
+            {t("Teachers open a session, students scan a live QR code, and GPS does the honesty check — no roll calls, no paper, no arguments.")}
           </p>
           <ul className="mt-10 space-y-4">
             {HIGHLIGHTS.map((item) => (
@@ -122,9 +124,9 @@ export function LoginForm() {
                   <item.icon className="size-5" />
                 </span>
                 <div>
-                  <p className="text-sm font-bold">{item.title}</p>
+                  <p className="text-sm font-bold">{t(item.title)}</p>
                   <p className="mt-0.5 text-sm text-brand-100/80">
-                    {item.description}
+                    {t(item.description)}
                   </p>
                 </div>
               </li>
@@ -153,11 +155,12 @@ export function LoginForm() {
           </Link>
 
           <div className="rounded-panel border border-hairline bg-card p-8 shadow-lift sm:p-10">
+            <div className="mb-4 flex justify-end"><LanguageSwitcher /></div>
             <h2 className="font-display text-2xl font-extrabold tracking-tight">
-              Welcome back
+              {t("Welcome back")}
             </h2>
             <p className="mt-1.5 text-sm text-muted">
-              Sign in to your Smart Attendance workspace.
+              {t("Sign in to your Smart Attendance workspace.")}
             </p>
 
             {error && (
@@ -169,7 +172,7 @@ export function LoginForm() {
 
             <form className="mt-6 space-y-5" onSubmit={handleSubmit}>
               <Input
-                label="Email"
+                label={t("Email")}
                 name="email"
                 type="email"
                 placeholder="you@school.edu"
@@ -180,7 +183,7 @@ export function LoginForm() {
                 error={error?.errors?.email?.[0]}
               />
               <Input
-                label="Password"
+                label={t("Password")}
                 name="password"
                 type={showPassword ? "text" : "password"}
                 placeholder="••••••••"
@@ -194,7 +197,7 @@ export function LoginForm() {
                     type="button"
                     onClick={() => setShowPassword((visible) => !visible)}
                     aria-label={
-                      showPassword ? "Hide password" : "Show password"
+                      t(showPassword ? "Hide password" : "Show password")
                     }
                     className="flex size-8 cursor-pointer items-center justify-center rounded-[10px] text-slate-400 transition-colors duration-200 hover:bg-brand-50 hover:text-brand-600"
                   >
@@ -221,19 +224,19 @@ export function LoginForm() {
                     className="size-4 cursor-pointer rounded border-hairline bg-card text-brand-600 accent-brand-600 transition-colors focus:ring-2 focus:ring-brand-500/20 focus:ring-offset-0"
                   />
                   <span className="text-sm font-medium text-slate-700 transition-colors group-hover:text-slate-900 dark:text-slate-300 dark:group-hover:text-white">
-                    Remember me
+                    {t("Remember me")}
                   </span>
                 </label>
               </div>
 
               <Button type="submit" className="w-full" loading={loading}>
-                Sign in
+                {t("Sign in")}
               </Button>
             </form>
           </div>
 
           <p className="mt-6 text-center text-xs text-muted">
-            No account yet? Ask your campus admin to invite you.
+            {t("No account yet? Ask your campus admin to invite you.")}
           </p>
         </div>
       </main>
