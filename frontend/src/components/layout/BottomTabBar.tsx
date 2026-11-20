@@ -6,9 +6,11 @@ import { usePathname } from "next/navigation";
 import { LayoutGrid, X } from "lucide-react";
 import { ALL_NAV_ITEMS, MOBILE_TABS, TEACHER_NAV_ITEMS } from "@/config/nav";
 import { cx } from "@/lib/utils/cx";
+import { useLocale } from "@/i18n/LocaleProvider";
 
 export function BottomTabBar({ role, teacherModules = [] }: { role: string | null; teacherModules?: string[] }) {
   const pathname = usePathname();
+  const { t } = useLocale();
   const [moreOpen, setMoreOpen] = useState(false);
   const isTeacher = role?.toLowerCase() === "teacher";
   const allowedTeacherItems = TEACHER_NAV_ITEMS.filter((item) => item.permissionKey && teacherModules.includes(item.permissionKey));
@@ -24,14 +26,14 @@ export function BottomTabBar({ role, teacherModules = [] }: { role: string | nul
         <div className="fixed inset-0 z-50 lg:hidden">
           <button
             type="button"
-            aria-label="Close menu"
+            aria-label={t("Close menu")}
             className="absolute inset-0 cursor-pointer bg-ink/40 backdrop-blur-sm"
             onClick={() => setMoreOpen(false)}
           />
           <div className="animate-slide-up absolute inset-x-0 bottom-0 rounded-t-[20px] border-t border-hairline bg-card p-5 pb-10 shadow-lift">
             <div className="mb-4 flex items-center justify-between">
               <h2 className="font-display text-base font-bold">
-                Browse modules
+                {t("Browse modules")}
               </h2>
               <button
                 type="button"
@@ -56,7 +58,7 @@ export function BottomTabBar({ role, teacherModules = [] }: { role: string | nul
                   )}
                 >
                   <item.icon className="size-4.5 shrink-0" />
-                  <span className="truncate">{item.label}</span>
+                  <span className="truncate">{t(item.label)}</span>
                 </Link>
               ))}
             </div>
@@ -76,7 +78,7 @@ export function BottomTabBar({ role, teacherModules = [] }: { role: string | nul
               <Link
                 key={tab.href}
                 href={tab.href}
-                aria-label={tab.label}
+                aria-label={t(tab.label)}
                 className={cx(
                   "flex flex-col items-center gap-1 py-2.5 text-[11px] font-bold transition-colors duration-200",
                   active ? "text-brand-600" : "text-slate-500",
@@ -85,7 +87,7 @@ export function BottomTabBar({ role, teacherModules = [] }: { role: string | nul
                 <tab.icon
                   className={cx("size-5", active && "drop-shadow-sm")}
                 />
-                {isTeacher && tab.label === "Dashboard" ? "Home" : isTeacher && tab.label === "Live Attendance" ? "Attendance" : tab.label}
+                {t(isTeacher && tab.label === "Dashboard" ? "Home" : isTeacher && tab.label === "Live Attendance" ? "Attendance" : tab.label)}
               </Link>
             );
           })}
@@ -95,7 +97,7 @@ export function BottomTabBar({ role, teacherModules = [] }: { role: string | nul
             className="flex cursor-pointer flex-col items-center gap-1 py-2.5 text-[11px] font-bold text-slate-500 transition-colors duration-200"
           >
             <LayoutGrid className="size-5" />
-            More
+            {t("More")}
           </button>}
         </div>
       </nav>
