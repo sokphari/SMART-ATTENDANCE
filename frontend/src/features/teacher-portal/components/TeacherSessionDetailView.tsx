@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/Button";
 import { closeTeacherSession, generateSessionQrToken, getSessionAttendance, getTeacherSession, markSessionAttendance } from "../api";
 import type { AttendanceSummary, SessionAttendance, SessionAttendanceStatus, TeacherAttendanceSession } from "../types";
 import { getQrWindowPhase, readableCountdown, secondsUntil } from "../qrWindow";
+import { studentScanUrl, phoneScanUrlWarning } from "@/features/attendance/studentScanLink";
 
 const STATUS_OPTIONS = [
   { status: "present", label: "Present", icon: CheckCircle2, style: "border-emerald-200 text-emerald-700 hover:bg-emerald-50 dark:border-emerald-500/30 dark:text-emerald-300 dark:hover:bg-emerald-500/10" },
@@ -64,6 +65,7 @@ export function TeacherSessionDetailView({ sessionId }: { sessionId: number }) {
   const [permissionReason, setPermissionReason] = useState("");
   const [qrToken, setQrToken] = useState<{ token: string; expires_at: string } | null>(null);
   const [qrDialogOpen, setQrDialogOpen] = useState(false);
+  const [studentScanBase, setStudentScanBase] = useState("");
   const [qrError, setQrError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -253,6 +255,7 @@ export function TeacherSessionDetailView({ sessionId }: { sessionId: number }) {
   }
 
   function openQrDialog() {
+    setStudentScanBase(window.location.origin);
     setQrDialogOpen(true);
     setQrError(null);
     // QR generation is handled by the active-window effect, not the click.
@@ -318,9 +321,10 @@ export function TeacherSessionDetailView({ sessionId }: { sessionId: number }) {
           {qrError && <p role="alert" className="mt-4 rounded-control bg-danger-soft p-3 text-left text-sm text-danger">{qrError}</p>}
           <p role="status" className="mt-4 rounded-control bg-brand-50 p-3 text-sm text-brand-800 dark:bg-brand-500/10 dark:text-brand-200">{qrWindowHint}</p>
           <div className="mx-auto mt-5 flex min-h-64 w-fit min-w-64 items-center justify-center rounded-xl bg-white p-3">
-            {qrToken && qrCanGenerate && Date.parse(qrToken.expires_at) > clock ? <QRCodeSVG value={qrToken.token} size={240} level="M" includeMargin /> :
+            {qrToken && qrCanGenerate && Date.parse(qrToken.expires_at) > clock ? <QRCodeSVG value={studentScanUrl(qrToken.token, studentScanBase || window.location.origin, process.env.NEXT_PUBLIC_STUDENT_SCAN_BASE_URL)} size={240} level="M" includeMargin /> :
               <p role="status" className="max-w-48 text-sm text-slate-600">{qrPhase !== "active" ? qrWindowHint : generatingQr ? "Generating student QR…" : "No QR available. Refresh to retry."}</p>}
           </div>
+          {studentScanBase && phoneScanUrlWarning(studentScanUrl("preview", studentScanBase, process.env.NEXT_PUBLIC_STUDENT_SCAN_BASE_URL)) && <p role="status" className="mt-3 rounded-control bg-warning-soft p-3 text-left text-xs text-amber-800 dark:text-amber-200">{phoneScanUrlWarning(studentScanUrl("preview", studentScanBase, process.env.NEXT_PUBLIC_STUDENT_SCAN_BASE_URL))}</p>}
           {qrToken && qrCanGenerate && <p className="mt-3 text-xs text-muted">Expires {new Date(qrToken.expires_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" })}</p>}
           <div className="mt-4 flex justify-center gap-2">
             <Button size="sm" variant="secondary" disabled={!qrToken || !qrCanGenerate || Date.parse(qrToken.expires_at) <= clock} onClick={() => void copyToken()}>{copied ? <Check className="size-4" /> : <Clipboard className="size-4" />}{copied ? "Copied" : "Copy token"}</Button>
