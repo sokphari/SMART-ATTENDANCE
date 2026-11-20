@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import { LocaleProvider } from "@/i18n/LocaleProvider";
 
 export const metadata: Metadata = {
   title: {
@@ -17,7 +18,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className="bg-canvas text-ink font-sans">{children}</body>
+      <body className="bg-canvas text-ink font-sans"><LocaleProvider>{children}</LocaleProvider></body>
     </html>
   );
 }
