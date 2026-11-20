@@ -60,6 +60,8 @@ jobs:
         run: npm ci --no-audit --no-fund
       - name: Test breadcrumb navigation
         run: node --experimental-strip-types --test tests/breadcrumbs.test.mjs
+      - name: Test teacher QR window logic
+        run: node --experimental-strip-types --test tests/teacherQrWindow.test.mjs
       - name: Type-check frontend
         run: npx tsc --noEmit
       - name: Build Next.js
