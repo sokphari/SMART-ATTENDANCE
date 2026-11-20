@@ -48,8 +48,8 @@ class RequestStore extends FormRequest
             'floor_id' => ['sometimes', 'nullable', 'integer', 'exists:floors,id'],
             'capacity' => ['sometimes', 'integer', 'between:1,2000'],
             'room_type' => ['sometimes', 'string', 'max:50'],
-            'latitude' => ['required', 'numeric', 'between:-90,90'],
-            'longitude' => ['required', 'numeric', 'between:-180,180'],
+            'latitude' => ['nullable', 'numeric', 'between:-90,90'],
+            'longitude' => ['nullable', 'numeric', 'between:-180,180'],
             'allowed_radius_meters' => ['sometimes', 'integer', 'between:10,1000'],
             'status' => ['sometimes', Rule::enum(ClassroomStatus::class)],
         ];
@@ -58,6 +58,9 @@ class RequestStore extends FormRequest
     public function after(): array
     {
         return [function (Validator $validator): void {
+            if ($this->filled('latitude') !== $this->filled('longitude')) {
+                $validator->errors()->add('latitude', 'Enter both GPS coordinates or leave both empty.');
+            }
             if ($validator->errors()->isNotEmpty() || ! $this->filled('floor_id')) return;
             $floor = Floor::query()->with('building')->find($this->integer('floor_id'));
             if (! $floor?->isActive() || ! $floor->building?->isActive()) {
