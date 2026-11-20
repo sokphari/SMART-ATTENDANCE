@@ -53,11 +53,11 @@ class SyncScheduledAttendanceSessionsTest extends TestCase
         ]);
 
         $this->artisan('attendance:sync-scheduled-sessions')->assertSuccessful();
-        $this->assertDatabaseHas('attendance_sessions', [
-            'class_schedule_id' => $schedule->id,
-            'session_date' => '2026-11-18',
-            'status' => AttendanceSessionStatus::Scheduled->value,
-        ]);
+        $this->assertTrue(AttendanceSession::query()
+            ->where('class_schedule_id', $schedule->id)
+            ->whereDate('session_date', '2026-11-18')
+            ->where('status', AttendanceSessionStatus::Scheduled->value)
+            ->exists());
         $prepared = AttendanceSession::query()->where('class_schedule_id', $schedule->id)->firstOrFail();
         $this->assertSame(30, (int) $prepared->starts_at->diffInMinutes($prepared->closes_at));
         $this->assertSame(90, (int) $prepared->starts_at->diffInMinutes($prepared->session_ends_at));
