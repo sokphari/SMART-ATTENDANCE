@@ -31,6 +31,7 @@ class AttendanceSessionResource extends JsonResource
             'session_ends_at' => $this->session_ends_at?->toIso8601String(),
             'closed_at' => $this->closed_at?->toIso8601String(),
             'status' => $this->status?->value,
+            'local_qr_testing_available' => app()->environment('local') && config('attendance.allow_local_qr_testing', false),
             'allowed_latitude' => (float) $this->allowed_latitude,
             'allowed_longitude' => (float) $this->allowed_longitude,
             'allowed_radius_meters' => $this->allowed_radius_meters,
