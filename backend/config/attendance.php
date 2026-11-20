@@ -11,6 +11,4 @@ return [
     | validated by the service. Do not enable this for real attendance.
     */
     'allow_local_qr_testing' => (bool) env('ATTENDANCE_ENABLE_LOCAL_QR_TESTING', false),
-    // ID-only attendance is deliberately disabled outside local development.
-    'allow_local_id_check_in' => (bool) env('ATTENDANCE_ENABLE_LOCAL_ID_CHECK_IN', false),
 ];
