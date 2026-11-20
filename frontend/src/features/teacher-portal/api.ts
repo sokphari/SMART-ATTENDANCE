@@ -124,6 +124,14 @@ export function markSessionAttendance(id: number, records: ManualAttendanceRecor
   );
 }
 
+/** Start a temporary QR scan window only when enabled in local Laravel configuration. */
+export function startLocalQrTest(id: number) {
+  return apiFetch<ApiResource<TeacherAttendanceSession>>(
+    `/api/v1/teacher/attendance-sessions/${id}/local-qr-test`,
+    { method: "POST" },
+  );
+}
+
 export function generateSessionQrToken(id: number) {
   return apiFetch<ApiResource<{ token: string; expires_at: string }>>(
     `/api/v1/teacher/attendance-sessions/${id}/qr-token`,
