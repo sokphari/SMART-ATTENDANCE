@@ -51,19 +51,21 @@ class TelegramAttendanceNotificationTest extends TestCase
         $notifier->notify($attendance);
 
         Http::assertSentCount(1);
-        Http::assertSent(function ($request): bool {
-            $message = $request->data()['text'] ?? '';
-            return $request->url() === 'https://api.telegram.org/bottest-telegram-bot-token/sendMessage'
-                && ($request->data()['chat_id'] ?? null) === '-100123456789'
-                && str_contains($message, '📌 STUDENT ATTENDANCE NOTIFICATION')
-                && str_contains($message, '👤 Student: Sokha Meas')
-                && str_contains($message, '⚧ Gender: Male')
-                && str_contains($message, '⚠️ Status: Late (8 minutes)')
-                && str_contains($message, '🕒 Schedule: 7:30 PM – 10:45 PM')
-                && str_contains($message, '📅 Date: 20/11/2026')
-                && ! str_contains($message, '11.5564')
-                && ! str_contains($message, 'token');
-        });
+        $recorded = Http::recorded()->first();
+        $this->assertNotNull($recorded);
+        $request = $recorded[0];
+        $message = $request->data()['text'] ?? '';
+
+        $this->assertSame('https://api.telegram.org/bottest-telegram-bot-token/sendMessage', $request->url());
+        $this->assertSame('-100123456789', $request->data()['chat_id']);
+        $this->assertStringContainsString('📌 STUDENT ATTENDANCE NOTIFICATION', $message);
+        $this->assertStringContainsString('👤 Student: Sokha Meas', $message);
+        $this->assertStringContainsString('⚧ Gender: Male', $message);
+        $this->assertStringContainsString('⚠️ Status: Late (8 minutes)', $message);
+        $this->assertStringContainsString('🕒 Schedule: 7:30 PM – 10:45 PM', $message);
+        $this->assertStringContainsString('📅 Date: 20/11/2026', $message);
+        $this->assertStringNotContainsString('11.5564', $message);
+        $this->assertStringNotContainsString('token', $message);
     }
 
     public function test_present_attendance_has_no_late_minutes(): void
