@@ -6,6 +6,7 @@ import { QrCode } from "lucide-react";
 import { BottomTabBar } from "./BottomTabBar";
 import { Sidebar } from "./Sidebar";
 import { Topbar } from "./Topbar";
+import { AppBreadcrumbs } from "./AppBreadcrumbs";
 import { logout } from "@/features/auth/api";
 import { clearSession, getStoredUser, getToken } from "@/lib/api/session";
 import type { AuthUser } from "@/types/auth";
@@ -146,6 +147,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           onLogout={handleLogout}
         />
         <main className="w-full flex-1 px-4 pt-6 pb-28 lg:px-8 lg:pt-8 lg:pb-12">
+          <AppBreadcrumbs pathname={pathname} role={user?.role ?? null} />
           {children}
         </main>
       </div>
