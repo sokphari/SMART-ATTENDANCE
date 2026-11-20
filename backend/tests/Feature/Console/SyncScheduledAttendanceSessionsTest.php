@@ -24,6 +24,40 @@ class SyncScheduledAttendanceSessionsTest extends TestCase
         parent::tearDown();
     }
 
+    public function test_one_hour_qr_session_is_automatically_closed_and_unmarked_students_become_absent(): void
+    {
+        $teacher = Teacher::factory()->create();
+        $class = ClassSection::factory()->create();
+        $student = \App\Models\Student::factory()->create();
+        \App\Models\Enrollment::factory()->create([
+            'class_section_id' => $class->id,
+            'student_id' => $student->id,
+        ]);
+
+        $session = AttendanceSession::factory()->create([
+            'teacher_id' => $teacher->id,
+            'class_section_id' => $class->id,
+            'starts_at' => now()->subHour(),
+            'late_after' => now()->subMinutes(45),
+            'closes_at' => now()->subSecond(),
+            'session_ends_at' => now()->subSecond(),
+        ]);
+        $this->artisan('attendance:sync-scheduled-sessions')->assertSuccessful();
+
+        $this->assertDatabaseHas('attendance_sessions', [
+            'id' => $session->id,
+            'status' => AttendanceSessionStatus::Closed->value,
+        ]);
+        $this->assertDatabaseHas('attendances', [
+            'attendance_session_id' => $session->id,
+            'student_id' => $student->id,
+            'status' => \App\Enums\AttendanceStatus::Absent->value,
+        ]);
+        $this->artisan('attendance:sync-scheduled-sessions')->assertSuccessful();
+        $this->assertSame(1, \App\Models\Attendance::query()
+            ->where('attendance_session_id', $session->id)->count());
+    }
+
     public function test_automatic_sessions_are_prepared_opened_and_finalized_idempotently(): void
     {
         Carbon::setTestNow(Carbon::parse('2026-11-18 07:30:00', 'Asia/Phnom_Penh'));
