@@ -2,12 +2,14 @@
 
 use App\Modules\Classrooms\Controllers\ClassroomController;
 use App\Modules\Buildings\Controllers\BuildingController;
+use App\Modules\Buildings\Controllers\BuildingSetupController;
 use App\Modules\Buildings\Controllers\FloorController;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware(['auth:sanctum', 'role:admin'])
     ->prefix('admin')
     ->group(function (): void {
+        Route::post('buildings/setup', BuildingSetupController::class);
         Route::apiResource('buildings', BuildingController::class);
         Route::get('buildings/{building}/floors', [BuildingController::class, 'floors']);
         Route::post('buildings/{building}/floors', [BuildingController::class, 'storeFloor']);
