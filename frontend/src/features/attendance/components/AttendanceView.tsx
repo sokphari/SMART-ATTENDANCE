@@ -21,10 +21,12 @@ import { Card } from "@/components/ui/Card";
 import { Input } from "@/components/ui/Input";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { fetchAttendanceRecords, fetchClassSectionsOptions } from "../api";
+import { AdminAttendanceQrDialog } from "./AdminAttendanceQrDialog";
 import type { AttendanceRecord, SectionOption } from "../types";
 
 export function AttendanceView() {
   const [items, setItems] = useState<AttendanceRecord[]>([]);
+  const [qrDialogOpen, setQrDialogOpen] = useState(false);
   const [sections, setSections] = useState<SectionOption[]>([]);
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState("");
@@ -98,7 +100,9 @@ export function AttendanceView() {
       <PageHeader
         title="Attendance Records"
         description="Live log of student check-ins, dynamic QR verification, GPS distance, and final statuses."
+        actions={<Button onClick={() => setQrDialogOpen(true)}><QrCode className="size-4" />Open Student QR</Button>}
       />
+      <AdminAttendanceQrDialog open={qrDialogOpen} onClose={() => setQrDialogOpen(false)} />
 
       <div className="mb-5 grid gap-3 sm:grid-cols-4">
         <Card className="flex min-h-24 items-center gap-3.5 p-4">
