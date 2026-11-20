@@ -195,6 +195,9 @@ class AttendanceSessionServices
             if (! $locked->isOpen()) {
                 abort(409, 'Only open attendance sessions can enter local QR test mode.');
             }
+            if ($locked->qrTokens()->exists()) {
+                abort(409, 'This session has already issued an attendance QR. Reopening it would bypass the one-hour limit.');
+            }
             if ($locked->session_date->toDateString() !== now('Asia/Phnom_Penh')->toDateString()) {
                 abort(409, 'Local QR test mode is only available for sessions dated today.');
             }
