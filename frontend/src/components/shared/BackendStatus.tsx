@@ -5,6 +5,7 @@ import {
   type BackendStatusState,
 } from "@/hooks/use-backend-status";
 import { cx } from "@/lib/utils/cx";
+import { useLocale } from "@/i18n/LocaleProvider";
 
 const TONES: Record<BackendStatusState, { chip: string; dot: string; label: string }> = {
   checking: {
@@ -26,6 +27,7 @@ const TONES: Record<BackendStatusState, { chip: string; dot: string; label: stri
 
 export function BackendStatus() {
   const status = useBackendStatus();
+  const { t } = useLocale();
   const tone = TONES[status];
 
   return (
@@ -36,7 +38,7 @@ export function BackendStatus() {
       )}
     >
       <span className={cx("size-2 rounded-pill", tone.dot)} />
-      {tone.label}
+      {t(tone.label)}
     </span>
   );
 }
