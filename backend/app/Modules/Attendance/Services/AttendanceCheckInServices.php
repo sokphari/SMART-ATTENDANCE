@@ -43,7 +43,8 @@ class AttendanceCheckInServices
 
         $now = now();
 
-        if ($now->lt($session->starts_at) || $now->gt($session->closes_at)) {
+        if ($now->lt($session->starts_at) || $now->gte($session->closes_at)
+            || ($session->session_ends_at !== null && $now->gte($session->session_ends_at))) {
             throw ValidationException::withMessages([
                 'token' => 'The attendance session is not active.',
             ]);
@@ -66,6 +67,17 @@ class AttendanceCheckInServices
 
         if ($alreadyCheckedIn) {
             abort(409, 'Attendance has already been recorded for this session.');
+        }
+
+        // Device IDs are scoped to the session and hashed before storage.
+        // This prevents a reused browser identity registering another student.
+        $deviceHash = isset($data['device_id'])
+            ? hash_hmac('sha256', $data['device_id'], (string) config('app.key'))
+            : null;
+        if ($deviceHash !== null && Attendance::query()
+            ->where('attendance_session_id', $session->id)
+            ->where('device_hash', $deviceHash)->exists()) {
+            abort(409, 'This device has already registered attendance for this session.');
         }
 
         $settings = TimetableSetting::query()->find(1);
@@ -106,9 +118,10 @@ class AttendanceCheckInServices
                 'checked_in_at' => $now,
                 'marked_by' => null,
                 'remarks' => null,
+                'device_hash' => $deviceHash,
             ]);
         } catch (UniqueConstraintViolationException) {
-            abort(409, 'Attendance has already been recorded for this session.');
+            abort(409, 'This student or device has already recorded attendance for this session.');
         }
 
         if (config('services.telegram_attendance.bot_token') && config('services.telegram_attendance.chat_id')) {
