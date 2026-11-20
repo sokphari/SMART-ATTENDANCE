@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { Check, Clipboard, QrCode, RefreshCw, X } from "lucide-react";
 import { QRCodeSVG } from "qrcode.react";
 import { Button } from "@/components/ui/Button";
+import { studentScanUrl, phoneScanUrlWarning } from "../studentScanLink";
 import { fetchActiveQrSessions, generateAdminQrToken, type ActiveQrSession, type QrTokenData } from "../api";
 
 type Props = { open: boolean; onClose: () => void };
@@ -17,6 +18,7 @@ export function AdminAttendanceQrDialog({ open, onClose }: Props) {
   const [error, setError] = useState("");
   const [copied, setCopied] = useState(false);
   const [reopenCount, setReopenCount] = useState(0);
+  const [studentScanBase, setStudentScanBase] = useState("");
   const dialogRef = useRef<HTMLDialogElement>(null);
   const generationRef = useRef(0);
 
@@ -59,6 +61,7 @@ export function AdminAttendanceQrDialog({ open, onClose }: Props) {
     if (open && !dialog.open) dialog.showModal();
     if (!open && dialog.open) dialog.close();
     if (open) {
+      setStudentScanBase(window.location.origin);
       setQr(null);
       setSessionId("");
       setCopied(false);
@@ -135,9 +138,10 @@ export function AdminAttendanceQrDialog({ open, onClose }: Props) {
           <>
             <p className="text-center text-sm font-semibold">{selected?.class_section?.course?.name ?? "Attendance session"}</p>
             <div className="mx-auto flex min-h-64 w-fit items-center justify-center rounded-xl bg-white p-3">
-              {qr ? <QRCodeSVG size={240} includeMargin level="M" value={qr.token} /> :
+              {qr && studentScanBase ? <QRCodeSVG size={240} includeMargin level="M" value={studentScanUrl(qr.token, studentScanBase, process.env.NEXT_PUBLIC_STUDENT_SCAN_BASE_URL)} /> :
                 <p role="status" className="max-w-48 text-center text-sm text-slate-600">{generating ? "Generating QR…" : "QR unavailable"}</p>}
             </div>
+            {studentScanBase && phoneScanUrlWarning(studentScanUrl("preview", studentScanBase, process.env.NEXT_PUBLIC_STUDENT_SCAN_BASE_URL)) && <p role="status" className="rounded-control bg-warning-soft p-3 text-xs text-amber-800 dark:text-amber-200">{phoneScanUrlWarning(studentScanUrl("preview", studentScanBase, process.env.NEXT_PUBLIC_STUDENT_SCAN_BASE_URL))}</p>}
             <p className="text-center text-xs text-muted">{qr ? `QR expires at ${new Date(qr.expires_at).toLocaleTimeString()}. It refreshes automatically.` : "Only open sessions within the check-in window can generate a QR."}</p>
             <div className="flex justify-center gap-2">
               <Button variant="secondary" size="sm" disabled={!qr} onClick={() => {
