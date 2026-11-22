@@ -3,6 +3,7 @@
 namespace App\Console\Commands;
 
 use Illuminate\Console\Command;
+use App\Modules\Attendance\Services\TelegramAttendanceMessageFormatter;
 use Illuminate\Support\Facades\Http;
 
 class TestTelegramAttendance extends Command
@@ -35,18 +36,15 @@ class TestTelegramAttendance extends Command
             return self::FAILURE;
         }
 
-        $statusLabel = $status === 'late' ? 'Late ('.$minutes.' minutes)' : 'Present';
-        $message = implode("\n", [
-            '🧪 TEST ONLY — NOT A REAL CHECK-IN',
-            '',
-            '📌 STUDENT ATTENDANCE NOTIFICATION',
-            '',
-            '👤 Student: Test Student',
-            '⚧ Gender: Male',
-            '⚠️ Status: '.$statusLabel,
-            '🕒 Schedule: 7:30 PM – 10:45 PM',
-            '📅 Date: '.now('Asia/Phnom_Penh')->format('d/m/Y'),
-        ]);
+        $message = app(TelegramAttendanceMessageFormatter::class)->format(
+            studentName: 'Test Student',
+            gender: 'male',
+            status: $status,
+            schedule: '7:30 PM – 10:45 PM',
+            date: now('Asia/Phnom_Penh')->format('d/m/Y'),
+            minutesLate: $status === 'late' ? $minutes : null,
+            isTest: true,
+        );
 
         $this->line($message);
 
