@@ -71,7 +71,7 @@ export function StudentScanView() {
   async function submit() {
     if (activeRequest.current || !qr || !canCheckIn) return;
     if (localAllowed && !/^[0-9]{9}$/.test(attendanceId)) {
-      setError("Enter your unique nine-digit attendance ID, e.g. 000000001.");
+      setError("Enter the 9-digit Attendance ID of a student marked Pending.");
       return;
     }
     activeRequest.current = true;
@@ -97,7 +97,14 @@ export function StudentScanView() {
       setResult(response.data);
     } catch (caught) {
       if (caught instanceof ApiError) {
-        setError(Object.values(caught.errors).flat()[0] ?? caught.message);
+        const reason = Object.values(caught.errors).flat()[0] ?? caught.message;
+        if (localAllowed && caught.status === 409) {
+          setError(/device/i.test(reason)
+            ? "ឧបករណ៍នេះបានកត់វត្តមានរួចហើយក្នុង Session នេះ។ This browser has already checked in; use another unused test device."
+            : "សិស្សនេះមានកំណត់ត្រាវត្តមានរួចហើយ។ Please choose a student marked Pending on the Teacher attendance page and enter their 9-digit Attendance ID.");
+        } else {
+          setError(reason);
+        }
       } else if (typeof caught === "object" && caught !== null && "code" in caught) {
         const code = (caught as GeolocationPositionError).code;
         setError(code === 1 ? "Please allow your phone location permission."
@@ -133,10 +140,10 @@ export function StudentScanView() {
             {qr && localAllowed && <div className="space-y-3">
               <p className="rounded-control bg-amber-50 p-3 text-xs text-amber-900">Local development mode. Student ID alone is not secure authentication and is disabled in production.</p>
               <label htmlFor="student-attendance-id" className="block text-sm font-semibold">Your 9-digit Attendance ID</label>
-              <input id="student-attendance-id" type="text" inputMode="numeric" pattern="[0-9]{9}" maxLength={9} autoComplete="off" placeholder="000000001"
+              <input id="student-attendance-id" type="text" inputMode="numeric" pattern="[0-9]{9}" maxLength={9} autoComplete="off" placeholder="9-digit Attendance ID"
                 className="h-12 w-full rounded-control border border-hairline bg-card px-4 text-lg tracking-widest outline-none focus:border-brand-600"
                 value={attendanceId} onChange={(e) => setAttendanceId(e.target.value.replace(/[^0-9]/g, "").slice(0, 9))} />
-              <p className="text-xs text-muted">Each student ID and browser device can register only once for this class session.</p>
+              <p className="text-xs text-muted">Only students marked Pending can check in here. Each student ID and browser device can register only once per session.</p>
             </div>}
             {qr && !localAllowed && !signedIn && <div className="space-y-3 rounded-control bg-brand-50 p-4">
               <p className="font-semibold">Student account required</p>

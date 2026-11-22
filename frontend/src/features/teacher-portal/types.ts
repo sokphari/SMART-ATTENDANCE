@@ -63,6 +63,7 @@ export type SessionAttendanceStatus = "present" | "late" | "absent" | "excused" 
 
 export type SessionAttendance = {
   student_id: number;
+  attendance_id: string;
   name: string;
   email: string | null;
   gender: string | null;

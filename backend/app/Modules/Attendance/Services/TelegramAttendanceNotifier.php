@@ -31,19 +31,7 @@ class TelegramAttendanceNotifier
             return;
         }
 
-        $studentName = $student->user?->name ?? 'Unknown student';
-        $gender = match (strtolower((string) ($student->gender ?? ''))) {
-            'male', 'm' => 'Male',
-            'female', 'f' => 'Female',
-            'other' => 'Other',
-            default => 'Not specified',
-        };
-
-        $status = match ($attendance->status) {
-            AttendanceStatus::Late => 'Late ('.$this->minutesAfterLateThreshold($attendance).' minutes)',
-            AttendanceStatus::Present => 'Present',
-            default => ucfirst($attendance->status?->value ?? 'unknown'),
-        };
+        $studentName = $student->user?->name ?? 'មិនស្គាល់ឈ្មោះ';
 
         $timezone = 'Asia/Phnom_Penh';
         // The class can continue after QR check-in closes. Prefer the actual
@@ -54,15 +42,16 @@ class TelegramAttendanceNotifier
         $date = ($session->session_date ?? $attendance->checked_in_at)->copy()
             ->timezone($timezone)->format('d/m/Y');
 
-        $text = implode("\n", [
-            '📌 STUDENT ATTENDANCE NOTIFICATION',
-            '',
-            '👤 Student: '.$studentName,
-            '⚧ Gender: '.$gender,
-            '⚠️ Status: '.$status,
-            '🕒 Schedule: '.$schedule,
-            '📅 Date: '.$date,
-        ]);
+        $text = app(TelegramAttendanceMessageFormatter::class)->format(
+            studentName: $studentName,
+            gender: $student->gender,
+            status: $attendance->status?->value ?? 'unknown',
+            schedule: $schedule,
+            date: $date,
+            minutesLate: $attendance->status === AttendanceStatus::Late
+                ? $this->minutesAfterLateThreshold($attendance)
+                : null,
+        );
 
         try {
             $response = Http::timeout(5)

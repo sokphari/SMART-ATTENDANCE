@@ -58,12 +58,12 @@ class TelegramAttendanceNotificationTest extends TestCase
 
         $this->assertSame('https://api.telegram.org/bottest-telegram-bot-token/sendMessage', $request->url());
         $this->assertSame('-100123456789', $request->data()['chat_id']);
-        $this->assertStringContainsString('📌 STUDENT ATTENDANCE NOTIFICATION', $message);
-        $this->assertStringContainsString('👤 Student: Sokha Meas', $message);
-        $this->assertStringContainsString('⚧ Gender: Male', $message);
-        $this->assertStringContainsString('⚠️ Status: Late (8 minutes)', $message);
-        $this->assertSame('🕒 Schedule: 7:30 PM – 10:45 PM', collect(explode("\n", $message))->first(fn ($line) => str_starts_with($line, '🕒 Schedule:')));
-        $this->assertStringContainsString('📅 Date: 20/11/2026', $message);
+        $this->assertStringContainsString('📌 ដំណឹងវត្តមានសិស្ស', $message);
+        $this->assertStringContainsString('👤 សិស្ស៖ Sokha Meas', $message);
+        $this->assertStringContainsString('⚧ ភេទ៖ ប្រុស', $message);
+        $this->assertStringContainsString('⚠️ ស្ថានភាព៖ យឺត (៨ នាទី)', $message);
+        $this->assertSame('🕒 ម៉ោងសិក្សា៖ 7:30 PM – 10:45 PM', collect(explode("\n", $message))->first(fn ($line) => str_starts_with($line, '🕒 ម៉ោងសិក្សា៖')));
+        $this->assertStringContainsString('📅 កាលបរិច្ឆេទ៖ 20/11/2026', $message);
         $this->assertStringNotContainsString('11.5564', $message);
         $this->assertStringNotContainsString('token', $message);
     }
@@ -79,7 +79,7 @@ class TelegramAttendanceNotificationTest extends TestCase
 
         $notifier->notify($attendance);
 
-        Http::assertSent(fn ($request) => str_contains($request->data()['text'], '⚠️ Status: Present'));
+        Http::assertSent(fn ($request) => str_contains($request->data()['text'], '⚠️ ស្ថានភាព៖ មានវត្តមាន'));
     }
 
     public function test_no_credentials_means_no_telegram_request(): void
