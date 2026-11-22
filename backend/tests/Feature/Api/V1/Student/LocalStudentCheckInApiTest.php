@@ -96,6 +96,27 @@ class LocalStudentCheckInApiTest extends TestCase
         $this->postJson('/api/v1/attendance/local-check-in', $this->data($first, $token, (string) Str::uuid()))->assertStatus(409);
     }
 
+    public function test_manual_attendance_record_blocks_duplicate_but_pending_student_can_scan(): void
+    {
+        [$first, $second, $session, $token] = $this->scenario();
+        Attendance::factory()->create([
+            'attendance_session_id' => $session->id,
+            'student_id' => $first->id,
+            'status' => AttendanceStatus::Present,
+            'verification_method' => \App\Enums\VerificationMethod::Manual,
+            'device_hash' => null,
+        ]);
+
+        $this->postJson('/api/v1/attendance/local-check-in', $this->data($first, $token, (string) Str::uuid()))
+            ->assertStatus(409);
+
+        $this->postJson('/api/v1/attendance/local-check-in', $this->data($second, $token, (string) Str::uuid()))
+            ->assertCreated()
+            ->assertJsonPath('data.status', 'present');
+
+        $this->assertDatabaseCount('attendances', 2);
+    }
+
     public function test_device_cannot_check_in_for_two_students_in_same_session(): void
     {
         [$first, $second, , $token] = $this->scenario();
