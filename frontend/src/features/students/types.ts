@@ -6,6 +6,7 @@ export type Student = {
   program_id?: number | null;
   department: { id: number; name: string; code: string } | null;
   student_code: string;
+  attendance_id: string;
   year_level: number;
   phone: string | null;
   gender: string | null;

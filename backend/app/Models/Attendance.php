@@ -30,6 +30,7 @@ class Attendance extends Model
         'checked_in_at',
         'marked_by',
         'remarks',
+        'device_hash',
     ];
 
     /**

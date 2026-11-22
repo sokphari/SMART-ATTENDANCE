@@ -23,6 +23,7 @@ class StudentResource extends JsonResource
             'program' => $this->whenLoaded('program', fn () => ['id' => $this->program?->id, 'code' => $this->program?->code, 'name' => $this->program?->name]),
             'department' => new DepartmentResource($this->whenLoaded('department')),
             'student_code' => $this->student_code,
+            'attendance_id' => $this->attendanceId(),
             'year_level' => $this->year_level,
             'phone' => $this->phone,
             'gender' => $this->gender,

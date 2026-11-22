@@ -339,4 +339,5 @@ export const khmer: Record<string, string> = {
   "Verification": "ការផ្ទៀងផ្ទាត់",
   "Verified by": "ផ្ទៀងផ្ទាត់ដោយ",
   "Role": "តួនាទី",
+  "Attendance ID": "លេខសម្គាល់វត្តមាន",
 };

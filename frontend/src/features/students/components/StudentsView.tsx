@@ -155,6 +155,7 @@ useEffect(() => {
   function exportCsv() {
     const rows = [
       [
+        "Attendance ID",
         "Name",
         "Email",
         "Gender",
@@ -164,6 +165,7 @@ useEffect(() => {
         "Phone",
       ],
       ...students.map((student) => [
+        student.attendance_id ?? String(student.id).padStart(9, "0"),
         student.user?.name ?? "",
         student.user?.email ?? "",
         student.gender ?? "",
@@ -342,10 +344,11 @@ useEffect(() => {
           />
         )}
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[680px] text-left text-sm">
+          <table className="w-full min-w-[760px] text-left text-sm">
             <thead className="bg-canvas text-xs font-bold tracking-wide text-muted uppercase">
               <tr>
                 <th className="px-5 py-3">{t("Student")}</th>
+                <th className="px-5 py-3">{t("Attendance ID")}</th>
                 <th className="px-5 py-3">{t("Gender")}</th>
                 <th className="px-5 py-3">{t("Department")}</th>
                 <th className="px-5 py-3">{t("Year")}</th>
@@ -357,13 +360,13 @@ useEffect(() => {
             <tbody className="divide-y divide-hairline">
               {loading ? (
                 <tr>
-                  <td colSpan={7} className="px-5 py-12 text-center text-muted">
+                  <td colSpan={8} className="px-5 py-12 text-center text-muted">
                     Loading students…
                   </td>
                 </tr>
               ) : students.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="px-5 py-12 text-center text-muted">
+                  <td colSpan={8} className="px-5 py-12 text-center text-muted">
                     No students match these filters.
                   </td>
                 </tr>
@@ -384,6 +387,11 @@ useEffect(() => {
                       <p className="mt-0.5 text-xs text-muted">
                         {student.user?.email ?? "No email"}
                       </p>
+                    </td>
+                    <td className="px-5 py-4">
+                      <span className="rounded-md bg-brand-50 px-2 py-1 text-xs font-semibold text-brand-700 dark:bg-brand-500/15 dark:text-brand-300">
+                        {student.attendance_id ?? String(student.id).padStart(9, "0")}
+                      </span>
                     </td>
                     <td className="px-5 py-4">
                       <span

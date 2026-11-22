@@ -158,16 +158,10 @@ export function TeacherSessionDetailView({ sessionId }: { sessionId: number }) {
   }, [sessionId]);
 
   useEffect(() => {
-    if (!qrDialogOpen || !qrCanGenerate || generatingQr || qrError) return;
-    // Once the check-in window opens, generate without requiring another click.
-    if (!qrToken || new Date(qrToken.expires_at).getTime() <= clock) {
-      void refreshQr();
-      return;
-    }
-    const untilExpiry = new Date(qrToken.expires_at).getTime() - Date.now();
-    const timer = window.setTimeout(() => void refreshQr(), Math.max(1000, untilExpiry - 1500));
-    return () => window.clearTimeout(timer);
-  }, [qrDialogOpen, qrCanGenerate, qrToken, generatingQr, qrError, clock, refreshQr]);
+    // The server issues one stable QR; never automatically rotate or renew it.
+    if (!qrDialogOpen || !qrCanGenerate || generatingQr || qrError || qrToken) return;
+    void refreshQr();
+  }, [qrDialogOpen, qrCanGenerate, qrToken, generatingQr, qrError, refreshQr]);
 
   useEffect(() => {
     // Never display an expired or previously issued token when QR check-in closes.
@@ -241,7 +235,7 @@ export function TeacherSessionDetailView({ sessionId }: { sessionId: number }) {
       setQrError(null);
       // Keep the modal visible; the regular QR refresh effect will fetch
       // a new token from the server after the session becomes active.
-      setNotice("Local QR testing is active for 30 minutes. Scan using a student test account.");
+      setNotice("Local QR testing is active for 1 hour. Scan using a student test account.");
     } catch (caught) {
       setQrError(caught instanceof Error ? caught.message : "Unable to start the local QR test.");
     } finally {
@@ -347,7 +341,7 @@ export function TeacherSessionDetailView({ sessionId }: { sessionId: number }) {
           {session.local_qr_testing_available && !qrCanGenerate && session.status === "open" && (
             <div className="mt-4 rounded-control border border-amber-300 bg-amber-50 p-3 text-left text-sm text-amber-900">
               <p className="font-semibold">Local development test only</p>
-              <p className="mt-1">Start a temporary 30-minute QR window for this session. This changes only its attendance times and invalidates existing QR tokens.</p>
+              <p className="mt-1">Start a temporary 1-hour QR window for this session. This changes only its attendance times and invalidates existing QR tokens.</p>
               <Button className="mt-3" size="sm" disabled={startingLocalTest} loading={startingLocalTest} onClick={() => void handleStartLocalQrTest()}>
                 <QrCode className="size-4" />Start QR test now
               </Button>
@@ -362,7 +356,7 @@ export function TeacherSessionDetailView({ sessionId }: { sessionId: number }) {
           {qrToken && qrCanGenerate && <p className="mt-3 text-xs text-muted">Expires {new Date(qrToken.expires_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" })}</p>}
           <div className="mt-4 flex justify-center gap-2">
             <Button size="sm" variant="secondary" disabled={!qrToken || !qrCanGenerate || Date.parse(qrToken.expires_at) <= clock} onClick={() => void copyToken()}>{copied ? <Check className="size-4" /> : <Clipboard className="size-4" />}{copied ? "Copied" : "Copy token"}</Button>
-            <Button size="sm" onClick={() => void refreshQr()} loading={generatingQr} disabled={!qrCanGenerate}><RefreshCw className="size-4" />Refresh QR</Button>
+            <p className="self-center text-xs text-muted">QR remains the same until expiry</p>
           </div>
           <Button className="mt-4 w-full" variant="secondary" onClick={() => setQrDialogOpen(false)}>Close</Button>
         </div>
