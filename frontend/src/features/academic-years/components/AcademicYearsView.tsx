@@ -6,11 +6,11 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { CalendarRange, Plus, Search } from "lucide-react";
 import { ApiError } from "@/lib/api/client";
-import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Input } from "@/components/ui/Input";
 import { PageHeader } from "@/components/ui/PageHeader";
+import { StatusBadge, StatusFilter } from "@/components/ui/status";
 import { fetchAcademicYears } from "../api";
 import type { AcademicYear } from "../types";
 import { Pencil } from "lucide-react";
@@ -120,20 +120,16 @@ export function AcademicYearsView() {
               className="pl-9"
             />
           </div>
-          <select
-            aria-label="Filter academic year status"
+          <StatusFilter
             value={status}
-            onChange={(event) => {
-              setStatus(event.target.value);
+            onChange={(value) => {
+              setStatus(value);
               setPage(1);
             }}
-            className="h-11 rounded-control border border-hairline bg-card px-3 text-sm text-ink"
-          >
-            <option value="">All statuses</option>
-            <option value="upcoming">Upcoming</option>
-            <option value="active">Active</option>
-            <option value="completed">Completed</option>
-          </select>
+            label="Filter academic year status"
+            options={[{ value: "upcoming" }, { value: "active" }, { value: "completed" }]}
+            className="h-11"
+          />
         </div>
         {error && (
           <p
@@ -176,17 +172,7 @@ export function AcademicYearsView() {
                     <td className="px-5 py-4">{year.end_date}</td>
                     <td className="px-5 py-4">{year.semesters_count ?? 0}</td>
                     <td className="px-5 py-4">
-                      <Badge
-                        tone={
-                          year.status === "active"
-                            ? "success"
-                            : year.status === "completed"
-                              ? "neutral"
-                              : "brand"
-                        }
-                      >
-                        {year.status}
-                      </Badge>
+                      <StatusBadge status={year.status} context="academic-period" />
                     </td>
 
                     <td className="px-5 py-3 text-right">

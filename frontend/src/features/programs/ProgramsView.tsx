@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Input } from "@/components/ui/Input";
 import { PageHeader } from "@/components/ui/PageHeader";
+import { StatusSwitch } from "@/components/ui/status";
 
 type Department = {
   id: number;
@@ -287,50 +288,7 @@ export function ProgramsView() {
 
                     {/* Status Toggle */}
                     <td className="p-4">
-                      <div className="flex items-center gap-3">
-                        <button
-                          type="button"
-                          role="switch"
-                          aria-checked={isActive}
-                          aria-label={`Set ${item.name} to ${
-                            isActive ? "inactive" : "active"
-                          }`}
-                          title={
-                            isActive
-                              ? "Deactivate program"
-                              : "Activate program"
-                          }
-                          disabled={updatingId !== null}
-                          onClick={() => void toggleStatus(item)}
-                          className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500 disabled:cursor-not-allowed disabled:opacity-50 ${
-                            isActive
-                              ? "bg-emerald-500"
-                              : "bg-slate-300"
-                          }`}
-                        >
-                          <span
-                            className={`inline-block size-4 rounded-full bg-white shadow-sm transition-transform ${
-                              isActive
-                                ? "translate-x-6"
-                                : "translate-x-1"
-                            }`}
-                          />
-                        </button>
-
-                        <span
-                          className={`text-xs font-semibold ${
-                            isActive
-                              ? "text-emerald-600"
-                              : "text-muted"
-                          }`}
-                        >
-                          {isUpdating
-                            ? "Updating..."
-                            : isActive
-                              ? "Active"
-                              : "Inactive"}
-                        </span>
-                      </div>
+                      <StatusSwitch checked={isActive} loading={isUpdating} disabled={updatingId !== null} accessibleLabel={item.name} onToggle={() => void toggleStatus(item)} />
                     </td>
                   </tr>
                 );

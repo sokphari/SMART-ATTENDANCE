@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState, type ReactNode } from "react";
 import { usePathname, useRouter } from "next/navigation";
-import { QrCode } from "lucide-react";
+import { BrandIcon } from "@/components/ui/BrandLogo";
 import { BottomTabBar } from "./BottomTabBar";
 import { Sidebar } from "./Sidebar";
 import { Topbar } from "./Topbar";
@@ -125,9 +125,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   if (!ready || roleBlockedRoute) {
     return (
       <div className="flex min-h-dvh items-center justify-center bg-canvas">
-        <div className="animate-pulse-ring flex size-12 items-center justify-center rounded-panel bg-gradient-to-br from-brand-500 to-indigo-600 text-white shadow-lift">
-          <QrCode className="size-6" />
-        </div>
+        <div className="animate-pulse-ring rounded-panel shadow-lift"><BrandIcon size={48} /></div>
       </div>
     );
   }

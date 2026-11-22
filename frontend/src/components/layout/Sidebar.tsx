@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { QrCode } from "lucide-react";
+import { BrandIcon, BrandLogo } from "@/components/ui/BrandLogo";
 import { NAV_SECTIONS, TEACHER_NAV_SECTIONS } from "@/config/nav";
 import { getInitials } from "@/lib/utils/name";
 import type { AuthUser } from "@/types/auth";
@@ -46,14 +46,7 @@ export function Sidebar({ collapsed, user, teacherModules = [] }: SidebarProps) 
           className="flex items-center gap-3 rounded-control"
           aria-label="Smart Attendance home"
         >
-          <span className="flex size-9 shrink-0 items-center justify-center rounded-control bg-gradient-to-br from-brand-500 to-indigo-600 text-white shadow-soft">
-            <QrCode className="size-5" />
-          </span>
-          {!collapsed && (
-            <span className="font-display text-[15px] leading-tight font-extrabold tracking-tight">
-              Smart<span className="text-brand-600">Attendance</span>
-            </span>
-          )}
+          {collapsed ? <BrandIcon size={36} /> : <BrandLogo iconSize={36} />}
         </Link>
       </div>
 

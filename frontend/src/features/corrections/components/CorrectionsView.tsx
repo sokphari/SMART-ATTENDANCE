@@ -17,7 +17,7 @@ import {
   X,
 } from "lucide-react";
 import { ApiError } from "@/lib/api/client";
-import { Badge } from "@/components/ui/Badge";
+import { StatusBadge } from "@/components/ui/status";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Input } from "@/components/ui/Input";
@@ -266,11 +266,9 @@ export function CorrectionsView() {
                     </td>
                     <td className="px-5 py-4">
                       <div className="flex items-center gap-1.5">
-                        <span className="text-xs text-muted line-through">
-                          {row.attendance?.status}
-                        </span>
+                        <StatusBadge status={row.attendance?.status} context="attendance" />
                         <span className="text-xs text-muted">→</span>
-                        <Badge tone="brand">{row.requested_status}</Badge>
+                        <StatusBadge status={row.requested_status} context="attendance" />
                       </div>
                     </td>
                     <td className="max-w-xs px-5 py-4 text-xs text-ink">
@@ -285,17 +283,7 @@ export function CorrectionsView() {
                       {row.requester?.name ?? "Staff"}
                     </td>
                     <td className="px-5 py-4">
-                      <Badge
-                        tone={
-                          row.status === "approved"
-                            ? "success"
-                            : row.status === "rejected"
-                              ? "danger"
-                              : "warning"
-                        }
-                      >
-                        {row.status}
-                      </Badge>
+                      <StatusBadge status={row.status} context="correction" />
                     </td>
                     <td className="px-5 py-3 text-right">
                       {row.status === "pending" ? (

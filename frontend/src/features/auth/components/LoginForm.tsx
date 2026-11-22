@@ -18,7 +18,7 @@ import { getStoredUser, getToken, setSession } from "@/lib/api/session";
 import { setAuthCookie } from "@/app/actions/auth";
 import { login } from "../api";
 import { hasPendingStudentScan } from "@/features/attendance/studentScanPending";
-import { LanguageSwitcher } from "@/components/shared/LanguageSwitcher";
+import { BrandLogo } from "@/components/ui/BrandLogo";
 import { useLocale } from "@/i18n/LocaleProvider";
 
 const HIGHLIGHTS = [
@@ -107,12 +107,7 @@ export function LoginForm() {
           className="relative flex items-center gap-3"
           aria-label="Back to home"
         >
-          <span className="flex size-10 items-center justify-center rounded-control bg-white/15 backdrop-blur">
-            <QrCode className="size-5" />
-          </span>
-          <span className="font-display text-lg font-extrabold tracking-tight">
-            Smart<span className="text-brand-200">Attendance</span>
-          </span>
+          <BrandLogo iconSize={42} inverse />
         </Link>
 
         <div className="relative max-w-md">
@@ -151,16 +146,10 @@ export function LoginForm() {
             className="mb-8 flex items-center justify-center gap-2.5 lg:hidden"
             aria-label="Back to home"
           >
-            <span className="flex size-9 items-center justify-center rounded-control bg-gradient-to-br from-brand-500 to-indigo-600 text-white shadow-soft">
-              <QrCode className="size-5" />
-            </span>
-            <span className="font-display text-base font-extrabold tracking-tight">
-              Smart<span className="text-brand-600">Attendance</span>
-            </span>
+            <BrandLogo iconSize={38} centered />
           </Link>
 
           <div className="rounded-panel border border-hairline bg-card p-8 shadow-lift sm:p-10">
-            <div className="mb-4 flex justify-end"><LanguageSwitcher /></div>
             <h2 className="font-display text-2xl font-extrabold tracking-tight">
               {t("Welcome back")}
             </h2>

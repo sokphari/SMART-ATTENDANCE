@@ -2,11 +2,15 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { ArrowRight, BookOpen, ClipboardCheck, Search, Users } from "lucide-react";
+import { useLocale } from "@/i18n/LocaleProvider";
+import { ArrowRight, BookOpen, Building2, CalendarDays, Clock3, ClipboardCheck, MapPin, Search, Users } from "lucide-react";
 import { getAllMyClassSections } from "../api";
 import type { TeacherClassSection } from "../types";
 
+const DAYS = ["", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
+
 export function TeacherClassesView() {
+  const { t } = useLocale();
   const [sections, setSections] = useState<TeacherClassSection[]>([]);
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
@@ -38,14 +42,12 @@ export function TeacherClassesView() {
   return (
     <div className="w-full space-y-6">
       <header>
-        <p className="text-sm font-semibold text-brand-600">
-          Teacher workspace
-        </p>
+        <p className="text-sm font-semibold text-brand-600">{t("Teacher workspace")}</p>
         <h1 className="mt-1 font-display text-3xl font-extrabold tracking-tight">
-          My classes
+          {t("My classes")}
         </h1>
         <p className="mt-2 text-sm text-muted">
-          Review rosters and schedules for your assigned class sections.
+          {t("Review rosters and schedules for your assigned class sections.")}
         </p>
       </header>
       <div className="flex flex-wrap items-center justify-between gap-3">
@@ -57,7 +59,7 @@ export function TeacherClassesView() {
               setSearch(event.target.value);
               setPage(1);
             }}
-            placeholder="Search course, code, section, or semester"
+            placeholder={t("Search course, code, section, or semester")}
             className="h-11 w-full rounded-control border border-hairline bg-card pl-10 pr-3 text-sm outline-none focus:border-brand-400 focus:ring-4 focus:ring-brand-100"
           />
         </div>
@@ -127,25 +129,56 @@ export function TeacherClassesView() {
                 {section.course.name}
               </h2>
               <div className="mt-4 flex items-center justify-between border-t border-hairline pt-4 text-sm">
-                <span className="text-muted">
-                  {section.semester.name}{" "}
-                  {section.semester.academic_year
-                    ? `· ${section.semester.academic_year}`
-                    : ""}
+                <span className="inline-flex items-center gap-1.5 text-muted">
+                  <CalendarDays className="size-4 text-brand-600" />
+                  {section.semester.name}{section.semester.academic_year ? ` · ${section.semester.academic_year}` : ""}
                 </span>
                 <span className="inline-flex items-center gap-1.5 font-semibold">
                   <Users className="size-4 text-brand-600" />
                   {section.enrolled_count}/{section.capacity}
                 </span>
               </div>
+              <div className="mt-3 space-y-2 border-t border-hairline pt-3 text-sm">
+                {(section.schedules ?? []).length ? section.schedules!.map((schedule) => (
+                  <div key={schedule.id} className="rounded-control bg-canvas/70 px-3 py-2.5">
+                    <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
+                      <span className="inline-flex items-center gap-2 font-semibold">
+                        <Clock3 className="size-4 shrink-0 text-brand-600" />
+                        {t(DAYS[schedule.day_of_week] ?? "Schedule")} {schedule.start_time.slice(0, 5)}–{schedule.end_time.slice(0, 5)}
+                      </span>
+                      {schedule.time_slot?.period?.name && (
+                        <span className="rounded-pill bg-brand-50 px-2 py-0.5 text-xs font-semibold text-brand-700 dark:bg-brand-500/15 dark:text-brand-300">
+                          {schedule.time_slot.period.name}
+                        </span>
+                      )}
+                    </div>
+                    <div className="mt-1.5 flex flex-wrap gap-x-3 gap-y-1 text-xs text-muted">
+                      <span className="inline-flex items-center gap-1.5">
+                        <MapPin className="size-3.5" />
+                        {schedule.classroom?.room_code ?? t("Room not assigned")}
+                      </span>
+                      {schedule.classroom?.building && (
+                        <span className="inline-flex items-center gap-1.5">
+                          <Building2 className="size-3.5" />{schedule.classroom.building}
+                        </span>
+                      )}
+                      {schedule.classroom?.floor && (
+                        <span>{t("Floor")} {schedule.classroom.floor}</span>
+                      )}
+                    </div>
+                  </div>
+                )) : (
+                  <p className="rounded-control bg-canvas/70 px-3 py-2.5 text-xs text-muted">{t("No schedule assigned")}</p>
+                )}
+              </div>
               <Link
-              href={`/teacher/classes/${section.id}/attendance`}
-              className="mt-4 flex min-h-10 items-center justify-center gap-2 rounded-control bg-brand-600 px-3 text-sm font-semibold text-white transition-colors hover:bg-brand-700"
-            >
-              <ClipboardCheck className="size-4" />
-              Take Attendance
-              <ArrowRight className="size-4" />
-            </Link>
+                href={`/teacher/classes/${section.id}/attendance`}
+                className="mt-4 flex min-h-10 items-center justify-center gap-2 rounded-control bg-brand-600 px-3 text-sm font-semibold text-white transition-colors hover:bg-brand-700"
+              >
+                <ClipboardCheck className="size-4" />
+                {t("Take Attendance")}
+                <ArrowRight className="size-4" />
+              </Link>
             </article>
           ))}
         </div>

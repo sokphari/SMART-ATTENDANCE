@@ -27,7 +27,7 @@ class ClassSectionServices
                 'course.department',
                 'semester.academicYear',
                 'teacherAssignments.teacher.user',
-                'classSchedules.classroom',
+                'classSchedules.classroom.floorRecord.building',
                 'classSchedules.timeSlot.studyPeriod',
             ])
             ->withCount(['enrollments as enrolled_count' => fn ($query) => $query->where('status', 'enrolled')])

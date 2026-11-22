@@ -28,6 +28,11 @@ const apiProxyUrl = resolveApiProxyUrl(configuredApiProxyUrl);
 
 const nextConfig: NextConfig = {
   output: "standalone",
+  experimental: {
+    // The CLI-based config probe returns an empty stream in this local Node
+    // setup. Use the TypeScript compiler API so production builds can proceed.
+    useTypeScriptCli: false,
+  },
   async rewrites() {
     return [
       {

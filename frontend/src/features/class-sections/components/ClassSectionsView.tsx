@@ -6,29 +6,28 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   AlertCircle,
+  Building2,
+  CalendarRange,
   CalendarDays,
   CheckCircle2,
   Clock,
   GraduationCap,
   Layers,
   LayoutGrid,
-  Pause,
+  MapPin,
   Pencil,
   Plus,
-  Play,
   RotateCcw,
   Search,
   Table as TableIcon,
-  ToggleLeft,
-  ToggleRight,
   Users,
   X,
 } from "lucide-react";
 import { ApiError } from "@/lib/api/client";
-import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { PageHeader } from "@/components/ui/PageHeader";
+import { StatusFilter, StatusSwitch } from "@/components/ui/status";
 import {
   fetchClassSections,
   fetchDepartmentsOptions,
@@ -58,6 +57,14 @@ function formatDayOfWeek(day: number | string | undefined | null): string {
   return String(day).slice(0, 3);
 }
 
+function formatClassDate(value: string, locale: string): string {
+  return new Intl.DateTimeFormat(locale === "km" ? "km-KH" : "en-US", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  }).format(new Date(`${value}T12:00:00`));
+}
+
 type DepartmentOption = {
   id: number;
   name: string;
@@ -65,7 +72,7 @@ type DepartmentOption = {
 };
 
 export function ClassSectionsView() {
-  const { t } = useLocale();
+  const { t, locale } = useLocale();
   const router = useRouter();
   const [items, setItems] = useState<ClassSection[]>([]);
   const [semesters, setSemesters] = useState<SemesterOption[]>([]);
@@ -76,6 +83,7 @@ export function ClassSectionsView() {
   const [semesterId, setSemesterId] = useState("");
   const [departmentId, setDepartmentId] = useState("");
   const [status, setStatus] = useState("");
+  const [updatingSectionId, setUpdatingSectionId] = useState<number | null>(null);
   const [page, setPage] = useState(1);
   const [lastPage, setLastPage] = useState(1);
   const [total, setTotal] = useState(0);
@@ -159,6 +167,8 @@ export function ClassSectionsView() {
 
   async function handleToggleStatus(section: ClassSection) {
     const nextStatus = section.status === "active" ? "inactive" : "active";
+    if (updatingSectionId !== null) return;
+    setUpdatingSectionId(section.id);
     try {
       await updateClassSection(section.id, { status: nextStatus });
       setItems((prev) =>
@@ -181,6 +191,8 @@ export function ClassSectionsView() {
             : "Could not update section status.",
         kind: "error",
       });
+    } finally {
+      setUpdatingSectionId(null);
     }
   }
 
@@ -323,20 +335,7 @@ export function ClassSectionsView() {
             </select>
 
             {/* Status */}
-            <select
-              aria-label="Filter by section status"
-              value={status}
-              onChange={(e) => {
-                setStatus(e.target.value);
-                setPage(1);
-              }}
-              className="h-10 rounded-xl border border-hairline bg-canvas/60 px-3 text-xs font-medium text-ink transition-colors focus:border-brand-500 focus:bg-card focus:outline-hidden"
-            >
-              <option value="">Status (All)</option>
-              <option value="active">Active</option>
-              <option value="inactive">Inactive</option>
-              <option value="pending_setup">Needs setup</option>
-            </select>
+            <StatusFilter value={status} onChange={(value) => { setStatus(value); setPage(1); }} label="Filter by section status" options={[{ value: "active" }, { value: "inactive" }, { value: "pending_setup", label: "Setup needed" }]} />
 
             {/* Reset Filters if active */}
             {hasFiltersActive && (
@@ -507,7 +506,7 @@ export function ClassSectionsView() {
                 className="group flex flex-col justify-between rounded-2xl border border-hairline bg-card p-6 text-ink shadow-soft transition-all duration-200 hover:border-brand-300 hover:shadow-lift dark:hover:border-brand-700"
               >
                 <div>
-                  {/* Top Row: Title, Department & Status Badge */}
+                  {/* Top Row: Title, Department & Status Switch */}
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0 flex-1">
                       <h3 className="font-display text-xl font-extrabold tracking-tight text-ink">
@@ -518,22 +517,7 @@ export function ClassSectionsView() {
                       </p>
                     </div>
 
-                    {section.status === "active" ? (
-                      <span className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-sm font-bold text-emerald-700 dark:border-emerald-500/40 dark:bg-emerald-500/10 dark:text-emerald-300">
-                        <CheckCircle2 className="size-3.5" />
-                        Active
-                      </span>
-                    ) : section.status === "pending_setup" ? (
-                      <span className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-sm font-bold text-amber-700 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-300">
-                        <AlertCircle className="size-3.5" />
-                        Setup needed
-                      </span>
-                    ) : (
-                      <span className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-rose-200 bg-rose-50 px-3 py-1 text-sm font-bold text-rose-700 dark:border-rose-500/30 dark:bg-rose-500/10 dark:text-rose-300">
-                        <AlertCircle className="size-3.5" />
-                        Inactive
-                      </span>
-                    )}
+                    <StatusSwitch checked={section.status === "active"} disabled={updatingSectionId !== null} loading={updatingSectionId === section.id} accessibleLabel={`${t("Class section")} ${section.section_code}`} onToggle={() => void handleToggleStatus(section)} className="shrink-0" />
                   </div>
 
                   {/* Instructor Row */}
@@ -567,13 +551,40 @@ export function ClassSectionsView() {
                       </div>
                     </div>
                     <div className="text-right">
-                      <span className="text-xs font-medium text-muted">
+                      {/* <span className="text-xs font-medium text-muted">
                         Semester
-                      </span>
+                      </span> */}
                       <span className="mt-1 inline-flex items-center gap-1.5 rounded-full border border-brand-200 bg-brand-50 px-3 py-1 text-xs font-bold text-brand-700 dark:border-brand-400/30 dark:bg-brand-500/10 dark:text-brand-300">
                         <CalendarDays className="size-3.5" />
                         {section.semester?.name ?? "Not assigned"}
                       </span>
+                    </div>
+                  </div>
+
+                  {/* Teaching location and class date range */}
+                  <div className="mt-3 space-y-2 text-xs text-muted">
+                    {section.schedules?.[0] && (
+                      <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+                        <span className="inline-flex items-center gap-1.5">
+                          <MapPin className="size-3.5 text-brand-600" />
+                          {section.schedules[0].room ?? t("Room not assigned")}
+                        </span>
+                        {section.schedules[0].building && (
+                          <span className="inline-flex items-center gap-1.5">
+                            <Building2 className="size-3.5 text-brand-600" />
+                            {section.schedules[0].building}
+                          </span>
+                        )}
+                        {section.schedules[0].floor && (
+                          <span>{t("Floor")} {section.schedules[0].floor}</span>
+                        )}
+                      </div>
+                    )}
+                    <div className="flex items-center gap-1.5">
+                      <CalendarRange className="size-3.5 shrink-0 text-brand-600" />
+                      {section.class_start_date && section.class_end_date
+                        ? `${t("Class dates")}: ${formatClassDate(section.class_start_date, locale)} – ${formatClassDate(section.class_end_date, locale)}`
+                        : t("Class dates not set")}
                     </div>
                   </div>
 
@@ -618,16 +629,6 @@ export function ClassSectionsView() {
                     >
                       <Pencil className="size-3.5" />
                       <span>Edit</span>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => handleToggleStatus(section)}
-                      aria-label={`${section.status === "active" ? "Deactivate" : "Activate"} section ${sectionDisplay}`}
-                      title={section.status === "active" ? "Deactivate section" : "Activate section"}
-                      className={`flex h-11 shrink-0 cursor-pointer items-center justify-center gap-2 rounded-full border px-4 text-sm font-bold transition-all active:scale-[0.98] ${section.status === "active" ? "border-rose-500/50 bg-rose-500/10 text-rose-300 hover:bg-rose-500/20" : "border-emerald-500/50 bg-emerald-500/10 text-emerald-300 hover:bg-emerald-500/20"}`}
-                    >
-                      {section.status === "active" ? <Pause className="size-4" /> : <Play className="size-4" />}
-                      <span>{section.status === "active" ? "Deactivate" : "Activate"}</span>
                     </button>
                   </div>
                 </div>
@@ -711,19 +712,7 @@ export function ClassSectionsView() {
                         </div>
                       </td>
                       <td className="px-5 py-4">
-                        <Badge
-                          tone={
-                            section.status === "active"
-                              ? "success"
-                              : section.status === "pending_setup"
-                                ? "warning"
-                                : "neutral"
-                          }
-                        >
-                          {section.status === "pending_setup"
-                            ? "Needs setup"
-                            : section.status}
-                        </Badge>
+                        <StatusSwitch checked={section.status === "active"} disabled={updatingSectionId !== null} loading={updatingSectionId === section.id} accessibleLabel={`${t("Class section")} ${section.section_code}`} onToggle={() => void handleToggleStatus(section)} />
                       </td>
                       <td className="px-5 py-3 text-right">
                         <div className="flex items-center justify-end gap-2">
@@ -752,24 +741,6 @@ export function ClassSectionsView() {
                             className="border-blue-500/20 bg-blue-500/10 text-blue-400 hover:bg-blue-500/20"
                           >
                             <Pencil className="size-4" />
-                          </Button>
-                          <Button
-                            type="button"
-                            variant="secondary"
-                            size="icon"
-                            onClick={() => handleToggleStatus(section)}
-                            aria-label="Toggle section status"
-                            className={
-                              section.status === "active"
-                                ? "border-emerald-500/20 bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20"
-                                : "border-rose-500/20 bg-rose-500/10 text-rose-400 hover:bg-rose-500/20"
-                            }
-                          >
-                            {section.status === "active" ? (
-                              <ToggleRight className="size-5" />
-                            ) : (
-                              <ToggleLeft className="size-5" />
-                            )}
                           </Button>
                         </div>
                       </td>

@@ -38,6 +38,8 @@ export type ClassSection = {
     room?: string;
     period?: string | null;
     status?: "active" | "inactive";
+    building?: string | null;
+    floor?: string | null;
   }[];
   created_at: string;
   updated_at: string;

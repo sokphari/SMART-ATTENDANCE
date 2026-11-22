@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { BrandLogo } from "@/components/ui/BrandLogo";
 import {
   ArrowRight,
   BarChart3,
@@ -57,14 +58,7 @@ export default function Home() {
 
       <div className="mx-auto max-w-6xl px-5 sm:px-8">
         <header className="flex items-center justify-between py-6">
-          <div className="flex items-center gap-3">
-            <span className="flex size-9 items-center justify-center rounded-control bg-gradient-to-br from-brand-500 to-indigo-600 text-white shadow-soft">
-              <QrCode className="size-5" />
-            </span>
-            <span className="font-display text-[15px] font-extrabold tracking-tight">
-              Smart<span className="text-brand-600">Attendance</span>
-            </span>
-          </div>
+          <BrandLogo iconSize={38} />
           <Link href="/login">
             <Button size="sm">Sign in</Button>
           </Link>

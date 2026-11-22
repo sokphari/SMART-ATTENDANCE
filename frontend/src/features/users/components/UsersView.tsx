@@ -1,6 +1,7 @@
 "use client";
 
 import { useLocale } from "@/i18n/LocaleProvider";
+import { StatusFilter } from "@/components/ui/status";
 
 import { useCallback, useEffect, useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
@@ -314,20 +315,7 @@ export function UsersView() {
             <option value="admin">Administrators</option>
             <option value="student">Students</option>
           </select>
-          <select
-            aria-label="Filter by status"
-            value={status}
-            onChange={(event) => {
-              setStatus(event.target.value);
-              setPage(1);
-            }}
-            className="h-11 rounded-control border border-hairline bg-card px-3 text-sm text-ink"
-          >
-            <option value="">All statuses</option>
-            <option value="active">Active</option>
-            <option value="inactive">Inactive</option>
-            <option value="suspended">Suspended</option>
-          </select>
+          <StatusFilter value={status} onChange={(value) => { setStatus(value); setPage(1); }} label="Filter by status" options={[{ value: "active" }, { value: "inactive" }, { value: "suspended" }]} />
         </div>
         <div className="overflow-x-auto">
           <table className="w-full min-w-[760px] text-left text-sm">

@@ -50,6 +50,11 @@ class ClassSectionResource extends JsonResource
                         'period' => $sched->timeSlot?->studyPeriod?->name,
                         'status' => $sched->status?->value,
                         'room' => $sched->classroom?->room_code ?? 'Room TBD',
+                        'building' => $sched->classroom?->floorRecord?->building?->name ?? $sched->classroom?->building,
+                        'floor' => $sched->classroom?->floorRecord?->name
+                            ?? ($sched->classroom?->floorRecord?->floor_number !== null
+                                ? (string) $sched->classroom->floorRecord->floor_number
+                                : $sched->classroom?->floor),
                     ];
                 });
             }),

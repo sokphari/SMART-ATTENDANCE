@@ -11,6 +11,7 @@ import { Card } from "@/components/ui/Card";
 import { Input } from "@/components/ui/Input";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { Breadcrumb, type BreadcrumbItem } from "@/components/ui/Breadcrumb";
+import { StatusBadge } from "@/components/ui/status";
 import { useLocale } from "@/i18n/LocaleProvider";
 
 type Building = {
@@ -787,9 +788,7 @@ export function BuildingsView() {
                     <p className="text-xs text-muted">Building code: {selectedBuilding.code}</p>
                   </div>
                 </div>
-                <span className={"rounded-full px-3 py-1 text-xs font-semibold " + (selectedBuilding.status === "inactive" ? "bg-canvas text-muted" : "bg-success-soft text-success")}>
-                  {selectedBuilding.status === "inactive" ? "Inactive" : "Active"}
-                </span>
+                <StatusBadge status={selectedBuilding.status} context="resource" />
               </div>
               <div className="grid grid-cols-3 divide-x divide-hairline border-b border-hairline">
                 {[
@@ -826,10 +825,7 @@ export function BuildingsView() {
                           <div key={room.id} className="rounded-control border border-hairline bg-canvas/40 p-4">
                             <div className="flex items-center justify-between gap-2">
                               <span className="font-bold">{room.room_code}</span>
-                              <span className={"rounded-full px-2 py-1 text-[11px] font-semibold " +
-                                (room.status === "active" ? "bg-success-soft text-success" : "bg-canvas text-muted")}>
-                                {room.status === "active" ? "Active" : "Inactive"}
-                              </span>
+                              <StatusBadge status={room.status} context="resource" />
                             </div>
                             <p className="mt-2 text-xs text-muted">{roomTypeLabel(room.room_type)} · {room.capacity} seats</p>
                             <p className="mt-2 flex items-center gap-1 text-xs text-muted">
@@ -863,10 +859,7 @@ export function BuildingsView() {
                     <div className="min-w-0 flex-1">
                       <div className="mb-1 flex flex-wrap items-center gap-2">
                         <span className="rounded-md bg-brand-50 px-2 py-0.5 text-[11px] font-bold text-brand-700">{building.code}</span>
-                        <span className={"rounded-full px-2 py-0.5 text-[10px] font-semibold " +
-                          (building.status === "inactive" ? "bg-canvas text-muted" : "bg-success-soft text-success")}>
-                          {building.status === "inactive" ? "Inactive" : "Active"}
-                        </span>
+                        <StatusBadge status={building.status} context="resource" className="min-h-5 px-1.5 text-[10px]" />
                       </div>
                       <h3 className="truncate text-sm font-bold text-ink" title={building.name}>{building.name}</h3>
                       {building.description && <p className="mt-1 line-clamp-2 text-xs text-muted">{building.description}</p>}

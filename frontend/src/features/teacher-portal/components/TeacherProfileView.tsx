@@ -3,6 +3,7 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { BadgeCheck, CalendarDays, Mail, Pencil, Phone, ShieldCheck, UserRound, X } from "lucide-react";
 import { Button } from "@/components/ui/Button";
+import { StatusBadge } from "@/components/ui/status";
 import { ApiError } from "@/lib/api/client";
 import { updateStoredUser } from "@/lib/api/session";
 import { getInitials } from "@/lib/utils/name";
@@ -109,7 +110,7 @@ export function TeacherProfileView() {
       <section className="flex flex-wrap items-center gap-5 rounded-panel border border-hairline bg-card p-6 shadow-soft sm:p-8">
         <span className="flex size-16 items-center justify-center rounded-full bg-gradient-to-br from-brand-500 to-indigo-600 font-display text-xl font-bold text-white">{getInitials(profile.user.name)}</span>
         <div className="min-w-0 flex-1"><div className="flex flex-wrap items-center gap-2"><h2 className="font-display text-2xl font-extrabold">{profile.user.name}</h2><span className="rounded-pill bg-brand-50 px-2.5 py-1 text-xs font-semibold capitalize text-brand-700 dark:bg-brand-500/15 dark:text-brand-300">{profile.user.role ?? "Teacher"}</span></div><p className="mt-1 text-sm text-muted">{profile.user.email}</p></div>
-        <span className={`rounded-pill px-3 py-1.5 text-xs font-bold capitalize ${profile.user.status === "active" ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300" : "bg-amber-50 text-amber-700 dark:bg-amber-500/15 dark:text-amber-300"}`}>{profile.user.status ?? "Unknown status"}</span>
+        <StatusBadge status={profile.user.status} context="account" />
       </section>
 
       <div className="grid gap-5 xl:grid-cols-[minmax(0,1.3fr)_minmax(300px,0.7fr)]">

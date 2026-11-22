@@ -7,20 +7,12 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { CalendarDays, ClipboardList, History, Search } from "lucide-react";
 import { Button } from "@/components/ui/Button";
+import { StatusBadge } from "@/components/ui/status";
 import type {
   AttendanceRecord,
   SectionOption,
 } from "@/features/attendance/types";
 import { getTeacherAttendance, getTeacherSectionOptions } from "../api";
-
-const STATUS_STYLE: Record<AttendanceRecord["status"], string> = {
-  present:
-    "bg-emerald-50 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300",
-  late: "bg-amber-50 text-amber-700 dark:bg-amber-500/15 dark:text-amber-300",
-  absent: "bg-rose-50 text-rose-700 dark:bg-rose-500/15 dark:text-rose-300",
-  excused:
-    "bg-violet-50 text-violet-700 dark:bg-violet-500/15 dark:text-violet-300",
-};
 
 export function TeacherAttendanceHistoryView() {
   const { t } = useLocale();
@@ -261,11 +253,7 @@ export function TeacherAttendanceHistoryView() {
                         : "—"}
                     </td>
                     <td className="px-4 py-3">
-                      <span
-                        className={`rounded-pill px-2.5 py-1 text-xs font-semibold capitalize ${STATUS_STYLE[record.status]}`}
-                      >
-                        {record.status}
-                      </span>
+                      <StatusBadge status={record.status} context="attendance" />
                     </td>
                     <td className="px-4 py-3 text-xs capitalize text-muted">
                       {record.verification_method.replaceAll("_", " ")}

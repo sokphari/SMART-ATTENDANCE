@@ -5,19 +5,19 @@ import { useLocale } from "@/i18n/LocaleProvider";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   AlertCircle,
-  Calendar,
-  CheckCircle2,
   Clock,
   Layers,
   MapPin,
   QrCode,
+  RefreshCw,
+  RotateCcw,
   Search,
   SlidersHorizontal,
   UserCheck,
   UserX,
 } from "lucide-react";
 import { ApiError } from "@/lib/api/client";
-import { Badge } from "@/components/ui/Badge";
+import { StatusBadge } from "@/components/ui/status";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Input } from "@/components/ui/Input";
@@ -85,64 +85,76 @@ export function AttendanceView() {
     return { present, late, absent };
   }, [items]);
 
-  function getStatusTone(s: string): "success" | "warning" | "danger" | "neutral" {
-    switch (s) {
-      case "present":
-        return "success";
-      case "late":
-        return "warning";
-      case "absent":
-        return "danger";
-      default:
-        return "neutral";
-    }
+  const hasActiveFilters = Boolean(search || status || sectionId || dateFrom || dateTo);
+
+  function clearFilters() {
+    setSearch("");
+    setStatus("");
+    setSectionId("");
+    setDateFrom("");
+    setDateTo("");
+    setPage(1);
   }
+
+  const rangeStart = items.length ? (page - 1) * 15 + 1 : 0;
+  const rangeEnd = Math.min(page * 15, total);
+  const rangeLabel = t("Showing {start}–{end} of {total} records")
+    .replace("{start}", String(rangeStart))
+    .replace("{end}", String(rangeEnd))
+    .replace("{total}", String(total));
 
   return (
     <>
       <PageHeader
-        title="Attendance Records"
-        description="Live log of student check-ins, dynamic QR verification, GPS distance, and final statuses."
-        actions={<Button onClick={() => setQrDialogOpen(true)}><QrCode className="size-4" />Open Student QR</Button>}
+        title={t("Attendance Records")}
+        description={t("Review student check-ins, verification methods, and attendance status.")}
+        actions={
+          <div className="flex flex-wrap gap-2">
+            <Button variant="secondary" onClick={() => void loadAttendance()} disabled={loading}>
+              <RefreshCw className={`size-4 ${loading ? "animate-spin" : ""}`} />{t("Refresh")}
+            </Button>
+            <Button onClick={() => setQrDialogOpen(true)}><QrCode className="size-4" />{t("Open Student QR")}</Button>
+          </div>
+        }
       />
       <AdminAttendanceQrDialog open={qrDialogOpen} onClose={() => setQrDialogOpen(false)} />
 
-      <div className="mb-5 grid gap-3 sm:grid-cols-4">
-        <Card className="flex min-h-24 items-center gap-3.5 p-4">
-          <span className="rounded-panel bg-brand-50 p-2.5 text-brand-600">
+      <div className="mb-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+        <Card className="flex min-h-24 items-center gap-3.5 border-brand-200/70 p-4 dark:border-brand-500/20">
+          <span className="rounded-panel bg-brand-50 p-3 text-brand-600 dark:bg-brand-500/15 dark:text-brand-300">
             <Layers className="size-5" />
           </span>
           <div>
-            <p className="text-xs text-muted">Total records</p>
+            <p className="text-xs text-muted">{t("Matching records")}</p>
             <p className="font-display mt-0.5 text-xl font-bold">{total}</p>
           </div>
         </Card>
         <Card className="flex min-h-24 items-center gap-3.5 p-4">
-          <span className="rounded-panel bg-success-soft p-2.5 text-success">
+          <span className="rounded-panel bg-success-soft p-3 text-success">
             <UserCheck className="size-5" />
           </span>
           <div>
-            <p className="text-xs text-muted">Present (page)</p>
+            <p className="text-xs text-muted">{t("Present on this page")}</p>
             <p className="font-display mt-0.5 text-xl font-bold">
               {counts.present}
             </p>
           </div>
         </Card>
         <Card className="flex min-h-24 items-center gap-3.5 p-4">
-          <span className="rounded-panel bg-warning-soft p-2.5 text-amber-600">
+          <span className="rounded-panel bg-warning-soft p-3 text-amber-600">
             <Clock className="size-5" />
           </span>
           <div>
-            <p className="text-xs text-muted">Late (page)</p>
+            <p className="text-xs text-muted">{t("Late on this page")}</p>
             <p className="font-display mt-0.5 text-xl font-bold">{counts.late}</p>
           </div>
         </Card>
         <Card className="flex min-h-24 items-center gap-3.5 p-4">
-          <span className="rounded-panel bg-danger-soft p-2.5 text-danger">
+          <span className="rounded-panel bg-danger-soft p-3 text-danger">
             <UserX className="size-5" />
           </span>
           <div>
-            <p className="text-xs text-muted">Absent (page)</p>
+            <p className="text-xs text-muted">{t("Absent on this page")}</p>
             <p className="font-display mt-0.5 text-xl font-bold">
               {counts.absent}
             </p>
@@ -151,12 +163,29 @@ export function AttendanceView() {
       </div>
 
       <Card className="overflow-hidden">
-        <div className="flex flex-col gap-3 border-b border-hairline p-4 lg:flex-row lg:items-center">
-          <div className="relative min-w-0 flex-1">
-            <Search className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted" />
+        <div className="border-b border-hairline bg-canvas-subtle/60 p-4 sm:p-5">
+          <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+            <div className="flex items-center gap-2">
+              <span className="flex size-9 items-center justify-center rounded-control bg-brand-50 text-brand-600 dark:bg-brand-500/15 dark:text-brand-300">
+                <SlidersHorizontal className="size-4" />
+              </span>
+              <div>
+                <h2 className="text-sm font-bold">{t("Filter attendance")}</h2>
+                <p className="text-xs text-muted">{t("Narrow records by student, class, status, or date.")}</p>
+              </div>
+            </div>
+            {hasActiveFilters && (
+              <Button variant="secondary" size="sm" onClick={clearFilters}>
+                <RotateCcw className="size-3.5" />{t("Clear filters")}
+              </Button>
+            )}
+          </div>
+          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-[minmax(15rem,1.5fr)_repeat(2,minmax(10rem,1fr))_repeat(2,minmax(9rem,0.85fr))]">
+          <div className="relative min-w-0">
+            <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted" />
             <Input
-              aria-label="Search records"
-              placeholder="Search student code or name"
+              aria-label={t("Search attendance records")}
+              placeholder={t("Search by student name or code")}
               value={search}
               onChange={(e) => {
                 setSearch(e.target.value);
@@ -166,67 +195,72 @@ export function AttendanceView() {
             />
           </div>
           <select
-            aria-label="Filter by section"
+            aria-label={t("Filter by section")}
             value={sectionId}
             onChange={(e) => {
               setSectionId(e.target.value);
               setPage(1);
             }}
-            className="h-11 rounded-control border border-hairline bg-card px-3 text-sm text-ink"
+            className="h-11 min-w-0 rounded-control border border-hairline bg-card px-3 text-sm text-ink outline-none focus-visible:border-brand-500 focus-visible:ring-2 focus-visible:ring-brand-100"
           >
-            <option value="">All sections</option>
+            <option value="">{t("All sections")}</option>
             {sections.map((s) => (
               <option key={s.id} value={s.id}>
-                {s.course?.course_code} Sec {s.section_code}
+                {s.course?.course_code} · {t("Section")} {s.section_code}
               </option>
             ))}
           </select>
           <select
-            aria-label="Filter by status"
+            aria-label={t("Filter by status")}
             value={status}
             onChange={(e) => {
               setStatus(e.target.value);
               setPage(1);
             }}
-            className="h-11 rounded-control border border-hairline bg-card px-3 text-sm text-ink"
+            className="h-11 min-w-0 rounded-control border border-hairline bg-card px-3 text-sm text-ink outline-none focus-visible:border-brand-500 focus-visible:ring-2 focus-visible:ring-brand-100"
           >
-            <option value="">All statuses</option>
-            <option value="present">Present</option>
-            <option value="late">Late</option>
-            <option value="absent">Absent</option>
-            <option value="excused">Excused</option>
+            <option value="">{t("All statuses")}</option>
+            <option value="present">{t("Present")}</option>
+            <option value="late">{t("Late")}</option>
+            <option value="absent">{t("Absent")}</option>
+            <option value="excused">{t("Excused")}</option>
           </select>
-          <div className="flex items-center gap-2">
+          <label className="flex min-w-0 flex-col gap-1 text-xs font-semibold text-muted">
+            {t("From date")}
             <Input
               type="date"
-              aria-label="Date from"
+              aria-label={t("From date")}
               value={dateFrom}
               onChange={(e) => {
                 setDateFrom(e.target.value);
                 setPage(1);
               }}
-              className="h-11 w-36 text-xs"
+              className="h-11 w-full text-sm"
             />
-            <span className="text-xs text-muted">to</span>
+          </label>
+          <label className="flex min-w-0 flex-col gap-1 text-xs font-semibold text-muted">
+            {t("To date")}
             <Input
               type="date"
-              aria-label="Date to"
+              aria-label={t("To date")}
               value={dateTo}
               onChange={(e) => {
                 setDateTo(e.target.value);
                 setPage(1);
               }}
-              className="h-11 w-36 text-xs"
+              className="h-11 w-full text-sm"
             />
+          </label>
           </div>
         </div>
 
         {error && (
           <p
             role="alert"
-            className="m-4 rounded-control bg-danger-soft px-4 py-3 text-sm font-medium text-danger"
+            className="m-4 flex items-start gap-2 rounded-control bg-danger-soft px-4 py-3 text-sm font-medium text-danger"
           >
-            {error}
+            <AlertCircle className="mt-0.5 size-4 shrink-0" />
+            {error === "Could not load attendance logs." ? t(error) : error}
           </p>
         )}
 
@@ -247,13 +281,13 @@ export function AttendanceView() {
               {loading ? (
                 <tr>
                   <td colSpan={7} className="px-5 py-12 text-center text-muted">
-                    Loading attendance records…
+                    {t("Loading attendance records…")}
                   </td>
                 </tr>
               ) : items.length === 0 ? (
                 <tr>
                   <td colSpan={7} className="px-5 py-12 text-center text-muted">
-                    No attendance records match these filters.
+                    {t("No attendance records match these filters.")}
                   </td>
                 </tr>
               ) : (
@@ -265,7 +299,7 @@ export function AttendanceView() {
                     <td className="px-5 py-4">
                       <div>
                         <span className="font-semibold text-ink">
-                          {row.student?.user?.name ?? "Student"}
+                          {row.student?.user?.name ?? t("Student")}
                         </span>
                         <div className="text-xs text-muted">
                           {row.student?.student_code}
@@ -277,30 +311,28 @@ export function AttendanceView() {
                         {row.session?.class_section?.course?.course_code ?? "—"}
                       </span>
                       <div className="text-xs text-muted">
-                        Section {row.session?.class_section?.section_code}
+                        {t("Section")} {row.session?.class_section?.section_code}
                       </div>
                     </td>
                     <td className="px-5 py-4">
-                      <Badge tone={getStatusTone(row.status)}>
-                        {row.status}
-                      </Badge>
+                      <StatusBadge status={row.status} context="attendance" />
                     </td>
                     <td className="px-5 py-4">
                       <div className="flex items-center gap-1.5 text-xs font-medium">
                         {row.verification_method === "dynamic_qr" && (
                           <span className="inline-flex items-center gap-1 rounded bg-brand-50 px-2 py-0.5 text-brand-700">
                             <QrCode className="size-3" />
-                            Dynamic QR
+                            {t("Dynamic QR")}
                           </span>
                         )}
                         {row.verification_method === "system" && (
                           <span className="inline-flex items-center gap-1 rounded bg-slate-100 px-2 py-0.5 text-slate-700">
-                            Auto Absent
+                            {t("Auto Absent")}
                           </span>
                         )}
                         {row.verification_method === "manual" && (
                           <span className="inline-flex items-center gap-1 rounded bg-amber-50 px-2 py-0.5 text-amber-700">
-                            Manual
+                            {t("Manual")}
                           </span>
                         )}
                       </div>
@@ -319,8 +351,8 @@ export function AttendanceView() {
                         <div className="flex items-center gap-1 text-slate-700">
                           <MapPin className="size-3.5 text-muted" />
                           <span>
-                            {Math.round(row.distance_meters)}m (±
-                            {Math.round(row.gps_accuracy_meters ?? 0)}m)
+                            {Math.round(row.distance_meters)} m (±
+                            {Math.round(row.gps_accuracy_meters ?? 0)} m)
                           </span>
                         </div>
                       ) : (
@@ -339,17 +371,19 @@ export function AttendanceView() {
 
         <div className="flex items-center justify-between border-t border-hairline px-4 py-3 text-sm text-muted">
           <span>
-            Showing {items.length ? (page - 1) * 15 + 1 : 0}–
-            {Math.min(page * 15, total)} of {total} records
+            {rangeLabel}
           </span>
           <div className="flex gap-2">
+            <span className="hidden self-center px-1 text-xs sm:inline">
+              {t("Page")} {page} {t("of")} {lastPage}
+            </span>
             <Button
               variant="secondary"
               size="sm"
               disabled={page <= 1 || loading}
               onClick={() => setPage((v) => v - 1)}
             >
-              Previous
+              {t("Previous")}
             </Button>
             <Button
               variant="secondary"
@@ -357,7 +391,7 @@ export function AttendanceView() {
               disabled={page >= lastPage || loading}
               onClick={() => setPage((v) => v + 1)}
             >
-              Next
+              {t("Next")}
             </Button>
           </div>
         </div>
