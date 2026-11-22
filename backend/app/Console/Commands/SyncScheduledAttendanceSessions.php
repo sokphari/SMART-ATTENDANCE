@@ -34,7 +34,7 @@ class SyncScheduledAttendanceSessions extends Command
         AttendanceSession::query()
             ->where('status', AttendanceSessionStatus::Open->value)
             ->whereNotNull('session_ends_at')
-            ->where('session_ends_at', '<=', $now)
+            ->where('session_ends_at', '<=', $now->copy()->utc())
             ->with('teacher')
             ->orderBy('id')
             ->get()
@@ -104,10 +104,10 @@ class SyncScheduledAttendanceSessions extends Command
                         'teacher_id' => $teacherId,
                         'classroom_id' => $schedule->classroom_id,
                         'session_date' => $today,
-                        'starts_at' => $startsAt,
-                        'late_after' => $lateAfter,
-                        'closes_at' => $checkInClosesAt,
-                        'session_ends_at' => $endsAt,
+                        'starts_at' => $startsAt->copy()->utc(),
+                        'late_after' => $lateAfter->copy()->utc(),
+                        'closes_at' => $checkInClosesAt->copy()->utc(),
+                        'session_ends_at' => $endsAt->copy()->utc(),
                         'closed_at' => null,
                         'status' => AttendanceSessionStatus::Scheduled,
                         'allowed_latitude' => $schedule->classroom?->latitude ?? 0,

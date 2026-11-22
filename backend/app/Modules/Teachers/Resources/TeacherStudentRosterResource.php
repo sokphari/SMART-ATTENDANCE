@@ -13,6 +13,7 @@ class TeacherStudentRosterResource extends JsonResource
         return [
             'id' => $this->student->id,
             'student_code' => $this->student->student_code,
+            'attendance_id' => $this->student->attendanceId(),
             'name' => $this->student->user?->name,
             'email' => $this->student->user?->email,
             'enrollment_status' => $this->status?->value,

@@ -169,7 +169,7 @@ class TeacherAttendanceSessionApiTest extends TestCase
         $session->refresh();
         $this->assertTrue(now()->between($session->starts_at, $session->closes_at));
         $this->assertTrue(now()->between($session->starts_at, $session->late_after));
-        $this->assertSame(30, (int) round($session->starts_at->diffInMinutes($session->closes_at)));
+        $this->assertSame(60, (int) round($session->starts_at->diffInMinutes($session->closes_at)));
 
         $this->postJson("/api/v1/teacher/attendance-sessions/{$session->id}/qr-token")
             ->assertCreated()
@@ -187,6 +187,24 @@ class TeacherAttendanceSessionApiTest extends TestCase
 
         $this->postJson("/api/v1/teacher/attendance-sessions/{$session->id}/local-qr-test")
             ->assertForbidden();
+    }
+
+    public function test_local_qr_test_cannot_be_restarted_after_qr_is_issued(): void
+    {
+        [$teacher, $section, $room] = $this->assignedTeacher();
+        app()->detectEnvironment(fn () => 'local');
+        config()->set('attendance.allow_local_qr_testing', true);
+        $session = AttendanceSession::factory()->create([
+            'teacher_id' => $teacher->id,
+            'class_section_id' => $section->id,
+            'classroom_id' => $room->id,
+            'session_date' => now('Asia/Phnom_Penh')->toDateString(),
+        ]);
+
+        $this->postJson("/api/v1/teacher/attendance-sessions/{$session->id}/qr-token")->assertCreated();
+        $this->postJson("/api/v1/teacher/attendance-sessions/{$session->id}/local-qr-test")->assertStatus(409);
+        $this->assertSame(1, \App\Models\AttendanceQrToken::query()
+            ->where('attendance_session_id', $session->id)->count());
     }
 
     public function test_local_qr_test_rejects_closed_session(): void
@@ -256,7 +274,7 @@ class TeacherAttendanceSessionApiTest extends TestCase
             ->assertJsonValidationErrors('class_schedule_id');
     }
 
-    public function test_teacher_can_generate_and_rotate_qr_token(): void
+    public function test_teacher_receives_same_qr_for_one_hour_without_rotation(): void
     {
         [, $classSection, $classroom] = $this->assignedTeacher();
         $sessionId = $this->postJson(
@@ -279,12 +297,13 @@ class TeacherAttendanceSessionApiTest extends TestCase
             ->assertCreated()
             ->json('data.token');
 
-        $this->assertNotSame($first, $second);
-        $this->assertDatabaseMissing('attendance_qr_tokens', [
+        $this->assertSame($first, $second);
+        $this->assertDatabaseHas('attendance_qr_tokens', [
             'attendance_session_id' => $sessionId,
             'token_hash' => hash('sha256', $first),
             'revoked_at' => null,
         ]);
+        $this->assertSame(1, \App\Models\AttendanceQrToken::query()->where('attendance_session_id', $sessionId)->count());
     }
 
     public function test_teacher_cannot_generate_qr_for_closed_session(): void

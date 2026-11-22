@@ -39,7 +39,7 @@ jobs:
       - name: Laravel Buildings and Rooms tests
         run: php artisan test --filter='BuildingSetupApiTest|BuildingListApiTest|ClassroomApiTest'
       - name: Attendance QR and check-in feature tests
-        run: php artisan test --filter='AttendanceQrApiTest|TeacherAttendanceSessionApiTest|StudentAttendanceCheckInApiTest'
+        run: php artisan test --filter='AttendanceQrApiTest|TeacherAttendanceSessionApiTest|StudentAttendanceCheckInApiTest|LocalStudentCheckInApiTest|SyncScheduledAttendanceSessionsTest'
       - name: Telegram attendance notification tests
         run: php artisan test --filter='TelegramAttendanceNotificationTest'
       - name: Laravel unit test suite

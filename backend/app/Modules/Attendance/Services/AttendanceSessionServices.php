@@ -195,14 +195,17 @@ class AttendanceSessionServices
             if (! $locked->isOpen()) {
                 abort(409, 'Only open attendance sessions can enter local QR test mode.');
             }
+            if ($locked->qrTokens()->exists()) {
+                abort(409, 'This session has already issued an attendance QR. Reopening it would bypass the one-hour limit.');
+            }
             if ($locked->session_date->toDateString() !== now('Asia/Phnom_Penh')->toDateString()) {
                 abort(409, 'Local QR test mode is only available for sessions dated today.');
             }
 
             $now = now();
-            $start = $now->copy()->subMinute();
-            $cutoff = $start->copy()->addMinutes(15);
-            $end = $start->copy()->addMinutes(30);
+            $start = $now->copy()->subSecond();
+            $cutoff = $now->copy()->addMinutes(15);
+            $end = $now->copy()->addHour();
             $locked->update([
                 'starts_at' => $start,
                 'late_after' => $cutoff,
@@ -240,41 +243,66 @@ class AttendanceSessionServices
     /** @return array{token: string, expires_at: string} */
     private function issueQrToken(AttendanceSession $session): array
     {
-        $session->refresh();
+        return DB::transaction(function () use ($session): array {
+            // Serialize issuance so teacher/admin views receive the same QR
+            // rather than revoking each other's tokens.
+            $locked = AttendanceSession::query()->lockForUpdate()->findOrFail($session->id);
+            if (! $locked->isOpen()) {
+                abort(409, 'The attendance session is not open.');
+            }
 
-        if (! $session->isOpen()) {
-            abort(409, 'The attendance session is not open.');
-        }
+            $now = now();
+            if ($now->lt($locked->starts_at) || $now->gte($locked->closes_at)
+                || ($locked->session_ends_at !== null && $now->gte($locked->session_ends_at))) {
+                abort(409, 'The attendance session is outside its check-in window.');
+            }
 
-        $now = now();
+            // Deterministic secret token allows the same QR on page reload
+            // without storing the plaintext in the database.
+            $secret = (string) config('app.key');
+            if ($secret === '') {
+                abort(503, 'Attendance QR signing is not configured.');
+            }
+            $token = hash_hmac(
+                'sha256',
+                'smartattendance:qr:v2:'.$locked->id.':'.$locked->starts_at->getTimestamp(),
+                $secret
+            );
+            $tokenHash = hash('sha256', $token);
+            $existing = $locked->qrTokens()->where('token_hash', $tokenHash)->first();
 
-        if ($now->lt($session->starts_at) || $now->gt($session->closes_at)) {
-            abort(409, 'The attendance session is not within its active window.');
-        }
+            if ($existing !== null) {
+                if (! $existing->isUsable()) {
+                    abort(409, 'This QR session has expired. Start a new attendance session.');
+                }
+                return ['token' => $token, 'expires_at' => $existing->expires_at->toIso8601String()];
+            }
 
-        $token = Str::random(64);
-        $expiresAt = $now->copy()->addSeconds(30);
+            $expiresAt = $now->copy()->addHour();
+            // Never extend the school's scheduled attendance limits.
+            if ($expiresAt->gt($locked->closes_at)) $expiresAt = $locked->closes_at->copy();
+            if ($locked->session_ends_at !== null && $expiresAt->gt($locked->session_ends_at)) {
+                $expiresAt = $locked->session_ends_at->copy();
+            }
+            if ($expiresAt->lte($now)) abort(409, 'The attendance session has ended.');
 
-        if ($expiresAt->gt($session->closes_at)) {
-            $expiresAt = $session->closes_at->copy();
-        }
-
-        DB::transaction(function () use ($session, $now, $token, $expiresAt): void {
-            $session->qrTokens()
-                ->whereNull('revoked_at')
-                ->update(['revoked_at' => $now]);
-
-            $session->qrTokens()->create([
-                'token_hash' => hash('sha256', $token),
+            $locked->qrTokens()->whereNull('revoked_at')->update(['revoked_at' => $now]);
+            $locked->qrTokens()->create([
+                'token_hash' => $tokenHash,
                 'expires_at' => $expiresAt,
                 'revoked_at' => null,
             ]);
-        });
 
-        return [
-            'token' => $token,
-            'expires_at' => $expiresAt->toIso8601String(),
-        ];
+            // Once QR is displayed, the remaining check-in and review period
+            // cannot exceed its fixed expiry. The scheduler finalizes unmarked
+            // students as absent and locks teacher edits after this deadline.
+            $locked->update([
+                'closes_at' => $expiresAt,
+                'session_ends_at' => $expiresAt,
+            ]);
+
+            return ['token' => $token, 'expires_at' => $expiresAt->toIso8601String()];
+        }, 3);
     }
 
     public function close(AttendanceSession $session, Teacher $teacher): AttendanceSession
@@ -359,16 +387,16 @@ class AttendanceSessionServices
     {
         $this->ensureOwnedBy($session, $teacher);
 
-        if (! $session->isOpen()) {
-            abort(409, 'Attendance for a closed session cannot be changed.');
+        if ((! $session->isOpen() || ($session->session_ends_at !== null && now()->gte($session->session_ends_at)))) {
+            abort(409, 'Attendance for a closed or expired session cannot be changed.');
         }
 
         return DB::transaction(function () use ($session, $teacher, $actor, $data): AttendanceSession {
             $lockedSession = AttendanceSession::query()->lockForUpdate()->findOrFail($session->id);
             $this->ensureOwnedBy($lockedSession, $teacher);
 
-            if (! $lockedSession->isOpen()) {
-                abort(409, 'Attendance for a closed session cannot be changed.');
+            if ((! $lockedSession->isOpen() || ($lockedSession->session_ends_at !== null && now()->gte($lockedSession->session_ends_at)))) {
+                abort(409, 'Attendance for a closed or expired session cannot be changed.');
             }
 
             $studentIds = array_column($data['records'], 'student_id');

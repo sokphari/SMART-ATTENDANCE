@@ -15,6 +15,7 @@ class TeacherSessionAttendanceResource extends JsonResource
 
         return [
             'student_id' => $student->id,
+            'attendance_id' => $student->attendanceId(),
             'name' => $student->user?->name,
             'email' => $student->user?->email,
             'gender' => $student->gender,
