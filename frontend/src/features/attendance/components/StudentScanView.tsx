@@ -97,7 +97,14 @@ export function StudentScanView() {
       setResult(response.data);
     } catch (caught) {
       if (caught instanceof ApiError) {
-        setError(Object.values(caught.errors).flat()[0] ?? caught.message);
+        const reason = Object.values(caught.errors).flat()[0] ?? caught.message;
+        if (localAllowed && caught.status === 409) {
+          setError(/device/i.test(reason)
+            ? "ឧបករណ៍នេះបានកត់វត្តមានរួចហើយក្នុង Session នេះ។ This browser has already checked in; use another unused test device."
+            : "សិស្សនេះមានកំណត់ត្រាវត្តមានរួចហើយ។ Please choose a student marked Pending on the Teacher attendance page and enter their 9-digit Attendance ID.");
+        } else {
+          setError(reason);
+        }
       } else if (typeof caught === "object" && caught !== null && "code" in caught) {
         const code = (caught as GeolocationPositionError).code;
         setError(code === 1 ? "Please allow your phone location permission."
