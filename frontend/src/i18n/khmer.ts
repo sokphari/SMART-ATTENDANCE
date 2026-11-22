@@ -410,7 +410,6 @@ export const khmer: Record<string, string> = {
   "Verified by": "ផ្ទៀងផ្ទាត់ដោយ",
   "Role": "តួនាទី",
   "Attendance ID": "លេខសម្គាល់វត្តមាន",
-<<<<<<< HEAD
   "Attendance Records": "កំណត់ត្រាវត្តមាន",
   "Review student check-ins, verification methods, and attendance status.": "ពិនិត្យការកត់វត្តមានរបស់និស្សិត វិធីផ្ទៀងផ្ទាត់ និងស្ថានភាពវត្តមាន។",
   "Open Student QR": "បើកកូដ QR និស្សិត",
@@ -439,6 +438,4 @@ export const khmer: Record<string, string> = {
   "Manual": "ដោយដៃ",
   "Previous": "មុន",
   "Showing {start}–{end} of {total} records": "បង្ហាញ {start}–{end} ក្នុងចំណោម {total} កំណត់ត្រា",
-=======
->>>>>>> f9740aa53b0545d605ffacef3e29b9dfc789f910
 };
