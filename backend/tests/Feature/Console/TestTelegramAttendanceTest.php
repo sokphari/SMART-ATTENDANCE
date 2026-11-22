@@ -34,13 +34,13 @@ class TestTelegramAttendanceTest extends TestCase
             $text = (string) $request['text'];
             return $request->url() === 'https://api.telegram.org/botfake-static-test-token/sendMessage'
                 && $request['chat_id'] === '-100123456789'
-                && str_contains($text, '🧪 TEST ONLY — NOT A REAL CHECK-IN')
-                && str_contains($text, '📌 STUDENT ATTENDANCE NOTIFICATION')
-                && str_contains($text, '👤 Student: Test Student')
-                && str_contains($text, '⚧ Gender: Male')
-                && str_contains($text, '⚠️ Status: Late (8 minutes)')
-                && str_contains($text, '🕒 Schedule: 7:30 PM – 10:45 PM')
-                && str_contains($text, '📅 Date:');
+                && str_contains($text, '🧪 សាកល្បងប៉ុណ្ណោះ — មិនមែនជាការស្រង់វត្តមានពិតប្រាកដទេ')
+                && str_contains($text, '📌 ដំណឹងវត្តមានសិស្ស')
+                && str_contains($text, '👤 សិស្ស៖ Test Student')
+                && str_contains($text, '⚧ ភេទ៖ ប្រុស')
+                && str_contains($text, '⚠️ ស្ថានភាព៖ យឺត (៨ នាទី)')
+                && str_contains($text, '🕒 ម៉ោងសិក្សា៖ 7:30 PM – 10:45 PM')
+                && str_contains($text, '📅 កាលបរិច្ឆេទ៖');
         });
     }
 
@@ -48,7 +48,7 @@ class TestTelegramAttendanceTest extends TestCase
     {
         $this->artisan('attendance:test-telegram', ['--status' => 'present'])
             ->assertSuccessful();
-        Http::assertSent(fn ($request) => str_contains((string) $request['text'], '⚠️ Status: Present'));
+        Http::assertSent(fn ($request) => str_contains((string) $request['text'], '⚠️ ស្ថានភាព៖ មានវត្តមាន'));
     }
 
     public function test_bad_status_is_rejected(): void
