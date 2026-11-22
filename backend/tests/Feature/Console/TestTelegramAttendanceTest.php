@@ -67,6 +67,10 @@ class TestTelegramAttendanceTest extends TestCase
 
     public function test_telegram_rejection_returns_failure(): void
     {
+        // Reset the HTTP facade because the setUp success fake would otherwise
+        // match first and mask this intentionally rejected response.
+        Http::swap(new \Illuminate\Http\Client\Factory());
+        Http::preventStrayRequests();
         Http::fake(['api.telegram.org/*' => Http::response(['ok' => false], 403)]);
         $this->artisan('attendance:test-telegram')->assertFailed();
         Http::assertSentCount(1);
