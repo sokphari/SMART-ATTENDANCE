@@ -138,17 +138,13 @@ export function AppShell({ children }: { children: ReactNode }) {
     return (
       <div className="flex min-h-dvh items-center justify-center bg-canvas px-5">
         <div className="max-w-lg rounded-panel border border-hairline bg-card p-8 text-center shadow-soft">
-          <h1 className="font-display text-xl font-bold">Workspace unavailable</h1>
-          <p className="mt-2 text-sm leading-relaxed text-muted">
-            This account does not have an enabled workspace. Contact an administrator for access.
-          </p>
+          <h1 className="font-display text-xl font-bold">{t("Workspace unavailable")}</h1>
+          <p className="mt-2 text-sm leading-relaxed text-muted">{t("This account does not have an enabled workspace. Contact an administrator for access.")}</p>
           <button
             type="button"
             onClick={() => void handleLogout()}
             className="mt-5 rounded-control bg-brand-600 px-4 py-2 text-sm font-semibold text-white hover:bg-brand-700"
-          >
-            Sign out
-          </button>
+          >{t("Sign out")}</button>
         </div>
       </div>
     );

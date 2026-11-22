@@ -60,13 +60,11 @@ export function AcademicYearsView() {
   return (
     <>
       <PageHeader
-        title="Academic Years"
+        title={t("Academic Years")}
         description="Set academic year date ranges and lifecycle status."
         actions={
           <Button onClick={() => router.push("/academic-years/create")}>
-            <Plus className="size-4" />
-            Create academic year
-          </Button>
+            <Plus className="size-4" />{t("Create academic year")}</Button>
         }
       />
       <div className="mb-5 grid gap-3 sm:grid-cols-3">
@@ -75,7 +73,7 @@ export function AcademicYearsView() {
             <CalendarRange className="size-6" />
           </span>
           <div>
-            <p className="text-sm text-muted">Matching years</p>
+            <p className="text-sm text-muted">{t("Matching years")}</p>
             <p className="font-display mt-1 text-2xl font-bold">{total}</p>
           </div>
         </Card>
@@ -84,7 +82,7 @@ export function AcademicYearsView() {
             <CalendarRange className="size-6" />
           </span>
           <div>
-            <p className="text-sm text-muted">Active on this page</p>
+            <p className="text-sm text-muted">{t("Active on this page")}</p>
             <p className="font-display mt-1 text-2xl font-bold">
               {activeCount}
             </p>
@@ -95,7 +93,7 @@ export function AcademicYearsView() {
             <CalendarRange className="size-6" />
           </span>
           <div>
-            <p className="text-sm text-muted">Semesters in view</p>
+            <p className="text-sm text-muted">{t("Semesters in view")}</p>
             <p className="font-display mt-1 text-2xl font-bold">
               {items.reduce(
                 (sum, year) => sum + (year.semesters_count ?? 0),
@@ -110,8 +108,8 @@ export function AcademicYearsView() {
           <div className="relative min-w-0 flex-1">
             <Search className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted" />
             <Input
-              aria-label="Search academic years"
-              placeholder="Search academic year"
+              aria-label={t("Search academic years")}
+              placeholder={t("Search academic year")}
               value={search}
               onChange={(event) => {
                 setSearch(event.target.value);
@@ -126,7 +124,7 @@ export function AcademicYearsView() {
               setStatus(value);
               setPage(1);
             }}
-            label="Filter academic year status"
+            label={t("Filter academic year status")}
             options={[{ value: "upcoming" }, { value: "active" }, { value: "completed" }]}
             className="h-11"
           />
@@ -160,9 +158,7 @@ export function AcademicYearsView() {
                 </tr>
               ) : items.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="px-5 py-12 text-center text-muted">
-                    No academic years found.
-                  </td>
+                  <td colSpan={6} className="px-5 py-12 text-center text-muted">{t("No academic years found.")}</td>
                 </tr>
               ) : (
                 items.map((year) => (
@@ -184,7 +180,7 @@ export function AcademicYearsView() {
                           router.push(`/academic-years/${year.id}/edit`)
                         }
                         aria-label={`Edit academic year ${year.name}`}
-                        title="Edit academic year"
+                        title={t("Edit academic year")}
                         className="
                         !size-9 !p-0
                         border-blue-500/20
@@ -216,17 +212,13 @@ export function AcademicYearsView() {
               size="sm"
               disabled={page <= 1 || loading}
               onClick={() => setPage((value) => value - 1)}
-            >
-              Previous
-            </Button>
+            >{t("Previous")}</Button>
             <Button
               variant="secondary"
               size="sm"
               disabled={page >= lastPage || loading}
               onClick={() => setPage((value) => value + 1)}
-            >
-              Next
-            </Button>
+            >{t("Next")}</Button>
           </div>
         </div>
       </Card>

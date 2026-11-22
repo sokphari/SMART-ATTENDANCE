@@ -4,7 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { LayoutGrid, X } from "lucide-react";
-import { ALL_NAV_ITEMS, MOBILE_TABS, TEACHER_NAV_ITEMS } from "@/config/nav";
+import { ADMIN_ACCOUNT_NAV_ITEMS, ALL_NAV_ITEMS, MOBILE_TABS, TEACHER_NAV_ITEMS } from "@/config/nav";
 import { cx } from "@/lib/utils/cx";
 import { useLocale } from "@/i18n/LocaleProvider";
 
@@ -13,9 +13,10 @@ export function BottomTabBar({ role, teacherModules = [] }: { role: string | nul
   const { t } = useLocale();
   const [moreOpen, setMoreOpen] = useState(false);
   const isTeacher = role?.toLowerCase() === "teacher";
+  const isAdmin = role?.toLowerCase() === "admin";
   const allowedTeacherItems = TEACHER_NAV_ITEMS.filter((item) => item.permissionKey && teacherModules.includes(item.permissionKey));
   const tabs = isTeacher ? allowedTeacherItems.slice(0, 3) : MOBILE_TABS;
-  const moreItems = isTeacher ? allowedTeacherItems : ALL_NAV_ITEMS;
+  const moreItems = isTeacher ? allowedTeacherItems : isAdmin ? [...ALL_NAV_ITEMS, ...ADMIN_ACCOUNT_NAV_ITEMS] : ALL_NAV_ITEMS;
 
   const isActive = (href: string) =>
     pathname === href || pathname.startsWith(`${href}/`);
@@ -38,7 +39,7 @@ export function BottomTabBar({ role, teacherModules = [] }: { role: string | nul
               <button
                 type="button"
                 onClick={() => setMoreOpen(false)}
-                aria-label="Close menu"
+                aria-label={t("Close menu")}
                 className="flex size-9 cursor-pointer items-center justify-center rounded-control text-slate-500 hover:bg-brand-50 hover:text-brand-700"
               >
                 <X className="size-5" />

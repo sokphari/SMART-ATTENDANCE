@@ -90,13 +90,11 @@ export function DepartmentsView() {
   return (
     <>
       <PageHeader
-        title="Departments"
+        title={t("Departments")}
         description="Manage academic departments and their status."
         actions={
           <Button onClick={() => router.push("/departments/create")}>
-            <Plus className="size-4" />
-            Create department
-          </Button>
+            <Plus className="size-4" />{t("Create department")}</Button>
         }
       />
 
@@ -106,7 +104,7 @@ export function DepartmentsView() {
             <Building2 className="size-6" />
           </span>
           <div>
-            <p className="text-sm text-muted">Matching departments</p>
+            <p className="text-sm text-muted">{t("Matching departments")}</p>
             <p className="font-display mt-1 text-2xl font-bold">{total}</p>
           </div>
         </Card>
@@ -115,7 +113,7 @@ export function DepartmentsView() {
             <Building2 className="size-6" />
           </span>
           <div>
-            <p className="text-sm text-muted">Active on this page</p>
+            <p className="text-sm text-muted">{t("Active on this page")}</p>
             <p className="font-display mt-1 text-2xl font-bold">
               {activeCount}
             </p>
@@ -126,7 +124,7 @@ export function DepartmentsView() {
             <Building2 className="size-6" />
           </span>
           <div>
-            <p className="text-sm text-muted">Inactive on this page</p>
+            <p className="text-sm text-muted">{t("Inactive on this page")}</p>
             <p className="font-display mt-1 text-2xl font-bold">
               {items.length - activeCount}
             </p>
@@ -139,8 +137,8 @@ export function DepartmentsView() {
           <div className="relative min-w-0 flex-1">
             <Search className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted" />
             <Input
-              aria-label="Search departments"
-              placeholder="Search department name or code"
+              aria-label={t("Search departments")}
+              placeholder={t("Search department name or code")}
               value={search}
               onChange={(event) => {
                 setSearch(event.target.value);
@@ -149,7 +147,7 @@ export function DepartmentsView() {
               className="pl-9"
             />
           </div>
-          <StatusFilter value={status} onChange={(value) => { setStatus(value); setPage(1); }} label="Filter by department status" options={[{ value: "active" }, { value: "inactive" }]} />
+          <StatusFilter value={status} onChange={(value) => { setStatus(value); setPage(1); }} label={t("Filter by department status")} options={[{ value: "active" }, { value: "inactive" }]} />
         </div>
         {error && (
           <p
@@ -187,7 +185,7 @@ export function DepartmentsView() {
               </p>
               <button
                 type="button"
-                aria-label="Dismiss notification"
+                aria-label={t("Dismiss notification")}
                 className="rounded-control p-1 text-muted hover:bg-canvas hover:text-ink"
                 onClick={() => setFeedback(null)}
               >
@@ -217,9 +215,7 @@ export function DepartmentsView() {
                 </tr>
               ) : items.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="px-5 py-12 text-center text-muted">
-                    No departments match these filters.
-                  </td>
+                  <td colSpan={6} className="px-5 py-12 text-center text-muted">{t("No departments match these filters.")}</td>
                 </tr>
               ) : (
                 items.map((department) => (
@@ -282,17 +278,13 @@ export function DepartmentsView() {
               size="sm"
               disabled={page <= 1 || loading}
               onClick={() => setPage((value) => value - 1)}
-            >
-              Previous
-            </Button>
+            >{t("Previous")}</Button>
             <Button
               variant="secondary"
               size="sm"
               disabled={page >= lastPage || loading}
               onClick={() => setPage((value) => value + 1)}
-            >
-              Next
-            </Button>
+            >{t("Next")}</Button>
           </div>
         </div>
       </Card>

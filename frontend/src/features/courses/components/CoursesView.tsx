@@ -87,13 +87,11 @@ export function CoursesView() {
   return (
     <>
       <PageHeader
-        title="Courses"
+        title={t("Courses")}
         description="Manage the course catalog and department assignments."
         actions={
           <Button onClick={() => router.push("/courses/create")}>
-            <Plus className="size-4" />
-            Create course
-          </Button>
+            <Plus className="size-4" />{t("Create course")}</Button>
         }
       />
       <div className="mb-5 grid gap-3 sm:grid-cols-3">
@@ -102,7 +100,7 @@ export function CoursesView() {
             <BookOpen className="size-6" />
           </span>
           <div>
-            <p className="text-sm text-muted">Matching courses</p>
+            <p className="text-sm text-muted">{t("Matching courses")}</p>
             <p className="font-display mt-1 text-2xl font-bold">{total}</p>
           </div>
         </Card>
@@ -111,7 +109,7 @@ export function CoursesView() {
             <BookOpen className="size-6" />
           </span>
           <div>
-            <p className="text-sm text-muted">Active on this page</p>
+            <p className="text-sm text-muted">{t("Active on this page")}</p>
             <p className="font-display mt-1 text-2xl font-bold">
               {activeCount}
             </p>
@@ -122,7 +120,7 @@ export function CoursesView() {
             <BookOpen className="size-6" />
           </span>
           <div>
-            <p className="text-sm text-muted">Departments</p>
+            <p className="text-sm text-muted">{t("Departments")}</p>
             <p className="font-display mt-1 text-2xl font-bold">
               {departments.length}
             </p>
@@ -134,8 +132,8 @@ export function CoursesView() {
           <div className="relative min-w-0 flex-1">
             <Search className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted" />
             <Input
-              aria-label="Search courses"
-              placeholder="Search course name or code"
+              aria-label={t("Search courses")}
+              placeholder={t("Search course name or code")}
               value={search}
               onChange={(event) => {
                 setSearch(event.target.value);
@@ -145,7 +143,7 @@ export function CoursesView() {
             />
           </div>
           <select
-            aria-label="Filter by department"
+            aria-label={t("Filter by department")}
             value={departmentId}
             onChange={(event) => {
               setDepartmentId(event.target.value);
@@ -153,14 +151,14 @@ export function CoursesView() {
             }}
             className="h-11 rounded-control border border-hairline bg-card px-3 text-sm text-ink"
           >
-            <option value="">All departments</option>
+            <option value="">{t("All departments")}</option>
             {departments.map((department) => (
               <option key={department.id} value={department.id}>
                 {department.name}
               </option>
             ))}
           </select>
-          <StatusFilter value={status} onChange={(value) => { setStatus(value); setPage(1); }} label="Filter by course status" options={[{ value: "active" }, { value: "inactive" }]} />
+          <StatusFilter value={status} onChange={(value) => { setStatus(value); setPage(1); }} label={t("Filter by course status")} options={[{ value: "active" }, { value: "inactive" }]} />
         </div>
         {error && (
           <p
@@ -186,7 +184,7 @@ export function CoursesView() {
               <p className="flex-1 text-sm font-semibold text-ink">{feedback.message}</p>
               <button
                 type="button"
-                aria-label="Dismiss notification"
+                aria-label={t("Dismiss notification")}
                 className="rounded-control p-1 text-muted hover:bg-canvas hover:text-ink"
                 onClick={() => setFeedback(null)}
               >
@@ -217,9 +215,7 @@ export function CoursesView() {
                 </tr>
               ) : items.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="px-5 py-12 text-center text-muted">
-                    No courses match these filters.
-                  </td>
+                  <td colSpan={7} className="px-5 py-12 text-center text-muted">{t("No courses match these filters.")}</td>
                 </tr>
               ) : (
                 items.map((course) => (
@@ -278,17 +274,13 @@ export function CoursesView() {
               size="sm"
               disabled={page <= 1 || loading}
               onClick={() => setPage((value) => value - 1)}
-            >
-              Previous
-            </Button>
+            >{t("Previous")}</Button>
             <Button
               variant="secondary"
               size="sm"
               disabled={page >= lastPage || loading}
               onClick={() => setPage((value) => value + 1)}
-            >
-              Next
-            </Button>
+            >{t("Next")}</Button>
           </div>
         </div>
       </Card>

@@ -106,7 +106,7 @@ export function CorrectionsView() {
   return (
     <>
       <PageHeader
-        title="Attendance Corrections"
+        title={t("Attendance Corrections")}
         description="Review and audit manual status changes requested by staff or students."
       />
 
@@ -116,7 +116,7 @@ export function CorrectionsView() {
             <Clock className="size-5" />
           </span>
           <div>
-            <p className="text-xs text-muted">Pending decisions</p>
+            <p className="text-xs text-muted">{t("Pending decisions")}</p>
             <p className="font-display mt-0.5 text-xl font-bold">
               {status === "pending" ? total : "—"}
             </p>
@@ -127,7 +127,7 @@ export function CorrectionsView() {
             <FileCheck2 className="size-5" />
           </span>
           <div>
-            <p className="text-xs text-muted">Approved requests</p>
+            <p className="text-xs text-muted">{t("Approved requests")}</p>
             <p className="font-display mt-0.5 text-xl font-bold">
               {status === "approved" ? total : "—"}
             </p>
@@ -138,7 +138,7 @@ export function CorrectionsView() {
             <FileX2 className="size-5" />
           </span>
           <div>
-            <p className="text-xs text-muted">Rejected requests</p>
+            <p className="text-xs text-muted">{t("Rejected requests")}</p>
             <p className="font-display mt-0.5 text-xl font-bold">
               {status === "rejected" ? total : "—"}
             </p>
@@ -238,9 +238,7 @@ export function CorrectionsView() {
                 </tr>
               ) : items.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="px-5 py-12 text-center text-muted">
-                    No correction requests found for this filter.
-                  </td>
+                  <td colSpan={6} className="px-5 py-12 text-center text-muted">{t("No correction requests found for this filter.")}</td>
                 </tr>
               ) : (
                 items.map((row) => (
@@ -297,9 +295,7 @@ export function CorrectionsView() {
                               setReviewNote("");
                             }}
                           >
-                            <Check className="size-3.5 text-success" />
-                            Approve
-                          </Button>
+                            <Check className="size-3.5 text-success" />{t("Approve")}</Button>
                           <Button
                             variant="secondary"
                             size="sm"
@@ -309,9 +305,7 @@ export function CorrectionsView() {
                               setReviewNote("");
                             }}
                           >
-                            <X className="size-3.5 text-danger" />
-                            Reject
-                          </Button>
+                            <X className="size-3.5 text-danger" />{t("Reject")}</Button>
                         </div>
                       ) : (
                         <span className="text-xs text-muted">
@@ -339,17 +333,13 @@ export function CorrectionsView() {
               size="sm"
               disabled={page <= 1 || loading}
               onClick={() => setPage((v) => v - 1)}
-            >
-              Previous
-            </Button>
+            >{t("Previous")}</Button>
             <Button
               variant="secondary"
               size="sm"
               disabled={page >= lastPage || loading}
               onClick={() => setPage((v) => v + 1)}
-            >
-              Next
-            </Button>
+            >{t("Next")}</Button>
           </div>
         </div>
       </Card>
@@ -368,13 +358,11 @@ export function CorrectionsView() {
             </p>
 
             <div className="mt-4 space-y-3">
-              <label className="block text-xs font-semibold text-ink">
-                Review Note (Optional)
-                <textarea
+              <label className="block text-xs font-semibold text-ink">{t("Review Note (Optional)")}<textarea
                   rows={3}
                   value={reviewNote}
                   onChange={(e) => setReviewNote(e.target.value)}
-                  placeholder="e.g. Verified with medical certificate..."
+                  placeholder={t("e.g. Verified with medical certificate...")}
                   className="mt-1 w-full rounded-control border border-hairline bg-card p-2.5 text-xs text-ink outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
                 />
               </label>
@@ -385,9 +373,7 @@ export function CorrectionsView() {
                 variant="secondary"
                 size="sm"
                 onClick={() => setReviewingId(null)}
-              >
-                Cancel
-              </Button>
+              >{t("Cancel")}</Button>
               <Button
                 variant={reviewDecision === "approved" ? "primary" : "danger"}
                 size="sm"

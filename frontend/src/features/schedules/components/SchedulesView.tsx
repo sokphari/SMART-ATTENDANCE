@@ -342,18 +342,18 @@ export function SchedulesView() {
   return (
     <>
       <PageHeader
-        title="Class Timetable"
+        title={t("Class Timetable")}
         description="Manage weekly class schedules, teacher assignments, classrooms, and study periods."
         actions={
           <div className="flex gap-2">
-            <Button variant="secondary" onClick={() => setSettingsOpen((open) => !open)}><Settings2 className="size-4" />Timetable settings</Button>
-            <Button onClick={() => router.push("/schedules/create")}><Plus className="size-4" />Add schedule</Button>
+            <Button variant="secondary" onClick={() => setSettingsOpen((open) => !open)}><Settings2 className="size-4" />{t("Timetable settings")}</Button>
+            <Button onClick={() => router.push("/schedules/create")}><Plus className="size-4" />{t("Add schedule")}</Button>
           </div>
         }
       />
 
       {settingsOpen && <Card className="mb-5 p-5">
-        <div className="mb-4"><h2 className="font-display text-lg font-bold">Periods, breaks, and workload limits</h2><p className="mt-1 text-sm text-muted">Times use {config?.timezone ?? "Asia/Phnom_Penh"}. Saving a teaching period updates linked schedules after checking for conflicts.</p></div>
+        <div className="mb-4"><h2 className="font-display text-lg font-bold">{t("Periods, breaks, and workload limits")}</h2><p className="mt-1 text-sm text-muted">Times use {config?.timezone ?? "Asia/Phnom_Penh"}. Saving a teaching period updates linked schedules after checking for conflicts.</p></div>
         <div className="grid gap-4 xl:grid-cols-3">
           {config?.periods.map((period) => <section key={period.id} className="rounded-control border border-hairline p-4">
             <h3 className="mb-3 font-bold">{period.name}</h3><div className="space-y-3">
@@ -367,18 +367,18 @@ export function SchedulesView() {
           </section>)}
         </div>
         <div className="mt-4 grid gap-4 rounded-control bg-canvas p-4 sm:grid-cols-3 sm:items-end">
-          <Input label="Max weekly teaching hours" type="number" min="1" max="168" value={maxHours} onChange={(event) => setMaxHours(Number(event.target.value))} />
-          <Input label="Maximum assigned sections (optional)" type="number" min="1" value={maxSections} onChange={(event) => setMaxSections(event.target.value)} placeholder="No limit" />
-          <Button loading={savingSettings} onClick={() => void saveSettings()}>Save workload limits</Button>
+          <Input label={t("Max weekly teaching hours")} type="number" min="1" max="168" value={maxHours} onChange={(event) => setMaxHours(Number(event.target.value))} />
+          <Input label={t("Maximum assigned sections (optional)")} type="number" min="1" value={maxSections} onChange={(event) => setMaxSections(event.target.value)} placeholder={t("No limit")} />
+          <Button loading={savingSettings} onClick={() => void saveSettings()}>{t("Save workload limits")}</Button>
         </div>
         <div className="mt-4 grid gap-4 rounded-control border border-hairline p-4 sm:grid-cols-2 xl:grid-cols-5 sm:items-end">
-          <label className="flex min-h-11 items-center gap-2 text-sm font-semibold"><input type="checkbox" checked={automaticAttendance} onChange={(event) => setAutomaticAttendance(event.target.checked)} />Automatically open scheduled attendance</label>
-          <Input label="Late after (minutes)" type="number" min="0" max="240" value={lateAfterMinutes} onChange={(event) => setLateAfterMinutes(Number(event.target.value))} />
-          <Input label="QR check-in window (minutes)" type="number" min="1" max="480" value={checkInWindowMinutes} onChange={(event) => setCheckInWindowMinutes(Number(event.target.value))} />
-          <label className="flex min-h-11 items-center gap-2 text-sm font-semibold"><input type="checkbox" checked={geofencingEnabled} onChange={(event) => setGeofencingEnabled(event.target.checked)} />Require classroom location</label>
-          <Input label="Maximum GPS accuracy (meters)" type="number" min="1" max="500" value={gpsAccuracyThreshold} onChange={(event) => setGpsAccuracyThreshold(Number(event.target.value))} disabled={!geofencingEnabled} />
+          <label className="flex min-h-11 items-center gap-2 text-sm font-semibold"><input type="checkbox" checked={automaticAttendance} onChange={(event) => setAutomaticAttendance(event.target.checked)} />{t("Automatically open scheduled attendance")}</label>
+          <Input label={t("Late after (minutes)")} type="number" min="0" max="240" value={lateAfterMinutes} onChange={(event) => setLateAfterMinutes(Number(event.target.value))} />
+          <Input label={t("QR check-in window (minutes)")} type="number" min="1" max="480" value={checkInWindowMinutes} onChange={(event) => setCheckInWindowMinutes(Number(event.target.value))} />
+          <label className="flex min-h-11 items-center gap-2 text-sm font-semibold"><input type="checkbox" checked={geofencingEnabled} onChange={(event) => setGeofencingEnabled(event.target.checked)} />{t("Require classroom location")}</label>
+          <Input label={t("Maximum GPS accuracy (meters)")} type="number" min="1" max="500" value={gpsAccuracyThreshold} onChange={(event) => setGpsAccuracyThreshold(Number(event.target.value))} disabled={!geofencingEnabled} />
           <p className="text-xs leading-relaxed text-muted sm:col-span-2 xl:col-span-5">Automatic attendance uses each class’s configured timetable and classroom. A scheduled session appears ahead of class, opens at its start time, stops accepting QR check-ins after the configured window, and is finalized at the class end time. The scheduler must be running on the server.</p>
-          <div className="sm:col-span-2 xl:col-span-5"><Button loading={savingSettings} onClick={() => void saveSettings()}>Save attendance policy</Button></div>
+          <div className="sm:col-span-2 xl:col-span-5"><Button loading={savingSettings} onClick={() => void saveSettings()}>{t("Save attendance policy")}</Button></div>
         </div>
       </Card>}
 
@@ -388,7 +388,7 @@ export function SchedulesView() {
             <CalendarClock className="size-6" />
           </span>
           <div>
-            <p className="text-sm text-muted">Sessions this week</p>
+            <p className="text-sm text-muted">{t("Sessions this week")}</p>
             <p className="font-display mt-1 text-2xl font-bold">{summary?.weekly_sessions ?? (loading ? "—" : total)}</p>
           </div>
         </Card>
@@ -397,7 +397,7 @@ export function SchedulesView() {
             <Clock className="size-6" />
           </span>
           <div>
-            <p className="text-sm text-muted">Active class sections</p>
+            <p className="text-sm text-muted">{t("Active class sections")}</p>
             <p className="font-display mt-1 text-2xl font-bold">{summary?.active_class_sections ?? "—"}</p>
           </div>
         </Card>
@@ -406,7 +406,7 @@ export function SchedulesView() {
             <Building className="size-6" />
           </span>
           <div>
-            <p className="text-sm text-muted">Assigned teachers</p>
+            <p className="text-sm text-muted">{t("Assigned teachers")}</p>
             <p className="font-display mt-1 text-2xl font-bold">
               {summary?.assigned_teachers ?? "—"}
             </p>
@@ -414,7 +414,7 @@ export function SchedulesView() {
         </Card>
         <Card className="flex min-h-28 items-center gap-4 p-5">
           <span className="rounded-panel bg-warning-soft p-3 text-warning"><Users className="size-6" /></span>
-          <div><p className="text-sm text-muted">Schedule conflicts</p><p className="font-display mt-1 text-2xl font-bold">{summary?.scheduling_conflicts ?? "—"}</p></div>
+          <div><p className="text-sm text-muted">{t("Schedule conflicts")}</p><p className="font-display mt-1 text-2xl font-bold">{summary?.scheduling_conflicts ?? "—"}</p></div>
         </Card>
       </div>
 
@@ -423,8 +423,8 @@ export function SchedulesView() {
           <div className="relative min-w-0 flex-1">
             <Search className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted" />
             <Input
-              aria-label="Search schedules"
-              placeholder="Search course, section, teacher, or room"
+              aria-label={t("Search schedules")}
+              placeholder={t("Search course, section, teacher, or room")}
               value={search}
               onChange={(e) => {
                 setSearch(e.target.value);
@@ -434,39 +434,39 @@ export function SchedulesView() {
             />
           </div>
           <select
-            aria-label="Filter by teacher"
+            aria-label={t("Filter by teacher")}
             value={teacherId}
             onChange={(e) => { setTeacherId(e.target.value); setPage(1); }}
             className="h-11 rounded-control border border-hairline bg-card px-3 text-sm text-ink"
           >
-            <option value="">All teachers</option>{teachers.map((teacher) => <option key={teacher.id} value={teacher.id}>{teacher.name}</option>)}
+            <option value="">{t("All teachers")}</option>{teachers.map((teacher) => <option key={teacher.id} value={teacher.id}>{teacher.name}</option>)}
           </select>
           <select
-            aria-label="Filter by department"
+            aria-label={t("Filter by department")}
             value={departmentId}
             onChange={(e) => { setDepartmentId(e.target.value); setPage(1); }}
             className="h-11 rounded-control border border-hairline bg-card px-3 text-sm text-ink"
           >
-            <option value="">All departments</option>{departments.map((department) => <option key={department.id} value={department.id}>{department.name}</option>)}
+            <option value="">{t("All departments")}</option>{departments.map((department) => <option key={department.id} value={department.id}>{department.name}</option>)}
           </select>
           <select
-            aria-label="Filter by study period"
+            aria-label={t("Filter by study period")}
             value={periodId}
             onChange={(e) => { setPeriodId(e.target.value); setPage(1); }}
             className="h-11 rounded-control border border-hairline bg-card px-3 text-sm text-ink"
           >
-            <option value="">All periods</option>{config?.periods.map((period) => <option key={period.id} value={period.id}>{period.name}</option>)}
+            <option value="">{t("All periods")}</option>{config?.periods.map((period) => <option key={period.id} value={period.id}>{period.name}</option>)}
           </select>
           <select
-            aria-label="Filter by status"
+            aria-label={t("Filter by status")}
             value={status}
             onChange={(e) => { setStatus(e.target.value); setPage(1); }}
             className="h-11 rounded-control border border-hairline bg-card px-3 text-sm text-ink"
           >
-            <option value="">All statuses</option><option value="active">Active</option><option value="inactive">Inactive</option>
+            <option value="">{t("All statuses")}</option><option value="active">{t("Active")}</option><option value="inactive">{t("Inactive")}</option>
           </select>
           <select
-            aria-label="Filter by day of week"
+            aria-label={t("Filter by day of week")}
             value={dayOfWeek}
             onChange={(e) => {
               setDayOfWeek(e.target.value);
@@ -474,20 +474,20 @@ export function SchedulesView() {
             }}
             className="h-11 rounded-control border border-hairline bg-card px-3 text-sm text-ink"
           >
-            <option value="">All days</option>
+            <option value="">{t("All days")}</option>
             {(config?.weekdays ?? [1, 2, 3, 4, 5]).map((day) => <option key={day} value={day}>{DAYS[day]}</option>)}
           </select>
           <div className="flex shrink-0 gap-1 rounded-control border border-hairline p-1">
-            <Button size="sm" variant={view === "table" ? "primary" : "ghost"} onClick={() => setView("table")}><BookOpen className="size-4" />Table</Button>
-            <Button size="sm" variant={view === "week" ? "primary" : "ghost"} onClick={() => setView("week")}><CalendarDays className="size-4" />Week</Button>
+            <Button size="sm" variant={view === "table" ? "primary" : "ghost"} onClick={() => setView("table")}><BookOpen className="size-4" />{t("Table")}</Button>
+            <Button size="sm" variant={view === "week" ? "primary" : "ghost"} onClick={() => setView("week")}><CalendarDays className="size-4" />{t("Week")}</Button>
           </div>
           <div className="flex shrink-0 items-center gap-1 rounded-control border border-hairline px-1 py-1">
-            <Button size="icon" variant="ghost" aria-label="Previous week" onClick={() => { setWeekStart((value) => moveWeek(value, -1)); setPage(1); }}><ChevronLeft className="size-4" /></Button>
+            <Button size="icon" variant="ghost" aria-label={t("Previous week")} onClick={() => { setWeekStart((value) => moveWeek(value, -1)); setPage(1); }}><ChevronLeft className="size-4" /></Button>
             <span className="min-w-36 text-center text-xs font-semibold text-muted">{weekLabel(weekStart)}</span>
-            <Button size="icon" variant="ghost" aria-label="Next week" onClick={() => { setWeekStart((value) => moveWeek(value, 1)); setPage(1); }}><ChevronRight className="size-4" /></Button>
+            <Button size="icon" variant="ghost" aria-label={t("Next week")} onClick={() => { setWeekStart((value) => moveWeek(value, 1)); setPage(1); }}><ChevronRight className="size-4" /></Button>
           </div>
           <select
-            aria-label="Filter by classroom"
+            aria-label={t("Filter by classroom")}
             value={classroomId}
             onChange={(e) => {
               setClassroomId(e.target.value);
@@ -495,7 +495,7 @@ export function SchedulesView() {
             }}
             className="h-11 rounded-control border border-hairline bg-card px-3 text-sm text-ink"
           >
-            <option value="">All classrooms</option>
+            <option value="">{t("All classrooms")}</option>
             {classrooms.map((room) => (
               <option key={room.id} value={room.id}>
                 {room.room_code} {room.building ? `(${room.building})` : ""}
@@ -564,10 +564,10 @@ export function SchedulesView() {
                       <span className="mt-1 block text-sm font-bold text-ink">{item.class_section?.course?.course_code} · {item.class_section?.section_code}</span>
                       <span className="block truncate text-xs text-muted">{item.class_section?.course?.name} · {item.classroom?.room_code}</span>
                       <span className="mt-2 block truncate text-xs text-muted">{item.class_section?.teachers?.map((teacher) => teacher.name).join(", ") || "Teacher unassigned"}</span>
-                      {visibleConflicts.has(item.id) && <span className="mt-2 inline-flex items-center gap-1 text-xs font-bold text-danger"><TriangleAlert className="size-3.5" />Schedule conflict</span>}
+                      {visibleConflicts.has(item.id) && <span className="mt-2 inline-flex items-center gap-1 text-xs font-bold text-danger"><TriangleAlert className="size-3.5" />{t("Schedule conflict")}</span>}
                     </button>
                   ))}
-                  {!items.some((item) => item.day_of_week === day) && <p className="py-3 text-xs text-muted">No scheduled sessions</p>}
+                  {!items.some((item) => item.day_of_week === day) && <p className="py-3 text-xs text-muted">{t("No scheduled sessions")}</p>}
                 </div>
               </section>
             ))}
@@ -595,9 +595,7 @@ export function SchedulesView() {
                 </tr>
               ) : items.length === 0 ? (
                 <tr>
-                  <td colSpan={8} className="px-5 py-12 text-center text-muted">
-                    No schedule slots match these filters.
-                  </td>
+                  <td colSpan={8} className="px-5 py-12 text-center text-muted">{t("No schedule slots match these filters.")}</td>
                 </tr>
               ) : (
                 items.map((slot) => (
@@ -611,7 +609,7 @@ export function SchedulesView() {
                       </Badge>
                     </td>
                     <td className="px-5 py-4">
-                      {slot.time_slot?.period ? <Badge tone="brand" style={{ color: PERIOD_COLORS[slot.time_slot.period.color] ?? "#2563eb", backgroundColor: `${PERIOD_COLORS[slot.time_slot.period.color] ?? "#2563eb"}18` }}>{slot.time_slot.period.name}</Badge> : <Badge tone="neutral">Custom</Badge>}
+                      {slot.time_slot?.period ? <Badge tone="brand" style={{ color: PERIOD_COLORS[slot.time_slot.period.color] ?? "#2563eb", backgroundColor: `${PERIOD_COLORS[slot.time_slot.period.color] ?? "#2563eb"}18` }}>{slot.time_slot.period.name}</Badge> : <Badge tone="neutral">{t("Custom")}</Badge>}
                     </td>
                     <td className="px-5 py-4">
                       <div className="flex items-center gap-1.5 font-medium text-ink">
@@ -640,7 +638,7 @@ export function SchedulesView() {
                       <span className="font-semibold text-ink">{slot.classroom?.room_code ?? "—"}</span>
                       {slot.classroom?.building && <div className="text-xs text-muted">{slot.classroom.building}{slot.classroom.floor ? `, Fl ${slot.classroom.floor}` : ""}</div>}
                     </td>
-                    <td className="px-5 py-4"><div className="flex items-center gap-2"><StatusBadge status={slot.status} context="resource" />{visibleConflicts.has(slot.id) && <Badge tone="danger">Conflict</Badge>}</div></td>
+                    <td className="px-5 py-4"><div className="flex items-center gap-2"><StatusBadge status={slot.status} context="resource" />{visibleConflicts.has(slot.id) && <Badge tone="danger">{t("Conflict")}</Badge>}</div></td>
 
                     <td className="px-5 py-3 text-right">
                       <div className="flex items-center justify-end gap-2">
@@ -651,8 +649,8 @@ export function SchedulesView() {
                           onClick={() =>
                             router.push(`/schedules/${slot.id}/edit`)
                           }
-                          aria-label="Edit schedule slot"
-                          title="Edit slot"
+                          aria-label={t("Edit schedule slot")}
+                          title={t("Edit slot")}
                           className="
                         border-blue-500/20
                         bg-blue-500/10 text-blue-400
@@ -665,9 +663,9 @@ export function SchedulesView() {
                           <Pencil className="size-4" />
                         </Button>
                         <div className="relative">
-                          <Button type="button" variant="secondary" size="icon" aria-label="More schedule actions" aria-haspopup="menu" aria-expanded={actionMenuId === slot.id} onClick={() => setActionMenuId((current) => current === slot.id ? null : slot.id)}><MoreVertical className="size-4" /></Button>
+                          <Button type="button" variant="secondary" size="icon" aria-label={t("More schedule actions")} aria-haspopup="menu" aria-expanded={actionMenuId === slot.id} onClick={() => setActionMenuId((current) => current === slot.id ? null : slot.id)}><MoreVertical className="size-4" /></Button>
                           {actionMenuId === slot.id && <div role="menu" className="absolute right-0 z-20 mt-1 w-48 rounded-panel border border-hairline bg-card p-1 shadow-lift">
-                            <button type="button" role="menuitem" onClick={() => { setDetailsSchedule(slot); setActionMenuId(null); }} className="flex min-h-10 w-full items-center gap-2 rounded-control px-3 text-left text-sm font-medium hover:bg-canvas"><Eye className="size-4" />View details</button>
+                            <button type="button" role="menuitem" onClick={() => { setDetailsSchedule(slot); setActionMenuId(null); }} className="flex min-h-10 w-full items-center gap-2 rounded-control px-3 text-left text-sm font-medium hover:bg-canvas"><Eye className="size-4" />{t("View details")}</button>
                             <button type="button" role="menuitem" disabled={mutatingStatusId === slot.id} onClick={() => { setActionMenuId(null); slot.status === "active" ? setPendingStatusSchedule(slot) : void handleStatus(slot); }} className="flex min-h-10 w-full items-center rounded-control px-3 text-left text-sm font-medium hover:bg-canvas disabled:opacity-50">{slot.status === "active" ? "Deactivate schedule" : "Activate schedule"}</button>
                           </div>}
                         </div>
@@ -691,32 +689,28 @@ export function SchedulesView() {
               size="sm"
               disabled={page <= 1 || loading}
               onClick={() => setPage((v) => v - 1)}
-            >
-              Previous
-            </Button>
+            >{t("Previous")}</Button>
             <Button
               variant="secondary"
               size="sm"
               disabled={page >= lastPage || loading}
               onClick={() => setPage((v) => v + 1)}
-            >
-              Next
-            </Button>
+            >{t("Next")}</Button>
           </div>
         </div>
       </Card>
       <dialog ref={statusDialogRef} aria-labelledby="schedule-status-title" onClose={() => setPendingStatusSchedule(null)} className="w-[min(28rem,calc(100vw-2rem))] rounded-panel border border-hairline bg-card p-0 text-ink shadow-lift backdrop:bg-slate-950/50">
         <div className="p-6">
-          <h2 id="schedule-status-title" className="font-display text-lg font-bold">Deactivate this schedule?</h2>
+          <h2 id="schedule-status-title" className="font-display text-lg font-bold">{t("Deactivate this schedule?")}</h2>
           <p className="mt-2 text-sm text-muted">{pendingStatusSchedule?.class_section?.course?.course_code} · {pendingStatusSchedule?.class_section?.section_code} on {DAYS[pendingStatusSchedule?.day_of_week ?? 0] ?? "the selected day"} will no longer appear as an active timetable entry. Existing attendance records will remain unchanged.</p>
           <div className="mt-6 flex justify-end gap-2">
-            <Button type="button" variant="secondary" onClick={() => setPendingStatusSchedule(null)}>Cancel</Button>
-            <Button type="button" variant="danger" loading={mutatingStatusId === pendingStatusSchedule?.id} onClick={() => pendingStatusSchedule && void handleStatus(pendingStatusSchedule)}>Deactivate schedule</Button>
+            <Button type="button" variant="secondary" onClick={() => setPendingStatusSchedule(null)}>{t("Cancel")}</Button>
+            <Button type="button" variant="danger" loading={mutatingStatusId === pendingStatusSchedule?.id} onClick={() => pendingStatusSchedule && void handleStatus(pendingStatusSchedule)}>{t("Deactivate schedule")}</Button>
           </div>
         </div>
       </dialog>
       <dialog ref={detailDialogRef} aria-labelledby="schedule-detail-title" onClose={() => setDetailsSchedule(null)} className="w-[min(36rem,calc(100vw-2rem))] rounded-panel border border-hairline bg-card p-0 text-ink shadow-lift backdrop:bg-slate-950/50">
-        {detailsSchedule && <div className="p-6"><div className="flex items-start justify-between gap-4"><div><h2 id="schedule-detail-title" className="font-display text-xl font-bold">Schedule details</h2><p className="mt-1 text-sm text-muted">{detailsSchedule.class_section?.course?.course_code} · Section {detailsSchedule.class_section?.section_code}</p></div><StatusBadge status={detailsSchedule.status} context="resource" /></div><dl className="mt-5 grid gap-3 sm:grid-cols-2">{[["Course", detailsSchedule.class_section?.course?.name ?? "—"], ["Department", detailsSchedule.class_section?.course?.department?.name ?? "—"], ["Teacher", detailsSchedule.class_section?.teachers?.map((teacher) => teacher.name).join(", ") || "Unassigned"], ["Day", DAYS[detailsSchedule.day_of_week] ?? "—"], ["Study period", detailsSchedule.time_slot?.period?.name ?? "Custom time"], ["Time", `${detailsSchedule.start_time.slice(0, 5)}–${detailsSchedule.end_time.slice(0, 5)}`], ["Classroom", detailsSchedule.classroom?.room_code ?? "—"], ["Effective dates", detailsSchedule.effective_from || detailsSchedule.effective_until ? `${detailsSchedule.effective_from ?? "Semester start"} to ${detailsSchedule.effective_until ?? "Semester end"}` : "Full semester"]].map(([label, value]) => <div key={label}><dt className="text-xs font-semibold uppercase tracking-wide text-muted">{label}</dt><dd className="mt-1 text-sm font-medium">{value}</dd></div>)}</dl><div className="mt-6 flex justify-end gap-2"><Button type="button" variant="secondary" onClick={() => setDetailsSchedule(null)}>Close</Button><Button type="button" onClick={() => { const id = detailsSchedule.id; setDetailsSchedule(null); router.push(`/schedules/${id}/edit`); }}><Pencil className="size-4" />Edit schedule</Button></div></div>}
+        {detailsSchedule && <div className="p-6"><div className="flex items-start justify-between gap-4"><div><h2 id="schedule-detail-title" className="font-display text-xl font-bold">{t("Schedule details")}</h2><p className="mt-1 text-sm text-muted">{detailsSchedule.class_section?.course?.course_code} · Section {detailsSchedule.class_section?.section_code}</p></div><StatusBadge status={detailsSchedule.status} context="resource" /></div><dl className="mt-5 grid gap-3 sm:grid-cols-2">{[["Course", detailsSchedule.class_section?.course?.name ?? "—"], ["Department", detailsSchedule.class_section?.course?.department?.name ?? "—"], ["Teacher", detailsSchedule.class_section?.teachers?.map((teacher) => teacher.name).join(", ") || "Unassigned"], ["Day", DAYS[detailsSchedule.day_of_week] ?? "—"], ["Study period", detailsSchedule.time_slot?.period?.name ?? "Custom time"], ["Time", `${detailsSchedule.start_time.slice(0, 5)}–${detailsSchedule.end_time.slice(0, 5)}`], ["Classroom", detailsSchedule.classroom?.room_code ?? "—"], ["Effective dates", detailsSchedule.effective_from || detailsSchedule.effective_until ? `${detailsSchedule.effective_from ?? "Semester start"} to ${detailsSchedule.effective_until ?? "Semester end"}` : "Full semester"]].map(([label, value]) => <div key={label}><dt className="text-xs font-semibold uppercase tracking-wide text-muted">{label}</dt><dd className="mt-1 text-sm font-medium">{value}</dd></div>)}</dl><div className="mt-6 flex justify-end gap-2"><Button type="button" variant="secondary" onClick={() => setDetailsSchedule(null)}>{t("Close")}</Button><Button type="button" onClick={() => { const id = detailsSchedule.id; setDetailsSchedule(null); router.push(`/schedules/${id}/edit`); }}><Pencil className="size-4" />{t("Edit schedule")}</Button></div></div>}
       </dialog>
     </>
   );

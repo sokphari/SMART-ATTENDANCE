@@ -398,14 +398,12 @@ export function BuildingsView() {
     <>
       <Breadcrumb items={breadcrumbItems.map((item) => ({ ...item, label: t(item.label) }))} />
       <PageHeader
-        title="Buildings & Rooms"
+        title={t("Buildings & Rooms")}
         description="Manage campus buildings, floors, and classrooms in one place."
       />
 
       <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
-        <p className="text-sm text-muted">
-          Organize classrooms by building and floor. GPS is optional for rooms.
-        </p>
+        <p className="text-sm text-muted">{t("Organize classrooms by building and floor. GPS is optional for rooms.")}</p>
         <Button variant={wizardOpen ? "secondary" : "primary"} disabled={saving}
           onClick={wizardOpen ? closeWizard : openWizard}>
           {wizardOpen ? <ArrowLeft className="size-4" /> : <Plus className="size-4" />}
@@ -435,13 +433,13 @@ export function BuildingsView() {
                 </p>
               </div>
             </div>
-            {step < 5 && <Button variant="secondary" size="icon" aria-label="Close wizard" onClick={closeWizard} disabled={saving}>
+            {step < 5 && <Button variant="secondary" size="icon" aria-label={t("Close wizard")} onClick={closeWizard} disabled={saving}>
               <X className="size-4" />
             </Button>}
           </div>
 
           {step < 5 && (
-            <ol aria-label="Building setup progress" className="grid grid-cols-2 gap-2 border-b border-hairline px-5 py-4 sm:grid-cols-4 sm:px-6">
+            <ol aria-label={t("Building setup progress")} className="grid grid-cols-2 gap-2 border-b border-hairline px-5 py-4 sm:grid-cols-4 sm:px-6">
               {steps.map((item, index) => {
                 const current = index + 1;
                 const Icon = item.icon;
@@ -476,27 +474,27 @@ export function BuildingsView() {
               <div className="grid gap-6 lg:grid-cols-[minmax(0,1.2fr)_minmax(16rem,0.8fr)]">
                 <section className="space-y-5">
                   <div>
-                    <h3 className="font-display text-base font-bold">Building details</h3>
-                    <p className="mt-1 text-sm text-muted">Choose a short code and a name staff can recognize.</p>
+                    <h3 className="font-display text-base font-bold">{t("Building details")}</h3>
+                    <p className="mt-1 text-sm text-muted">{t("Choose a short code and a name staff can recognize.")}</p>
                   </div>
                   <div className="grid gap-4 sm:grid-cols-2">
                     <div>
                       <label htmlFor="setup-building-code" className={labelStyle}>{t("Building code *")}</label>
-                      <Input className="h-11" id="setup-building-code" maxLength={30} placeholder="e.g. A1" autoComplete="off" value={buildingForm.code}
+                      <Input className="h-11" id="setup-building-code" maxLength={30} placeholder={t("e.g. A1")} autoComplete="off" value={buildingForm.code}
                         onChange={(event) => {
                           setBuildingForm((value) => ({ ...value, code: event.target.value.toUpperCase() }));
                           setFormError("");
                         }} />
-                      <p className="mt-1.5 text-xs text-muted">Short, unique, and easy to identify.</p>
+                      <p className="mt-1.5 text-xs text-muted">{t("Short, unique, and easy to identify.")}</p>
                     </div>
                     <div>
                       <label htmlFor="setup-building-name" className={labelStyle}>{t("Building name *")}</label>
-                      <Input className="h-11" id="setup-building-name" maxLength={150} placeholder="e.g. Main Campus Building A" value={buildingForm.name}
+                      <Input className="h-11" id="setup-building-name" maxLength={150} placeholder={t("e.g. Main Campus Building A")} value={buildingForm.name}
                         onChange={(event) => {
                           setBuildingForm((value) => ({ ...value, name: event.target.value }));
                           setFormError("");
                         }} />
-                      <p className="mt-1.5 text-xs text-muted">This name appears throughout room and class setup.</p>
+                      <p className="mt-1.5 text-xs text-muted">{t("This name appears throughout room and class setup.")}</p>
                     </div>
                   </div>
                   <div>
@@ -511,7 +509,7 @@ export function BuildingsView() {
                         <label htmlFor="setup-building-description" className={labelStyle}>{t("Description (optional)")}</label>
                         <textarea id="setup-building-description" rows={3} maxLength={5000}
                           className={`${selectStyle} h-auto min-h-24 py-2`}
-                          placeholder="Where is this building located?"
+                          placeholder={t("Where is this building located?")}
                           value={buildingForm.description}
                           onChange={(event) => setBuildingForm((value) => ({ ...value, description: event.target.value }))} />
                       </div>
@@ -520,14 +518,14 @@ export function BuildingsView() {
                 </section>
                 <aside className="rounded-panel border border-brand-200 bg-gradient-to-br from-brand-50 to-card p-5 dark:border-brand-700/60 dark:from-brand-950/70 dark:to-card">
                   <div className="flex size-12 items-center justify-center rounded-panel bg-brand-600 text-white shadow-soft"><Building2 className="size-6" /></div>
-                  <p className="mt-5 text-xs font-bold uppercase tracking-wide text-muted">Building preview</p>
+                  <p className="mt-5 text-xs font-bold uppercase tracking-wide text-muted">{t("Building preview")}</p>
                   <h3 className="mt-1 break-words font-display text-xl font-bold">{buildingForm.name.trim() || "Your building name"}</h3>
                   <span className="mt-3 inline-flex rounded-pill border border-brand-200 bg-card px-3 py-1 font-mono text-sm font-bold text-brand-700 dark:border-brand-400/40 dark:bg-brand-900/50 dark:text-brand-200">
                     {buildingForm.code.trim().toUpperCase() || "CODE"}
                   </span>
                   <div className="mt-5 border-t border-brand-200/70 pt-4 text-sm text-muted dark:border-brand-700/60">
-                    <p className="font-semibold text-ink">What happens next?</p>
-                    <p className="mt-1">Add floors, then add classrooms and their seating capacity. GPS coordinates are optional.</p>
+                    <p className="font-semibold text-ink">{t("What happens next?")}</p>
+                    <p className="mt-1">{t("Add floors, then add classrooms and their seating capacity. GPS coordinates are optional.")}</p>
                   </div>
                 </aside>
               </div>
@@ -535,8 +533,7 @@ export function BuildingsView() {
 
             {step === 2 && (
               <div className="space-y-3">
-                <p className="text-xs text-muted">
-                  Add floors for <strong className="text-ink">{buildingForm.name}</strong>. Use 0 for ground floor.
+                <p className="text-xs text-muted">{t("Add floors for")}<strong className="text-ink">{buildingForm.name}</strong>. Use 0 for ground floor.
                 </p>
                 {draftFloors.map((floor, index) => (
                   <div key={floor.key} className="grid gap-2 rounded-control border border-hairline p-3 sm:grid-cols-[1fr_100px_auto] sm:items-end">
@@ -562,16 +559,13 @@ export function BuildingsView() {
                   while (used.has(next)) next++;
                   setDraftFloors((value) => [...value, makeFloor(next)]);
                 }}>
-                  <Plus className="size-4" /> Add another floor
-                </Button>
+                  <Plus className="size-4" />{t("Add another floor")}</Button>
               </div>
             )}
 
             {step === 3 && (
               <div className="space-y-3">
-                <p className="text-xs text-muted">
-                  Add one or more rooms to each floor. Coordinates are only needed for GPS-based attendance.
-                </p>
+                <p className="text-xs text-muted">{t("Add one or more rooms to each floor. Coordinates are only needed for GPS-based attendance.")}</p>
                 {draftFloors.map((floor) => (
                   <section key={floor.key} className="overflow-hidden rounded-card border border-hairline">
                     <div className="flex items-center justify-between bg-canvas-subtle px-3 py-2">
@@ -586,7 +580,7 @@ export function BuildingsView() {
                           <div className="grid gap-2 sm:grid-cols-[1.3fr_0.8fr_1fr_auto] sm:items-end">
                             <div>
                               <label htmlFor={`room-code-${room.key}`} className={labelStyle}>{t("Room code *")}</label>
-                              <Input className="h-9" id={`room-code-${room.key}`} maxLength={50} placeholder="A-101" value={room.room_code}
+                              <Input className="h-9" id={`room-code-${room.key}`} maxLength={50} placeholder={t("A-101")} value={room.room_code}
                                 onChange={(event) => updateRoom(floor.key, room.key, { room_code: event.target.value.toUpperCase() })} />
                             </div>
                             <div>
@@ -609,20 +603,18 @@ export function BuildingsView() {
                           <button type="button" className="mt-3 flex items-center gap-2 text-xs font-semibold text-brand-700"
                             aria-expanded={room.advanced}
                             onClick={() => updateRoom(floor.key, room.key, { advanced: !room.advanced })}>
-                            <MapPin className="size-3.5" />
-                            GPS / Advanced settings (optional)
-                            <ChevronDown className={`size-3.5 transition-transform ${room.advanced ? "rotate-180" : ""}`} />
+                            <MapPin className="size-3.5" />{t("GPS / Advanced settings (optional)")}<ChevronDown className={`size-3.5 transition-transform ${room.advanced ? "rotate-180" : ""}`} />
                           </button>
                           {room.advanced && (
                             <div className="mt-3 grid gap-3 rounded-control bg-canvas p-3 sm:grid-cols-3">
                               <div>
                                 <label htmlFor={`room-lat-${room.key}`} className={labelStyle}>{t("Latitude")}</label>
-                                <Input id={`room-lat-${room.key}`} type="number" step="any" placeholder="11.5564" value={room.latitude}
+                                <Input id={`room-lat-${room.key}`} type="number" step="any" placeholder={t("11.5564")} value={room.latitude}
                                   onChange={(event) => updateRoom(floor.key, room.key, { latitude: event.target.value })} />
                               </div>
                               <div>
                                 <label htmlFor={`room-lng-${room.key}`} className={labelStyle}>{t("Longitude")}</label>
-                                <Input id={`room-lng-${room.key}`} type="number" step="any" placeholder="104.9282" value={room.longitude}
+                                <Input id={`room-lng-${room.key}`} type="number" step="any" placeholder={t("104.9282")} value={room.longitude}
                                   onChange={(event) => updateRoom(floor.key, room.key, { longitude: event.target.value })} />
                               </div>
                               <div>
@@ -686,7 +678,7 @@ export function BuildingsView() {
                     </div>
                   </div>
                 ))}
-                <p className="text-xs text-muted">Nothing is saved until you click Create Building.</p>
+                <p className="text-xs text-muted">{t("Nothing is saved until you click Create Building.")}</p>
               </div>
             )}
 
@@ -702,7 +694,7 @@ export function BuildingsView() {
                 </p>
                 <div className="flex flex-wrap justify-center gap-3">
                   <Button variant="secondary" onClick={() => { closeWizard(); setShowDetails(true); }}>{t("View Building")}</Button>
-                  <Button onClick={openWizard}><Plus className="size-4" /> Create Another</Button>
+                  <Button onClick={openWizard}><Plus className="size-4" />{t("Create Another")}</Button>
                 </div>
               </div>
             )}
@@ -717,14 +709,13 @@ export function BuildingsView() {
           {step < 5 && (
             <div className="flex flex-wrap items-center justify-between gap-3 border-t border-hairline px-5 py-4 sm:px-6">
               <Button variant="secondary" disabled={step === 1 || saving} onClick={() => { setStep((value) => value - 1); setFormError(""); }}>
-                <ArrowLeft className="size-4" /> Back
-              </Button>
+                <ArrowLeft className="size-4" />{t("Back")}</Button>
               {step === 4 ? (
                 <Button loading={saving} disabled={saving} onClick={() => void saveBuilding()}>
                   <Check className="size-4" /> {saving ? "Creating..." : "Create Building"}
                 </Button>
               ) : (
-                <Button onClick={goNext}>Continue <ArrowRight className="size-4" /></Button>
+                <Button onClick={goNext}>{t("Continue")}<ArrowRight className="size-4" /></Button>
               )}
             </div>
           )}
@@ -733,7 +724,7 @@ export function BuildingsView() {
 
 
       {!wizardOpen && (
-        <section aria-label="Campus buildings" className="space-y-4">
+        <section aria-label={t("Campus buildings")} className="space-y-4">
           <div className="flex flex-wrap items-end justify-between gap-3">
             <div>
               <h2 className="font-display text-lg font-bold text-ink">{t("All Buildings")}</h2>
@@ -743,7 +734,7 @@ export function BuildingsView() {
             </div>
             <div className="relative w-full sm:w-64">
               <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted" />
-              <Input aria-label="Search buildings" className="h-9 pl-9" placeholder={t("Search buildings...")}
+              <Input aria-label={t("Search buildings")} className="h-9 pl-9" placeholder={t("Search buildings...")}
                 value={search} onChange={(event) => setSearch(event.target.value)} />
             </div>
           </div>
@@ -761,22 +752,22 @@ export function BuildingsView() {
               </span>
               <div>
                 <h3 className="font-semibold">{t("No buildings yet")}</h3>
-                <p className="mt-1 text-sm text-muted">Create a building, then add floors and classrooms in one flow.</p>
+                <p className="mt-1 text-sm text-muted">{t("Create a building, then add floors and classrooms in one flow.")}</p>
               </div>
-              <Button onClick={openWizard}><Plus className="size-4" /> Add Building</Button>
+              <Button onClick={openWizard}><Plus className="size-4" />{t("Add Building")}</Button>
             </Card>
           ) : visibleBuildings.length === 0 ? (
             <Card className="p-8 text-center">
               <Search className="mx-auto mb-2 size-6 text-muted" />
               <h3 className="font-semibold">{t("No matching buildings")}</h3>
-              <p className="mt-1 text-sm text-muted">Try searching by building name or code.</p>
-              <Button variant="secondary" size="sm" className="mt-3" onClick={() => setSearch("")}>Clear search</Button>
+              <p className="mt-1 text-sm text-muted">{t("Try searching by building name or code.")}</p>
+              <Button variant="secondary" size="sm" className="mt-3" onClick={() => setSearch("")}>{t("Clear search")}</Button>
             </Card>
           ) : showDetails && selectedBuilding ? (
             <Card className="overflow-hidden">
               <div className="flex flex-wrap items-center justify-between gap-3 border-b border-hairline p-4">
                 <div className="flex min-w-0 items-center gap-3">
-                  <button type="button" onClick={() => setShowDetails(false)} aria-label="Back to all buildings"
+                  <button type="button" onClick={() => setShowDetails(false)} aria-label={t("Back to all buildings")}
                     className="flex size-9 shrink-0 items-center justify-center rounded-control border border-hairline text-muted hover:bg-brand-50 hover:text-brand-700">
                     <ArrowLeft className="size-4" />
                   </button>
@@ -805,11 +796,11 @@ export function BuildingsView() {
               <div className="space-y-4 p-4">
                 <div>
                   <h4 className="text-sm font-semibold">{t("Floors & Classrooms")}</h4>
-                  <p className="mt-1 text-xs text-muted">Select a floor to view its rooms and seating capacity.</p>
+                  <p className="mt-1 text-xs text-muted">{t("Select a floor to view its rooms and seating capacity.")}</p>
                 </div>
                 {floors.length ? (
                   <>
-                    <div role="group" aria-label="Select floor" className="flex flex-wrap gap-2">
+                    <div role="group" aria-label={t("Select floor")} className="flex flex-wrap gap-2">
                       {floors.map((floor) => (
                         <button type="button" key={floor.id} onClick={() => setSelectedFloorId(floor.id)}
                           aria-pressed={selectedFloorId === floor.id}
@@ -836,15 +827,11 @@ export function BuildingsView() {
                         ))}
                       </div>
                     ) : (
-                      <p className="rounded-control border border-dashed border-hairline p-5 text-sm text-muted">
-                        No classrooms found for this floor.
-                      </p>
+                      <p className="rounded-control border border-dashed border-hairline p-5 text-sm text-muted">{t("No classrooms found for this floor.")}</p>
                     )}
                   </>
                 ) : (
-                  <p className="rounded-control border border-dashed border-hairline p-5 text-sm text-muted">
-                    No floors have been added to this building.
-                  </p>
+                  <p className="rounded-control border border-dashed border-hairline p-5 text-sm text-muted">{t("No floors have been added to this building.")}</p>
                 )}
               </div>
             </Card>
@@ -880,8 +867,7 @@ export function BuildingsView() {
                   <button type="button"
                     onClick={() => { setSelectedBuildingId(building.id); setSelectedFloorId(0); setShowDetails(true); }}
                     aria-label={"View details for " + building.name}
-                    className="flex w-full items-center justify-between px-4 py-3 text-left text-xs font-semibold text-brand-700 transition-colors hover:bg-brand-50">
-                    View details <ChevronRight className="size-4" />
+                    className="flex w-full items-center justify-between px-4 py-3 text-left text-xs font-semibold text-brand-700 transition-colors hover:bg-brand-50">{t("View details")}<ChevronRight className="size-4" />
                   </button>
                 </article>
               ))}

@@ -426,9 +426,7 @@ export function TeacherSessionDetailView({ sessionId }: { sessionId: number }) {
           href="/teacher/attendance-sessions"
           className="inline-flex items-center gap-2 text-sm font-semibold text-brand-600"
         >
-          <ArrowLeft className="size-4" />
-          Back to sessions
-        </Link>
+          <ArrowLeft className="size-4" />{t("Back to sessions")}</Link>
         <p
           role="alert"
           className="mt-5 rounded-control bg-danger-soft p-4 text-sm text-danger"
@@ -449,18 +447,14 @@ export function TeacherSessionDetailView({ sessionId }: { sessionId: number }) {
           href="/teacher/attendance-sessions"
           className="inline-flex items-center gap-2 text-sm font-semibold text-brand-600 hover:text-brand-700"
         >
-          <ArrowLeft className="size-4" />
-          Back to sessions
-        </Link>
+          <ArrowLeft className="size-4" />{t("Back to sessions")}</Link>
         <Button
           variant="secondary"
           size="sm"
           onClick={() => void refresh(page)}
           loading={loading}
         >
-          <RefreshCw className="size-4" />
-          Refresh
-        </Button>
+          <RefreshCw className="size-4" />{t("Refresh")}</Button>
       </div>
       {error && (
         <p
@@ -537,9 +531,7 @@ export function TeacherSessionDetailView({ sessionId }: { sessionId: number }) {
           <div>
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div>
-                <h2 className="font-display text-lg font-bold">
-                  Manual attendance
-                </h2>
+                <h2 className="font-display text-lg font-bold">{t("Manual attendance")}</h2>
                 <p className="mt-1 text-sm text-muted">
                   Ask students to scan the QR or mark them manually below. QR
                   check-in is available only to students who are still Pending.
@@ -556,16 +548,11 @@ export function TeacherSessionDetailView({ sessionId }: { sessionId: number }) {
                   </Button>
                 )}
                 <Button variant="secondary" onClick={openQrDialog}>
-                  <QrCode className="size-4" />
-                  Open QR for students
-                </Button>
+                  <QrCode className="size-4" />{t("Open QR for students")}</Button>
               </div>
             </div>
             <div className="mt-3 flex flex-wrap items-center gap-3 rounded-control border border-hairline bg-canvas px-3 py-2 text-xs text-muted">
-              <span>
-                Testing with a phone? Select a Pending student and enter their
-                9-digit Attendance ID.
-              </span>
+              <span>{t("Testing with a phone? Select a Pending student and enter their 9-digit Attendance ID.")}</span>
               <button
                 type="button"
                 onClick={() => {
@@ -574,9 +561,7 @@ export function TeacherSessionDetailView({ sessionId }: { sessionId: number }) {
                   setPage(1);
                 }}
                 className="font-semibold text-brand-600 underline underline-offset-2 hover:text-brand-700"
-              >
-                Show Pending students
-              </button>
+              >{t("Show Pending students")}</button>
             </div>
             {qrError && (
               <p role="alert" className="mt-3 text-sm text-danger">
@@ -592,13 +577,13 @@ export function TeacherSessionDetailView({ sessionId }: { sessionId: number }) {
                     setSearch(event.target.value);
                     setPage(1);
                   }}
-                  placeholder="Search student name or ID"
-                  aria-label="Search students"
+                  placeholder={t("Search student name or ID")}
+                  aria-label={t("Search students")}
                   className="h-11 w-full rounded-control border border-hairline bg-card pl-10 pr-3 text-sm"
                 />
               </label>
               <select
-                aria-label="Filter attendance status"
+                aria-label={t("Filter attendance status")}
                 value={statusFilter}
                 onChange={(event) => {
                   setStatusFilter(event.target.value);
@@ -606,12 +591,12 @@ export function TeacherSessionDetailView({ sessionId }: { sessionId: number }) {
                 }}
                 className="h-11 rounded-control border border-hairline bg-card px-3 text-sm"
               >
-                <option value="">All statuses</option>
-                <option value="unmarked">Pending</option>
-                <option value="present">Present</option>
-                <option value="absent">Absent</option>
-                <option value="late">Late</option>
-                <option value="excused">Permission</option>
+                <option value="">{t("All statuses")}</option>
+                <option value="unmarked">{t("Pending")}</option>
+                <option value="present">{t("Present")}</option>
+                <option value="absent">{t("Absent")}</option>
+                <option value="late">{t("Late")}</option>
+                <option value="excused">{t("Permission")}</option>
               </select>
             </div>
             {loading && rows.length === 0 && (
@@ -649,11 +634,7 @@ export function TeacherSessionDetailView({ sessionId }: { sessionId: number }) {
                       </p>
                       <GenderBadge gender={row.gender} />
                     </div>
-                    <span
-                      className={`rounded-pill px-2.5 py-1 text-xs font-semibold ${STATUS_STYLE[displayedStatus(row)]}`}
-                    >
-                      {STATUS_LABEL[displayedStatus(row)]}
-                    </span>
+                    <StatusBadge status={displayedStatus(row)} context="attendance" />
                   </div>
                   <div className="mt-3 grid grid-cols-2 gap-2">
                     {STATUS_OPTIONS.map(
@@ -685,11 +666,11 @@ export function TeacherSessionDetailView({ sessionId }: { sessionId: number }) {
               <table className="w-full min-w-[760px] text-left text-sm">
                 <thead className="bg-canvas text-xs uppercase tracking-wide text-muted">
                   <tr>
-                    <th className="px-3 py-3">No.</th>
-                    <th className="px-3 py-3">Student</th>
-                    <th className="px-3 py-3">Gender</th>
-                    <th className="px-3 py-3">Status</th>
-                    <th className="px-3 py-3">Actions</th>
+                    <th className="px-3 py-3">{t("No.")}</th>
+                    <th className="px-3 py-3">{t("Student")}</th>
+                    <th className="px-3 py-3">{t("Gender")}</th>
+                    <th className="px-3 py-3">{t("Status")}</th>
+                    <th className="px-3 py-3">{t("Actions")}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-hairline">
@@ -727,11 +708,7 @@ export function TeacherSessionDetailView({ sessionId }: { sessionId: number }) {
                         <GenderBadge gender={row.gender} />
                       </td>
                       <td className="px-3 py-3">
-                        <span
-                          className={`rounded-pill px-2.5 py-1 text-xs font-semibold ${STATUS_STYLE[displayedStatus(row)]}`}
-                        >
-                          {STATUS_LABEL[displayedStatus(row)]}
-                        </span>
+                        <StatusBadge status={displayedStatus(row)} context="attendance" />
                         <p className="mt-1 text-[11px] text-muted">
                           {row.verification_method
                             ? row.verification_method.replaceAll("_", " ")
@@ -769,9 +746,7 @@ export function TeacherSessionDetailView({ sessionId }: { sessionId: number }) {
               </table>
             </div>
             {rows.length === 0 && !loading && (
-              <p className="py-6 text-center text-sm text-muted">
-                No enrolled students match this search and status filter.
-              </p>
+              <p className="py-6 text-center text-sm text-muted">{t("No enrolled students match this search and status filter.")}</p>
             )}
             <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
               <p className="text-xs text-muted">
@@ -783,17 +758,13 @@ export function TeacherSessionDetailView({ sessionId }: { sessionId: number }) {
                   variant="secondary"
                   disabled={page <= 1 || loading}
                   onClick={() => void refresh(page - 1)}
-                >
-                  Previous
-                </Button>
+                >{t("Previous")}</Button>
                 <Button
                   size="sm"
                   variant="secondary"
                   disabled={page >= lastPage || loading}
                   onClick={() => void refresh(page + 1)}
-                >
-                  Next
-                </Button>
+                >{t("Next")}</Button>
               </div>
             </div>
           </div>
@@ -802,7 +773,7 @@ export function TeacherSessionDetailView({ sessionId }: { sessionId: number }) {
 
       {session.status !== "open" && (
         <section className="rounded-panel border border-hairline bg-card p-5 shadow-soft">
-          <h2 className="font-display text-lg font-bold">Attendance records</h2>
+          <h2 className="font-display text-lg font-bold">{t("Attendance records")}</h2>
           <div className="mt-4 overflow-x-auto">
             <table className="w-full min-w-[580px] text-left text-sm">
               <thead className="bg-canvas text-xs uppercase tracking-wide text-muted">
@@ -837,17 +808,13 @@ export function TeacherSessionDetailView({ sessionId }: { sessionId: number }) {
               variant="secondary"
               disabled={page <= 1}
               onClick={() => void refresh(page - 1)}
-            >
-              Previous
-            </Button>
+            >{t("Previous")}</Button>
             <Button
               size="sm"
               variant="secondary"
               disabled={page >= lastPage}
               onClick={() => void refresh(page + 1)}
-            >
-              Next
-            </Button>
+            >{t("Next")}</Button>
           </div>
         </section>
       )}
@@ -874,9 +841,7 @@ export function TeacherSessionDetailView({ sessionId }: { sessionId: number }) {
             <h2
               id="permission-title"
               className="font-display text-lg font-bold"
-            >
-              Record permission
-            </h2>
+            >{t("Record permission")}</h2>
             <p id="permission-description" className="mt-2 text-sm text-muted">
               Mark {permissionStudent.name} as excused for this session. A
               reason is optional. Click Save attendance after selecting
@@ -885,16 +850,14 @@ export function TeacherSessionDetailView({ sessionId }: { sessionId: number }) {
             <label
               htmlFor="permission-reason"
               className="mt-4 block text-sm font-semibold"
-            >
-              Reason (optional)
-            </label>
+            >{t("Reason (optional)")}</label>
             <textarea
               id="permission-reason"
               value={permissionReason}
               onChange={(event) => setPermissionReason(event.target.value)}
               maxLength={1000}
               rows={3}
-              placeholder="Add a short note"
+              placeholder={t("Add a short note")}
               className="mt-2 w-full resize-y rounded-control border border-hairline bg-canvas p-3 text-sm outline-none focus:border-brand-400"
             />
             <div className="mt-5 flex justify-end gap-2">
@@ -903,13 +866,9 @@ export function TeacherSessionDetailView({ sessionId }: { sessionId: number }) {
                 variant="secondary"
                 disabled={savingAttendance}
                 onClick={() => setPermissionStudent(null)}
-              >
-                Cancel
-              </Button>
+              >{t("Cancel")}</Button>
               <Button type="submit" loading={savingAttendance}>
-                <FileCheck2 className="size-4" />
-                Select permission
-              </Button>
+                <FileCheck2 className="size-4" />{t("Select permission")}</Button>
             </div>
           </form>
         )}
@@ -931,17 +890,12 @@ export function TeacherSessionDetailView({ sessionId }: { sessionId: number }) {
               <h2
                 id="qr-dialog-title"
                 className="font-display text-lg font-bold"
-              >
-                Student attendance QR
-              </h2>
-              <p className="mt-1 text-sm text-muted">
-                Students can scan this code during the scheduled attendance
-                window.
-              </p>
+              >{t("Student attendance QR")}</h2>
+              <p className="mt-1 text-sm text-muted">{t("Students can scan this code during the scheduled attendance window.")}</p>
             </div>
             <button
               type="button"
-              aria-label="Close QR popup"
+              aria-label={t("Close QR popup")}
               onClick={() => setQrDialogOpen(false)}
               className="rounded-control px-2 py-1 text-muted hover:bg-canvas"
             >
@@ -960,7 +914,7 @@ export function TeacherSessionDetailView({ sessionId }: { sessionId: number }) {
             !qrCanGenerate &&
             session.status === "open" && (
               <div className="mt-4 rounded-control border border-amber-300 bg-amber-50 p-3 text-left text-sm text-amber-900">
-                <p className="font-semibold">Local development test only</p>
+                <p className="font-semibold">{t("Local development test only")}</p>
                 <p className="mt-1">
                   Start a temporary 1-hour QR window for this session. This
                   changes only its attendance times and invalidates existing QR
@@ -973,9 +927,7 @@ export function TeacherSessionDetailView({ sessionId }: { sessionId: number }) {
                   loading={startingLocalTest}
                   onClick={() => void handleStartLocalQrTest()}
                 >
-                  <QrCode className="size-4" />
-                  Start QR test now
-                </Button>
+                  <QrCode className="size-4" />{t("Start QR test now")}</Button>
               </div>
             )}
           <p
@@ -1057,17 +1009,13 @@ export function TeacherSessionDetailView({ sessionId }: { sessionId: number }) {
               )}
               {copied ? "Copied" : "Copy token"}
             </Button>
-            <p className="self-center text-xs text-muted">
-              QR remains the same until expiry
-            </p>
+            <p className="self-center text-xs text-muted">{t("QR remains the same until expiry")}</p>
           </div>
           <Button
             className="mt-4 w-full"
             variant="secondary"
             onClick={() => setQrDialogOpen(false)}
-          >
-            Close
-          </Button>
+          >{t("Close")}</Button>
         </div>
       </dialog>
 
@@ -1092,17 +1040,13 @@ export function TeacherSessionDetailView({ sessionId }: { sessionId: number }) {
                   <h2
                     id="save-summary-title"
                     className="font-display text-xl font-bold"
-                  >
-                    Attendance saved
-                  </h2>
-                  <p className="mt-1 text-sm text-muted">
-                    Your changes were saved successfully.
-                  </p>
+                  >{t("Attendance saved")}</h2>
+                  <p className="mt-1 text-sm text-muted">{t("Your changes were saved successfully.")}</p>
                 </div>
               </div>
               <button
                 type="button"
-                aria-label="Close attendance summary"
+                aria-label={t("Close attendance summary")}
                 onClick={() => setSaveSummaryDialogOpen(false)}
                 className="rounded-control px-2 py-1 text-muted hover:bg-canvas"
               >
@@ -1111,25 +1055,25 @@ export function TeacherSessionDetailView({ sessionId }: { sessionId: number }) {
             </div>
             <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
               <div className="rounded-control border border-emerald-500/15 bg-emerald-500/10 p-3">
-                <p className="text-xs text-muted">Present</p>
+                <p className="text-xs text-muted">{t("Present")}</p>
                 <p className="mt-1 text-2xl font-bold text-emerald-400">
                   {savedSummary.present}
                 </p>
               </div>
               <div className="rounded-control border border-rose-500/15 bg-rose-500/10 p-3">
-                <p className="text-xs text-muted">Absent</p>
+                <p className="text-xs text-muted">{t("Absent")}</p>
                 <p className="mt-1 text-2xl font-bold text-rose-300">
                   {savedSummary.absent}
                 </p>
               </div>
               <div className="rounded-control border border-amber-500/15 bg-amber-500/10 p-3">
-                <p className="text-xs text-muted">Late</p>
+                <p className="text-xs text-muted">{t("Late")}</p>
                 <p className="mt-1 text-2xl font-bold text-amber-300">
                   {savedSummary.late}
                 </p>
               </div>
               <div className="rounded-control border border-blue-500/15 bg-blue-500/10 p-3">
-                <p className="text-xs text-muted">Permission</p>
+                <p className="text-xs text-muted">{t("Permission")}</p>
                 <p className="mt-1 text-2xl font-bold text-blue-300">
                   {savedSummary.excused}
                 </p>
@@ -1137,10 +1081,8 @@ export function TeacherSessionDetailView({ sessionId }: { sessionId: number }) {
             </div>
             <div className="mt-4 flex items-center justify-between rounded-control border border-hairline bg-canvas p-4">
               <div>
-                <p className="text-sm font-semibold">Pending attendance</p>
-                <p className="mt-1 text-xs text-muted">
-                  Students still waiting for a status
-                </p>
+                <p className="text-sm font-semibold">{t("Pending attendance")}</p>
+                <p className="mt-1 text-xs text-muted">{t("Students still waiting for a status")}</p>
               </div>
               <p className="font-display text-xl font-bold">
                 {savedSummary.unmarked}
@@ -1155,9 +1097,7 @@ export function TeacherSessionDetailView({ sessionId }: { sessionId: number }) {
               students absent.
             </p>
             <div className="mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
-              <Button onClick={() => setSaveSummaryDialogOpen(false)}>
-                Cancel
-              </Button>
+              <Button onClick={() => setSaveSummaryDialogOpen(false)}>{t("Cancel")}</Button>
               <Button
                 variant="danger"
                 loading={closing}
@@ -1165,9 +1105,7 @@ export function TeacherSessionDetailView({ sessionId }: { sessionId: number }) {
                   setSaveSummaryDialogOpen(false);
                   void handleClose();
                 }}
-              >
-                Close session
-              </Button>
+              >{t("Close session")}</Button>
             </div>
           </div>
         )}

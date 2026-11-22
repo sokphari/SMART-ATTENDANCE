@@ -67,22 +67,18 @@ export function SemestersView() {
   return (
     <>
       <PageHeader
-        title="Semesters"
+        title={t("Semesters")}
         description="Schedule semester date ranges within academic years."
         actions={
           <Button
             onClick={() => router.push("/semesters/create")}
             disabled={years.length === 0}
           >
-            <Plus className="size-4" />
-            Create semester
-          </Button>
+            <Plus className="size-4" />{t("Create semester")}</Button>
         }
       />
       {years.length === 0 && (
-        <p className="mb-4 rounded-control bg-warning-soft px-4 py-3 text-sm text-warning">
-          Create an academic year before adding semesters.
-        </p>
+        <p className="mb-4 rounded-control bg-warning-soft px-4 py-3 text-sm text-warning">{t("Create an academic year before adding semesters.")}</p>
       )}
       <div className="mb-5 grid gap-3 sm:grid-cols-3">
         <Card className="flex min-h-28 items-center gap-4 p-5">
@@ -90,7 +86,7 @@ export function SemestersView() {
             <CalendarDays className="size-6" />
           </span>
           <div>
-            <p className="text-sm text-muted">Matching semesters</p>
+            <p className="text-sm text-muted">{t("Matching semesters")}</p>
             <p className="font-display mt-1 text-2xl font-bold">{total}</p>
           </div>
         </Card>
@@ -99,7 +95,7 @@ export function SemestersView() {
             <CalendarDays className="size-6" />
           </span>
           <div>
-            <p className="text-sm text-muted">Active on this page</p>
+            <p className="text-sm text-muted">{t("Active on this page")}</p>
             <p className="font-display mt-1 text-2xl font-bold">
               {activeCount}
             </p>
@@ -110,7 +106,7 @@ export function SemestersView() {
             <CalendarDays className="size-6" />
           </span>
           <div>
-            <p className="text-sm text-muted">Academic years</p>
+            <p className="text-sm text-muted">{t("Academic years")}</p>
             <p className="font-display mt-1 text-2xl font-bold">
               {years.length}
             </p>
@@ -122,8 +118,8 @@ export function SemestersView() {
           <div className="relative min-w-0 flex-1">
             <Search className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted" />
             <Input
-              aria-label="Search semesters"
-              placeholder="Search semester name"
+              aria-label={t("Search semesters")}
+              placeholder={t("Search semester name")}
               value={search}
               onChange={(event) => {
                 setSearch(event.target.value);
@@ -133,7 +129,7 @@ export function SemestersView() {
             />
           </div>
           <select
-            aria-label="Filter by academic year"
+            aria-label={t("Filter by academic year")}
             value={yearId}
             onChange={(event) => {
               setYearId(event.target.value);
@@ -141,7 +137,7 @@ export function SemestersView() {
             }}
             className="h-11 rounded-control border border-hairline bg-card px-3 text-sm text-ink"
           >
-            <option value="">All academic years</option>
+            <option value="">{t("All academic years")}</option>
             {years.map((year) => (
               <option key={year.id} value={year.id}>
                 {year.name}
@@ -154,7 +150,7 @@ export function SemestersView() {
               setStatus(value);
               setPage(1);
             }}
-            label="Filter by semester status"
+            label={t("Filter by semester status")}
             options={[{ value: "upcoming" }, { value: "active" }, { value: "completed" }]}
             className="h-11"
           />
@@ -188,9 +184,7 @@ export function SemestersView() {
                 </tr>
               ) : items.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="px-5 py-12 text-center text-muted">
-                    No semesters found.
-                  </td>
+                  <td colSpan={6} className="px-5 py-12 text-center text-muted">{t("No semesters found.")}</td>
                 </tr>
               ) : (
                 items.map((semester) => (
@@ -217,8 +211,8 @@ export function SemestersView() {
                         onClick={() =>
                           router.push(`/semesters/${semester.id}/edit`)
                         }
-                        aria-label="Edit semester"
-                        title="Edit semester"
+                        aria-label={t("Edit semester")}
+                        title={t("Edit semester")}
                         className="
                         border-blue-500/20
                         bg-blue-500/10 text-blue-400
@@ -248,17 +242,13 @@ export function SemestersView() {
               size="sm"
               disabled={page <= 1 || loading}
               onClick={() => setPage((value) => value - 1)}
-            >
-              Previous
-            </Button>
+            >{t("Previous")}</Button>
             <Button
               variant="secondary"
               size="sm"
               disabled={page >= lastPage || loading}
               onClick={() => setPage((value) => value + 1)}
-            >
-              Next
-            </Button>
+            >{t("Next")}</Button>
           </div>
         </div>
       </Card>

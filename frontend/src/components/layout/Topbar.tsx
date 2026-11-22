@@ -14,6 +14,7 @@ import {
   Search,
   Sun,
   UserRound,
+  Settings,
   UsersRound,
   Maximize,
   Minimize,
@@ -143,7 +144,7 @@ export function Topbar({
         <Link
           href="/dashboard"
           className="flex items-center gap-2 lg:hidden"
-          aria-label="Smart Attendance home"
+          aria-label={t("Smart Attendance home")}
         >
           <BrandLogo iconSize={30} />
         </Link>
@@ -167,7 +168,7 @@ export function Topbar({
             placeholder={t("Search workspace")}
             className="h-9 w-52 rounded-control border border-hairline bg-card pl-9 pr-11 text-xs text-ink outline-none transition focus:border-brand-400 focus:ring-4 focus:ring-brand-100"
           />
-          <kbd aria-hidden="true" className="pointer-events-none absolute top-1/2 right-2 -translate-y-1/2 rounded border border-hairline bg-canvas px-1.5 py-0.5 text-[9px] font-medium leading-none text-muted">Ctrl K</kbd>
+          <kbd aria-hidden="true" className="pointer-events-none absolute top-1/2 right-2 -translate-y-1/2 rounded border border-hairline bg-canvas px-1.5 py-0.5 text-[9px] font-medium leading-none text-muted">{t("Ctrl K")}</kbd>
         </form>
       </div>
 
@@ -272,7 +273,7 @@ export function Topbar({
               <>
                 <button
                   type="button"
-                  aria-label="Close profile menu"
+                  aria-label={t("Close profile menu")}
                   className="fixed inset-0 z-40 cursor-default"
                   onClick={() => setProfileOpen(false)}
                 />
@@ -289,6 +290,25 @@ export function Topbar({
                   </div>
                   {isAdmin && (
                     <>
+                      <Link
+                        href="/profile"
+                        role="menuitem"
+                        onClick={() => setProfileOpen(false)}
+                        className="mt-1 flex min-h-10 w-full items-center gap-2.5 rounded-control px-3 py-2.5 text-sm font-semibold text-ink transition-colors hover:bg-canvas"
+                      >
+                        <UserRound className="size-4 text-muted" />
+                        {t("My profile")}
+                      </Link>
+                      <Link
+                        href="/settings"
+                        role="menuitem"
+                        onClick={() => setProfileOpen(false)}
+                        className="flex min-h-10 w-full items-center gap-2.5 rounded-control px-3 py-2.5 text-sm font-semibold text-ink transition-colors hover:bg-canvas"
+                      >
+                        <Settings className="size-4 text-muted" />
+                        {t("Settings")}
+                      </Link>
+                      <div className="my-1 border-t border-hairline" />
                       <Link
                         href="/users"
                         role="menuitem"

@@ -1,5 +1,7 @@
 "use client";
 
+import { useLocale } from "@/i18n/LocaleProvider";
+
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Check, LockKeyhole, RotateCcw, ShieldCheck } from "lucide-react";
 import { ApiError } from "@/lib/api/client";
@@ -22,6 +24,7 @@ const MODULE_DESCRIPTIONS: Record<string, string> = {
 };
 
 export function RolePermissionsView() {
+  const { t } = useLocale();
   const [modules, setModules] = useState<TeacherModulePermission[]>([]);
   const [saved, setSaved] = useState<Record<string, boolean>>({});
   const [loading, setLoading] = useState(true);
@@ -112,7 +115,7 @@ export function RolePermissionsView() {
   return (
     <>
       <PageHeader
-        title="Roles & permissions"
+        title={t("Roles & permissions")}
         description="Choose which parts of Smart Attendance teacher accounts can access."
         actions={
           <div className="flex items-center gap-2">
@@ -122,18 +125,14 @@ export function RolePermissionsView() {
                 onClick={discardChanges}
                 disabled={saving}
               >
-                <RotateCcw className="size-4" />
-                Discard
-              </Button>
+                <RotateCcw className="size-4" />{t("Discard")}</Button>
             )}
             <Button
               onClick={() => void save()}
               loading={saving}
               disabled={!dirty || loading || modules.length === 0}
             >
-              <Check className="size-4" />
-              Save changes
-            </Button>
+              <Check className="size-4" />{t("Save changes")}</Button>
           </div>
         }
       />
@@ -158,9 +157,7 @@ export function RolePermissionsView() {
             size="sm"
             onClick={() => void load()}
             disabled={loading}
-          >
-            Try again
-          </Button>
+          >{t("Try again")}</Button>
         </div>
       )}
 
@@ -171,9 +168,7 @@ export function RolePermissionsView() {
               <ShieldCheck className="size-6" />
             </span>
             <div>
-              <h2 className="font-display text-lg font-bold">
-                Teacher role access
-              </h2>
+              <h2 className="font-display text-lg font-bold">{t("Teacher role access")}</h2>
               <p className="mt-1 max-w-2xl text-sm text-muted">
                 These settings apply to every teacher account. Disabled modules
                 disappear from teacher navigation and are blocked by Laravel
@@ -193,9 +188,7 @@ export function RolePermissionsView() {
             Loading permissions…
           </p>
         ) : modules.length === 0 ? (
-          <div className="p-8 text-center text-sm text-muted">
-            No teacher permissions were returned.
-          </div>
+          <div className="p-8 text-center text-sm text-muted">{t("No teacher permissions were returned.")}</div>
         ) : (
           <div className="divide-y divide-hairline">
             {modules.map((module) => (
@@ -245,9 +238,7 @@ export function RolePermissionsView() {
         )}
 
         {dirty && !loading && (
-          <div className="border-t border-warning/20 bg-warning-soft/50 px-5 py-3 text-xs font-medium text-warning sm:px-6">
-            You have unsaved changes. Save to apply them to teacher accounts.
-          </div>
+          <div className="border-t border-warning/20 bg-warning-soft/50 px-5 py-3 text-xs font-medium text-warning sm:px-6">{t("You have unsaved changes. Save to apply them to teacher accounts.")}</div>
         )}
       </Card>
     </>

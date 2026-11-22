@@ -86,23 +86,21 @@ export function ReportsView() {
   return (
     <>
       <PageHeader
-        title="Attendance Reports"
+        title={t("Attendance Reports")}
         description="Aggregated attendance statistics, participation rates, and section-by-section breakdown."
       />
 
       {/* Filter Bar */}
       <Card className="mb-5 p-4">
         <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
-          <div className="flex-1 text-xs font-semibold text-muted">
-            FILTER ANALYTICS
-          </div>
+          <div className="flex-1 text-xs font-semibold text-muted">{t("FILTER ANALYTICS")}</div>
           <select
-            aria-label="Filter by semester"
+            aria-label={t("Filter by semester")}
             value={semesterId}
             onChange={(e) => setSemesterId(e.target.value)}
             className="h-10 rounded-control border border-hairline bg-card px-3 text-xs text-ink"
           >
-            <option value="">All Semesters</option>
+            <option value="">{t("All Semesters")}</option>
             {semesters.map((s) => (
               <option key={s.id} value={s.id}>
                 {s.name} {s.academic_year ? `(${s.academic_year.name})` : ""}
@@ -110,12 +108,12 @@ export function ReportsView() {
             ))}
           </select>
           <select
-            aria-label="Filter by section"
+            aria-label={t("Filter by section")}
             value={sectionId}
             onChange={(e) => setSectionId(e.target.value)}
             className="h-10 rounded-control border border-hairline bg-card px-3 text-xs text-ink"
           >
-            <option value="">All Class Sections</option>
+            <option value="">{t("All Class Sections")}</option>
             {sections.map((sec) => (
               <option key={sec.id} value={sec.id}>
                 {sec.course?.course_code} Sec {sec.section_code}
@@ -125,7 +123,7 @@ export function ReportsView() {
           <div className="flex items-center gap-2">
             <Input
               type="date"
-              aria-label="Date from"
+              aria-label={t("Date from")}
               value={dateFrom}
               onChange={(e) => setDateFrom(e.target.value)}
               className="h-10 w-36 text-xs"
@@ -133,7 +131,7 @@ export function ReportsView() {
             <span className="text-xs text-muted">to</span>
             <Input
               type="date"
-              aria-label="Date to"
+              aria-label={t("Date to")}
               value={dateTo}
               onChange={(e) => setDateTo(e.target.value)}
               className="h-10 w-36 text-xs"
@@ -149,9 +147,7 @@ export function ReportsView() {
                 setDateFrom("");
                 setDateTo("");
               }}
-            >
-              Reset
-            </Button>
+            >{t("Reset")}</Button>
           )}
         </div>
       </Card>
@@ -172,7 +168,7 @@ export function ReportsView() {
             <TrendingUp className="size-6" />
           </div>
           <div>
-            <p className="text-xs text-muted">Attendance Rate</p>
+            <p className="text-xs text-muted">{t("Attendance Rate")}</p>
             <p className="font-display text-2xl font-bold text-ink">
               {loading ? "…" : `${rate}%`}
             </p>
@@ -184,7 +180,7 @@ export function ReportsView() {
             <UserCheck className="size-6" />
           </div>
           <div>
-            <p className="text-xs text-muted">Present Total</p>
+            <p className="text-xs text-muted">{t("Present Total")}</p>
             <p className="font-display text-2xl font-bold text-ink">
               {loading ? "…" : (report?.by_status.present ?? 0)}
             </p>
@@ -196,7 +192,7 @@ export function ReportsView() {
             <Clock className="size-6" />
           </div>
           <div>
-            <p className="text-xs text-muted">Late Arrivals</p>
+            <p className="text-xs text-muted">{t("Late Arrivals")}</p>
             <p className="font-display text-2xl font-bold text-ink">
               {loading ? "…" : (report?.by_status.late ?? 0)}
             </p>
@@ -208,7 +204,7 @@ export function ReportsView() {
             <UserX className="size-6" />
           </div>
           <div>
-            <p className="text-xs text-muted">Total Absences</p>
+            <p className="text-xs text-muted">{t("Total Absences")}</p>
             <p className="font-display text-2xl font-bold text-ink">
               {loading ? "…" : (report?.by_status.absent ?? 0)}
             </p>
@@ -219,7 +215,7 @@ export function ReportsView() {
       {/* Visual Rate Bar */}
       <Card className="mb-5 p-5">
         <div className="flex items-center justify-between text-xs font-semibold text-ink">
-          <span>Overall Health Indicator</span>
+          <span>{t("Overall Health Indicator")}</span>
           <span>{rate}% present or late</span>
         </div>
         <div className="mt-2.5 h-3.5 w-full overflow-hidden rounded-full bg-canvas">
@@ -244,12 +240,8 @@ export function ReportsView() {
       {/* Per-Section Breakdown Table */}
       <Card className="overflow-hidden">
         <div className="border-b border-hairline p-4">
-          <h3 className="font-display text-base font-bold text-ink">
-            Breakdown by Class Section
-          </h3>
-          <p className="text-xs text-muted">
-            Section-level totals and performance metrics.
-          </p>
+          <h3 className="font-display text-base font-bold text-ink">{t("Breakdown by Class Section")}</h3>
+          <p className="text-xs text-muted">{t("Section-level totals and performance metrics.")}</p>
         </div>
 
         <div className="overflow-x-auto">
@@ -275,9 +267,7 @@ export function ReportsView() {
                 </tr>
               ) : !report?.by_section || report.by_section.length === 0 ? (
                 <tr>
-                  <td colSpan={8} className="px-5 py-12 text-center text-muted">
-                    No section attendance recorded for this filter.
-                  </td>
+                  <td colSpan={8} className="px-5 py-12 text-center text-muted">{t("No section attendance recorded for this filter.")}</td>
                 </tr>
               ) : (
                 report.by_section.map((sec) => (

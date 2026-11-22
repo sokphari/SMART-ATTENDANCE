@@ -1,4 +1,7 @@
+"use client";
+
 import { cx } from "@/lib/utils/cx";
+import { useBranding } from "@/components/branding/BrandingProvider";
 
 type BrandIconProps = {
   size?: number;
@@ -7,6 +10,10 @@ type BrandIconProps = {
 };
 
 export function BrandIcon({ size = 40, variant = "full", className }: BrandIconProps) {
+  const { branding } = useBranding();
+  if (branding.logo_url && variant === "full") {
+    return <img src={branding.logo_url} alt="" width={size} height={size} className={cx("shrink-0 rounded-[28%] object-contain", className)} />;
+  }
   if (variant === "monogram") {
     return (
       <svg aria-hidden="true" width={size} height={size} viewBox="0 0 64 64" className={className}>
@@ -49,12 +56,15 @@ type BrandLogoProps = {
 };
 
 export function BrandLogo({ className, iconSize = 40, showKhmer = true, inverse = false, centered = false }: BrandLogoProps) {
+  const { branding } = useBranding();
+  const name = branding.system_name.trim().split(/\s+/);
+  const accent = name.pop();
   return (
-    <span className={cx("inline-flex min-w-0 items-center gap-2.5", centered && "justify-center", className)} aria-label="Smart Attendance · ប្រព័ន្ធគ្រប់គ្រងវត្តមានឆ្លាតវៃ">
+    <span className={cx("inline-flex min-w-0 items-center gap-2.5", centered && "justify-center", className)} aria-label={`${branding.system_name} · ប្រព័ន្ធគ្រប់គ្រងវត្តមានឆ្លាតវៃ`}>
       <BrandIcon size={iconSize} className="shrink-0" />
       <span className="flex min-w-0 flex-col leading-tight">
         <span className={cx("whitespace-nowrap font-display text-[15px] font-extrabold tracking-tight", inverse ? "text-white" : "text-slate-950 dark:text-white")}>
-          Smart <span className={inverse ? "text-blue-200" : "text-brand-600"}>Attendance</span>
+          {name.length ? <>{name.join(" ")} </> : null}<span className={inverse ? "text-blue-200" : "text-brand-600"}>{accent}</span>
         </span>
         {showKhmer && <span lang="km" className={cx("mt-0.5 whitespace-nowrap text-[10px] font-medium", inverse ? "text-white/75" : "text-muted")}>
           ប្រព័ន្ធគ្រប់គ្រងវត្តមានឆ្លាតវៃ

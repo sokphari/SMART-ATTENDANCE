@@ -15,6 +15,8 @@ class AttendanceServices
     public function paginateForTeacher(Teacher $teacher, array $filters = []): LengthAwarePaginator
     {
         return Attendance::query()
+            ->select('attendances.*')
+            ->join('attendance_sessions', 'attendance_sessions.id', '=', 'attendances.attendance_session_id')
             ->with([
                 'attendanceSession.classSection.course.department',
                 'attendanceSession.teacher.user',
@@ -43,7 +45,8 @@ class AttendanceServices
             ->when($filters['date_to'] ?? null, fn ($query, string $date) => $query->whereHas(
                 'attendanceSession', fn ($session) => $session->whereDate('session_date', '<=', $date)
             ))
-            ->orderByDesc('id')
+            ->orderByDesc('attendance_sessions.session_date')
+            ->orderByDesc('attendances.id')
             ->paginate((int) ($filters['per_page'] ?? 15))
             ->withQueryString();
     }
@@ -54,6 +57,8 @@ class AttendanceServices
     public function paginate(array $filters = []): LengthAwarePaginator
     {
         return Attendance::query()
+            ->select('attendances.*')
+            ->join('attendance_sessions', 'attendance_sessions.id', '=', 'attendances.attendance_session_id')
             ->with([
                 'attendanceSession.classSection.course.department',
                 'attendanceSession.teacher.user',
@@ -106,7 +111,8 @@ class AttendanceServices
                     fn ($query) => $query->whereDate('session_date', '<=', $dateTo)
                 )
             )
-            ->orderByDesc('id')
+            ->orderByDesc('attendance_sessions.session_date')
+            ->orderByDesc('attendances.id')
             ->paginate((int) ($filters['per_page'] ?? 15))
             ->withQueryString();
     }

@@ -1,5 +1,7 @@
 "use client";
 
+import { useLocale } from "@/i18n/LocaleProvider";
+
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { ArrowLeft, GraduationCap } from "lucide-react";
@@ -12,6 +14,7 @@ import { fetchTeacher } from "../api";
 import type { Teacher } from "../types";
 
 export function TeacherProfileView() {
+  const { t } = useLocale();
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
   const [teacher, setTeacher] = useState<Teacher | null>(null);
@@ -25,7 +28,7 @@ export function TeacherProfileView() {
   }, [id]);
 
   return <>
-    <PageHeader title="Teacher profile" description="Teacher contact, department, and account details." actions={<div className="flex gap-2"><Button variant="secondary" size="sm" onClick={() => router.push("/teachers")}><ArrowLeft className="size-4" />Back to teachers</Button>{teacher && <Button size="sm" onClick={() => router.push(`/teachers/${teacher.id}/edit`)}>Edit teacher</Button>}</div>} />
+    <PageHeader title={t("Teacher profile")} description="Teacher contact, department, and account details." actions={<div className="flex gap-2"><Button variant="secondary" size="sm" onClick={() => router.push("/teachers")}><ArrowLeft className="size-4" />{t("Back to teachers")}</Button>{teacher && <Button size="sm" onClick={() => router.push(`/teachers/${teacher.id}/edit`)}>{t("Edit teacher")}</Button>}</div>} />
     {error && <p role="alert" className="mb-4 rounded-control bg-danger-soft px-4 py-3 text-sm text-danger">{error}</p>}
     {loading ? <Card className="w-full p-8 text-sm text-muted">Loading teacher…</Card> : teacher && <Card className="w-full p-5 sm:p-7">
       <div className="flex items-center gap-4 border-b border-hairline pb-5"><span className="flex size-14 items-center justify-center rounded-full bg-brand-50 text-brand-600"><GraduationCap className="size-7" /></span><div><h2 className="font-display text-xl font-bold">{teacher.user?.name ?? "Teacher"}</h2><p className="mt-1 text-sm text-muted">{teacher.teacher_code}</p><div className="mt-2"><StatusBadge status={teacher.user?.status} context="account" /></div></div></div>

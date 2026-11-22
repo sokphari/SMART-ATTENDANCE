@@ -2,7 +2,7 @@
 
 import { useLocale } from "@/i18n/LocaleProvider";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   AlertCircle,
   Clock,
@@ -41,8 +41,10 @@ export function AttendanceView() {
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const requestSequence = useRef(0);
 
   const loadAttendance = useCallback(async () => {
+    const requestId = ++requestSequence.current;
     setLoading(true);
     setError("");
     const params = new URLSearchParams({ page: String(page), per_page: "15" });
@@ -54,22 +56,27 @@ export function AttendanceView() {
 
     try {
       const result = await fetchAttendanceRecords(params);
+      if (requestId !== requestSequence.current) return;
       setItems(result.data);
       setTotal(result.meta?.total ?? result.data.length);
       setLastPage(result.meta?.last_page ?? 1);
     } catch (caught) {
+      if (requestId !== requestSequence.current) return;
       setError(
         caught instanceof ApiError
           ? caught.message
           : "Could not load attendance logs.",
       );
     } finally {
-      setLoading(false);
+      if (requestId === requestSequence.current) setLoading(false);
     }
   }, [dateFrom, dateTo, page, search, sectionId, status]);
 
   useEffect(() => {
     void loadAttendance();
+    return () => {
+      requestSequence.current += 1;
+    };
   }, [loadAttendance]);
 
   useEffect(() => {
@@ -180,51 +187,60 @@ export function AttendanceView() {
               </Button>
             )}
           </div>
-          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-[minmax(15rem,1.5fr)_repeat(2,minmax(10rem,1fr))_repeat(2,minmax(9rem,0.85fr))]">
-          <div className="relative min-w-0">
-            <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted" />
-            <Input
-              aria-label={t("Search attendance records")}
-              placeholder={t("Search by student name or code")}
-              value={search}
+          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
+          <label className="flex min-w-0 flex-col gap-1 text-xs font-semibold text-muted">
+            {t("Search")}
+            <div className="relative">
+              <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted" />
+              <Input
+                aria-label={t("Search attendance records")}
+                placeholder={t("Search by student name or code")}
+                value={search}
+                onChange={(e) => {
+                  setSearch(e.target.value);
+                  setPage(1);
+                }}
+                className="h-11 w-full pl-9 text-sm"
+              />
+            </div>
+          </label>
+          <label className="flex min-w-0 flex-col gap-1 text-xs font-semibold text-muted">
+            {t("Section")}
+            <select
+              aria-label={t("Filter by section")}
+              value={sectionId}
               onChange={(e) => {
-                setSearch(e.target.value);
+                setSectionId(e.target.value);
                 setPage(1);
               }}
-              className="pl-9"
-            />
-          </div>
-          <select
-            aria-label={t("Filter by section")}
-            value={sectionId}
-            onChange={(e) => {
-              setSectionId(e.target.value);
-              setPage(1);
-            }}
-            className="h-11 min-w-0 rounded-control border border-hairline bg-card px-3 text-sm text-ink outline-none focus-visible:border-brand-500 focus-visible:ring-2 focus-visible:ring-brand-100"
-          >
-            <option value="">{t("All sections")}</option>
-            {sections.map((s) => (
-              <option key={s.id} value={s.id}>
-                {s.course?.course_code} · {t("Section")} {s.section_code}
-              </option>
-            ))}
-          </select>
-          <select
-            aria-label={t("Filter by status")}
-            value={status}
-            onChange={(e) => {
-              setStatus(e.target.value);
-              setPage(1);
-            }}
-            className="h-11 min-w-0 rounded-control border border-hairline bg-card px-3 text-sm text-ink outline-none focus-visible:border-brand-500 focus-visible:ring-2 focus-visible:ring-brand-100"
-          >
-            <option value="">{t("All statuses")}</option>
-            <option value="present">{t("Present")}</option>
-            <option value="late">{t("Late")}</option>
-            <option value="absent">{t("Absent")}</option>
-            <option value="excused">{t("Excused")}</option>
-          </select>
+              className="h-11 w-full min-w-0 rounded-control border border-hairline bg-card px-3 text-sm font-normal text-ink outline-none focus-visible:border-brand-500 focus-visible:ring-2 focus-visible:ring-brand-100"
+            >
+              <option value="">{t("All sections")}</option>
+              {sections.map((s) => (
+                <option key={s.id} value={s.id}>
+                  {s.course?.course_code} · {t("Section")} {s.section_code}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="flex min-w-0 flex-col gap-1 text-xs font-semibold text-muted">
+            {t("Status")}
+            <select
+              aria-label={t("Filter by status")}
+              value={status}
+              onChange={(e) => {
+                setStatus(e.target.value);
+                setPage(1);
+              }}
+              className="h-11 w-full min-w-0 rounded-control border border-hairline bg-card px-3 text-sm font-normal text-ink outline-none focus-visible:border-brand-500 focus-visible:ring-2 focus-visible:ring-brand-100"
+            >
+              <option value="">{t("All statuses")}</option>
+              <option value="present">{t("Present")}</option>
+              <option value="late">{t("Late")}</option>
+              <option value="absent">{t("Absent")}</option>
+              <option value="excused">{t("Excused")}</option>
+            </select>
+          </label>
           <label className="flex min-w-0 flex-col gap-1 text-xs font-semibold text-muted">
             {t("From date")}
             <Input

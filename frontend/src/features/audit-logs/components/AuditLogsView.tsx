@@ -75,7 +75,7 @@ export function AuditLogsView() {
   return (
     <>
       <PageHeader
-        title="Audit Logs"
+        title={t("Audit Logs")}
         description="Immutable system trail tracking security actions, attendance corrections, and administrative reviews."
       />
 
@@ -85,7 +85,7 @@ export function AuditLogsView() {
             <ScrollText className="size-5" />
           </span>
           <div>
-            <p className="text-xs text-muted">Total events</p>
+            <p className="text-xs text-muted">{t("Total events")}</p>
             <p className="font-display mt-0.5 text-xl font-bold">{total}</p>
           </div>
         </Card>
@@ -94,7 +94,7 @@ export function AuditLogsView() {
             <Shield className="size-5" />
           </span>
           <div>
-            <p className="text-xs text-muted">Audited Actions</p>
+            <p className="text-xs text-muted">{t("Audited Actions")}</p>
             <p className="font-display mt-0.5 text-xl font-bold">100% Verified</p>
           </div>
         </Card>
@@ -103,8 +103,8 @@ export function AuditLogsView() {
             <Globe className="size-5" />
           </span>
           <div>
-            <p className="text-xs text-muted">Client Trace</p>
-            <p className="font-display mt-0.5 text-xl font-bold">IP & Actor</p>
+            <p className="text-xs text-muted">{t("Client Trace")}</p>
+            <p className="font-display mt-0.5 text-xl font-bold">{t("IP & Actor")}</p>
           </div>
         </Card>
       </div>
@@ -114,8 +114,8 @@ export function AuditLogsView() {
           <div className="relative min-w-0 flex-1">
             <Search className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted" />
             <Input
-              aria-label="Filter action"
-              placeholder="Filter by action name (e.g. attendance_correction.approved)"
+              aria-label={t("Filter action")}
+              placeholder={t("Filter by action name (e.g. attendance_correction.approved)")}
               value={action}
               onChange={(e) => {
                 setAction(e.target.value);
@@ -127,7 +127,7 @@ export function AuditLogsView() {
           <div className="flex items-center gap-2">
             <Input
               type="date"
-              aria-label="Date from"
+              aria-label={t("Date from")}
               value={dateFrom}
               onChange={(e) => {
                 setDateFrom(e.target.value);
@@ -138,7 +138,7 @@ export function AuditLogsView() {
             <span className="text-xs text-muted">to</span>
             <Input
               type="date"
-              aria-label="Date to"
+              aria-label={t("Date to")}
               value={dateTo}
               onChange={(e) => {
                 setDateTo(e.target.value);
@@ -179,9 +179,7 @@ export function AuditLogsView() {
                 </tr>
               ) : items.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="px-5 py-12 text-center text-muted">
-                    No audit records match these filters.
-                  </td>
+                  <td colSpan={6} className="px-5 py-12 text-center text-muted">{t("No audit records match these filters.")}</td>
                 </tr>
               ) : (
                 items.map((log) => (
@@ -225,9 +223,7 @@ export function AuditLogsView() {
                           size="sm"
                           onClick={() => setActiveLog(log)}
                         >
-                          <Eye className="size-3.5" />
-                          Inspect diff
-                        </Button>
+                          <Eye className="size-3.5" />{t("Inspect diff")}</Button>
                       )}
                     </td>
                   </tr>
@@ -248,17 +244,13 @@ export function AuditLogsView() {
               size="sm"
               disabled={page <= 1 || loading}
               onClick={() => setPage((v) => v - 1)}
-            >
-              Previous
-            </Button>
+            >{t("Previous")}</Button>
             <Button
               variant="secondary"
               size="sm"
               disabled={page >= lastPage || loading}
               onClick={() => setPage((v) => v + 1)}
-            >
-              Next
-            </Button>
+            >{t("Next")}</Button>
           </div>
         </div>
       </Card>
@@ -287,9 +279,7 @@ export function AuditLogsView() {
 
             <div className="mt-4 grid gap-4 sm:grid-cols-2">
               <div>
-                <span className="text-xs font-bold uppercase tracking-wider text-muted">
-                  Old Values
-                </span>
+                <span className="text-xs font-bold uppercase tracking-wider text-muted">{t("Old Values")}</span>
                 <pre className="mt-1.5 max-h-60 overflow-auto rounded-control bg-canvas p-3 font-mono text-xs text-ink">
                   {activeLog.old_values
                     ? JSON.stringify(activeLog.old_values, null, 2)
@@ -297,9 +287,7 @@ export function AuditLogsView() {
                 </pre>
               </div>
               <div>
-                <span className="text-xs font-bold uppercase tracking-wider text-muted">
-                  New Values
-                </span>
+                <span className="text-xs font-bold uppercase tracking-wider text-muted">{t("New Values")}</span>
                 <pre className="mt-1.5 max-h-60 overflow-auto rounded-control bg-canvas p-3 font-mono text-xs text-ink">
                   {activeLog.new_values
                     ? JSON.stringify(activeLog.new_values, null, 2)
@@ -313,9 +301,7 @@ export function AuditLogsView() {
                 variant="secondary"
                 size="sm"
                 onClick={() => setActiveLog(null)}
-              >
-                Close
-              </Button>
+              >{t("Close")}</Button>
             </div>
           </div>
         </div>

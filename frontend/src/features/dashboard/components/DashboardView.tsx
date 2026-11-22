@@ -64,7 +64,7 @@ export function DashboardView() {
   return (
     <>
       <PageHeader
-        title="Dashboard"
+        title={t("Dashboard")}
         description="A campus-wide snapshot of people, classes, and activity."
         actions={
           <Button

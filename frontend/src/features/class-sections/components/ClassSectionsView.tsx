@@ -221,13 +221,11 @@ export function ClassSectionsView() {
   return (
     <>
       <PageHeader
-        title="Class Sections"
+        title={t("Class Sections")}
         description="Control all classes, teachers, schedules, departments, and student rosters"
         actions={
           <Button onClick={() => router.push("/class-sections/create")}>
-            <Plus className="size-4" />
-            New Class Section
-          </Button>
+            <Plus className="size-4" />{t("New Class Section")}</Button>
         }
       />
 
@@ -238,7 +236,7 @@ export function ClassSectionsView() {
             <Layers className="size-5" />
           </span>
           <div>
-            <p className="text-xs font-medium text-muted">Total sections</p>
+            <p className="text-xs font-medium text-muted">{t("Total sections")}</p>
             <p className="font-display mt-0.5 text-2xl font-bold text-ink">
               {total}
             </p>
@@ -249,7 +247,7 @@ export function ClassSectionsView() {
             <CheckCircle2 className="size-5" />
           </span>
           <div>
-            <p className="text-xs font-medium text-muted">Active on this page</p>
+            <p className="text-xs font-medium text-muted">{t("Active on this page")}</p>
             <p className="font-display mt-0.5 text-2xl font-bold text-ink">
               {activeCount}
             </p>
@@ -260,7 +258,7 @@ export function ClassSectionsView() {
             <Users className="size-5" />
           </span>
           <div>
-            <p className="text-xs font-medium text-muted">Page capacity</p>
+            <p className="text-xs font-medium text-muted">{t("Page capacity")}</p>
             <p className="font-display mt-0.5 text-2xl font-bold text-ink">
               {totalCapacity} seats
             </p>
@@ -276,8 +274,8 @@ export function ClassSectionsView() {
             <Search className="absolute top-1/2 left-3.5 size-4 -translate-y-1/2 text-muted" />
             <input
               type="text"
-              aria-label="Search sections"
-              placeholder="Search class or teacher..."
+              aria-label={t("Search sections")}
+              placeholder={t("Search class or teacher...")}
               value={search}
               onChange={(e) => {
                 setSearch(e.target.value);
@@ -300,7 +298,7 @@ export function ClassSectionsView() {
           <div className="flex flex-wrap items-center gap-2.5">
             {/* Department */}
             <select
-              aria-label="Filter by department"
+              aria-label={t("Filter by department")}
               value={departmentId}
               onChange={(e) => {
                 setDepartmentId(e.target.value);
@@ -308,7 +306,7 @@ export function ClassSectionsView() {
               }}
               className="h-10 rounded-xl border border-hairline bg-canvas/60 px-3 text-xs font-medium text-ink transition-colors focus:border-brand-500 focus:bg-card focus:outline-hidden"
             >
-              <option value="">Department (All)</option>
+              <option value="">{t("Department (All)")}</option>
               {departments.map((dept) => (
                 <option key={dept.id} value={dept.id}>
                   {dept.name}
@@ -318,7 +316,7 @@ export function ClassSectionsView() {
 
             {/* Semester */}
             <select
-              aria-label="Filter by semester"
+              aria-label={t("Filter by semester")}
               value={semesterId}
               onChange={(e) => {
                 setSemesterId(e.target.value);
@@ -326,7 +324,7 @@ export function ClassSectionsView() {
               }}
               className="h-10 rounded-xl border border-hairline bg-canvas/60 px-3 text-xs font-medium text-ink transition-colors focus:border-brand-500 focus:bg-card focus:outline-hidden"
             >
-              <option value="">Semester (All)</option>
+              <option value="">{t("Semester (All)")}</option>
               {semesters.map((sem) => (
                 <option key={sem.id} value={sem.id}>
                   {sem.name}
@@ -335,18 +333,18 @@ export function ClassSectionsView() {
             </select>
 
             {/* Status */}
-            <StatusFilter value={status} onChange={(value) => { setStatus(value); setPage(1); }} label="Filter by section status" options={[{ value: "active" }, { value: "inactive" }, { value: "pending_setup", label: "Setup needed" }]} />
+            <StatusFilter value={status} onChange={(value) => { setStatus(value); setPage(1); }} label={t("Filter by section status")} options={[{ value: "active" }, { value: "inactive" }, { value: "pending_setup", label: "Setup needed" }]} />
 
             {/* Reset Filters if active */}
             {hasFiltersActive && (
               <button
                 type="button"
                 onClick={handleResetFilters}
-                title="Reset all filters"
+                title={t("Reset all filters")}
                 className="flex h-10 items-center gap-1.5 rounded-xl border border-hairline bg-canvas/60 px-3 text-xs font-medium text-muted hover:text-ink transition-colors"
               >
                 <RotateCcw className="size-3.5" />
-                <span className="hidden sm:inline">Reset</span>
+                <span className="hidden sm:inline">{t("Reset")}</span>
               </button>
             )}
 
@@ -355,8 +353,8 @@ export function ClassSectionsView() {
               <button
                 type="button"
                 onClick={() => setAndSaveViewMode("card")}
-                aria-label="Card view"
-                title="Card View"
+                aria-label={t("Card view")}
+                title={t("Card View")}
                 className={`flex h-full items-center gap-1.5 rounded-lg px-3 text-xs font-semibold transition-all cursor-pointer ${
                   viewMode === "card"
                     ? "bg-brand-600 text-white shadow-xs"
@@ -364,13 +362,13 @@ export function ClassSectionsView() {
                 }`}
               >
                 <LayoutGrid className="size-3.5" />
-                <span className="hidden sm:inline">Cards</span>
+                <span className="hidden sm:inline">{t("Cards")}</span>
               </button>
               <button
                 type="button"
                 onClick={() => setAndSaveViewMode("table")}
-                aria-label="Table view"
-                title="Table View"
+                aria-label={t("Table view")}
+                title={t("Table View")}
                 className={`flex h-full items-center gap-1.5 rounded-lg px-3 text-xs font-semibold transition-all cursor-pointer ${
                   viewMode === "table"
                     ? "bg-brand-600 text-white shadow-xs"
@@ -378,7 +376,7 @@ export function ClassSectionsView() {
                 }`}
               >
                 <TableIcon className="size-3.5" />
-                <span className="hidden sm:inline">Table</span>
+                <span className="hidden sm:inline">{t("Table")}</span>
               </button>
             </div>
           </div>
@@ -446,9 +444,7 @@ export function ClassSectionsView() {
           <span className="flex size-12 items-center justify-center rounded-2xl bg-canvas text-muted mb-3">
             <Layers className="size-6" />
           </span>
-          <h3 className="font-display text-base font-bold text-ink">
-            No class sections found
-          </h3>
+          <h3 className="font-display text-base font-bold text-ink">{t("No class sections found")}</h3>
           <p className="mt-1 text-xs text-muted max-w-sm">
             {hasFiltersActive
               ? "Try adjusting your search keywords or filter dropdowns."
@@ -460,18 +456,14 @@ export function ClassSectionsView() {
               size="sm"
               onClick={handleResetFilters}
               className="mt-4"
-            >
-              Clear filters
-            </Button>
+            >{t("Clear filters")}</Button>
           ) : (
             <Button
               size="sm"
               onClick={() => router.push("/class-sections/create")}
               className="mt-4"
             >
-              <Plus className="size-4" />
-              Create Class Section
-            </Button>
+              <Plus className="size-4" />{t("Create Class Section")}</Button>
           )}
         </div>
       ) : viewMode === "card" ? (
@@ -538,9 +530,7 @@ export function ClassSectionsView() {
                   {/* Schedule & Semester Row */}
                   <div className="mt-5 flex items-start justify-between gap-4">
                     <div>
-                      <span className="text-xs font-medium text-muted">
-                        Schedule
-                      </span>
+                      <span className="text-xs font-medium text-muted">{t("Schedule")}</span>
                       <div className="mt-1 flex items-center gap-1.5 text-sm font-bold text-ink">
                         <Clock className="size-3.5 text-muted" />
                         <span>
@@ -551,9 +541,7 @@ export function ClassSectionsView() {
                       </div>
                     </div>
                     <div className="text-right">
-                      {/* <span className="text-xs font-medium text-muted">
-                        Semester
-                      </span> */}
+                      {/* <span className="text-xs font-medium text-muted">{t("Semester")}</span> */}
                       <span className="mt-1 inline-flex items-center gap-1.5 rounded-full border border-brand-200 bg-brand-50 px-3 py-1 text-xs font-bold text-brand-700 dark:border-brand-400/30 dark:bg-brand-500/10 dark:text-brand-300">
                         <CalendarDays className="size-3.5" />
                         {section.semester?.name ?? "Not assigned"}
@@ -591,7 +579,7 @@ export function ClassSectionsView() {
                   {/* Class Capacity Row */}
                   <div className="mt-5">
                     <div className="flex items-center justify-between text-xs">
-                      <span className="font-medium text-muted">Class Capacity</span>
+                      <span className="font-medium text-muted">{t("Class Capacity")}</span>
                       <span className="font-bold text-ink">
                         {enrolled} / {capacity} Students
                       </span>
@@ -620,7 +608,7 @@ export function ClassSectionsView() {
                       className="flex flex-1 cursor-pointer items-center justify-center gap-2 rounded-full bg-brand-600 py-2.5 px-5 text-sm font-bold text-white shadow-sm transition-all hover:bg-brand-700 active:scale-[0.98]"
                     >
                       <Users className="size-4" />
-                      <span>View Students</span>
+                      <span>{t("View Students")}</span>
                     </button>
                     <button
                       type="button"
@@ -628,7 +616,7 @@ export function ClassSectionsView() {
                       className="flex cursor-pointer items-center justify-center gap-1.5 rounded-full border border-hairline bg-canvas py-2.5 px-5 text-sm font-semibold text-ink transition-all hover:border-brand-300 hover:bg-brand-50 hover:text-brand-700 active:scale-[0.98] dark:hover:border-brand-700 dark:hover:bg-brand-950/60 dark:hover:text-brand-300"
                     >
                       <Pencil className="size-3.5" />
-                      <span>Edit</span>
+                      <span>{t("Edit")}</span>
                     </button>
                   </div>
                 </div>
@@ -724,7 +712,7 @@ export function ClassSectionsView() {
                               router.push(`/class-sections/${section.id}`)
                             }
                             aria-label={`View students in section ${section.section_code}`}
-                            title="View students"
+                            title={t("View students")}
                             className="border-brand-500/20 bg-brand-500/10 text-brand-400 hover:bg-brand-500/20"
                           >
                             <Users className="size-4" />
@@ -737,7 +725,7 @@ export function ClassSectionsView() {
                               router.push(`/class-sections/${section.id}/edit`)
                             }
                             aria-label={`Edit section ${section.section_code}`}
-                            title="Edit section"
+                            title={t("Edit section")}
                             className="border-blue-500/20 bg-blue-500/10 text-blue-400 hover:bg-blue-500/20"
                           >
                             <Pencil className="size-4" />
@@ -766,9 +754,7 @@ export function ClassSectionsView() {
             disabled={page <= 1 || loading}
             onClick={() => setPage((v) => v - 1)}
             className="rounded-xl text-xs"
-          >
-            Previous
-          </Button>
+          >{t("Previous")}</Button>
           <span className="flex items-center px-2 text-xs font-medium text-slate-500">
             Page {page} of {lastPage || 1}
           </span>
@@ -778,9 +764,7 @@ export function ClassSectionsView() {
             disabled={page >= lastPage || loading}
             onClick={() => setPage((v) => v + 1)}
             className="rounded-xl text-xs"
-          >
-            Next
-          </Button>
+          >{t("Next")}</Button>
         </div>
       </div>
     </>

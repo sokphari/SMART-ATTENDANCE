@@ -1,5 +1,7 @@
 "use client";
 
+import { useLocale } from "@/i18n/LocaleProvider";
+
 import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { ArrowLeft, ArrowRight, Save, Plus, Trash2 } from "lucide-react";
@@ -21,6 +23,7 @@ const NOTICE_KEY = "sa_class_section_notice";
 const fieldClass = "h-11 w-full rounded-control border border-hairline bg-card px-3 text-sm text-ink outline-none focus-visible:ring-4 focus-visible:ring-brand-100";
 
 export function ClassSectionFormView({ mode }: { mode: "create" | "edit" }) {
+  const { t } = useLocale();
   const params = useParams<{ id?: string }>();
   const router = useRouter();
   const id = Number(params?.id);
@@ -169,50 +172,50 @@ export function ClassSectionFormView({ mode }: { mode: "create" | "edit" }) {
 
   const title = mode === "create" ? "Create Class" : "Edit Class Section";
   const select = (label: string, value: number, onChange: (value: number) => void, options: { id: number; label: string }[], placeholder: string, disabled = false) => (
-    <label className="space-y-1.5 text-sm font-semibold">{label}<select disabled={disabled} value={value || ""} onChange={e => onChange(Number(e.target.value))} className={fieldClass}><option value="">{placeholder}</option>{options.map(o => <option key={o.id} value={o.id}>{o.label}</option>)}</select></label>
+    <label className="space-y-1.5 text-sm font-semibold">{t(label)}<select disabled={disabled} value={value || ""} onChange={e => onChange(Number(e.target.value))} className={fieldClass}><option value="">{t(placeholder)}</option>{options.map(o => <option key={o.id} value={o.id}>{o.label}</option>)}</select></label>
   );
 
   return <>
-    <PageHeader title={title} description={mode === "create" ? "Set up the class, assigned teacher, room, and weekly timetable." : "Update class section details."} actions={<Button variant="secondary" size="sm" onClick={() => router.push("/class-sections")}><ArrowLeft className="size-4"/>Back to sections</Button>}/>
+    <PageHeader title={title} description={mode === "create" ? "Set up the class, assigned teacher, room, and weekly timetable." : "Update class section details."} actions={<Button variant="secondary" size="sm" onClick={() => router.push("/class-sections")}><ArrowLeft className="size-4"/>{t("Back to sections")}</Button>}/>
     {loading ? <Card className="w-full p-8 text-sm text-muted">Loading section details…</Card> : <Card className="w-full p-5 sm:p-7">
-      {mode === "create" && <ol aria-label="Class setup progress" className="mb-6 grid grid-cols-2 gap-2 md:grid-cols-4">{stepNames.map((name, index) => <li key={name}><button type="button" disabled={index > step || saving} onClick={() => { if (index <= step) { setStep(index); setError(""); } }} aria-current={step === index ? "step" : undefined} className={`w-full rounded-control border px-3 py-2 text-left text-xs font-semibold disabled:cursor-not-allowed disabled:opacity-50 ${step === index ? "border-brand-500 bg-brand-50 text-brand-700" : index < step ? "border-success/40 bg-success-soft text-success" : "border-hairline text-muted"}`}><span className="mr-2">{index < step ? "✓" : index + 1}</span>{name}</button></li>)}</ol>}
+      {mode === "create" && <ol aria-label={t("Class setup progress")} className="mb-6 grid grid-cols-2 gap-2 md:grid-cols-4">{stepNames.map((name, index) => <li key={name}><button type="button" disabled={index > step || saving} onClick={() => { if (index <= step) { setStep(index); setError(""); } }} aria-current={step === index ? "step" : undefined} className={`w-full rounded-control border px-3 py-2 text-left text-xs font-semibold disabled:cursor-not-allowed disabled:opacity-50 ${step === index ? "border-brand-500 bg-brand-50 text-brand-700" : index < step ? "border-success/40 bg-success-soft text-success" : "border-hairline text-muted"}`}><span className="mr-2">{index < step ? "✓" : index + 1}</span>{t(name)}</button></li>)}</ol>}
       <form onSubmit={submit} className="grid gap-5 sm:grid-cols-2">
         {(mode === "edit" || step === 0) && <>
           {select("1. Department", departmentId, value => { setDepartmentId(value); setProgramId(0); setTeacherId(0); setForm(current => ({ ...current, course_id: 0 })); }, departments.map(d => ({ id: d.id, label: `${d.code ?? ""} ${d.name}`.trim() })), optionsLoading ? "Loading active departments…" : departments.length ? "Select department" : "No active departments available", optionsLoading)}
           {select("2. Program", programId, setProgramId, coursePrograms.map(p => ({ id: p.id, label: `${p.code ?? ""} ${p.name}`.trim() })), selectedCourse?.program_id ? "Course program (required)" : departmentPrograms.length ? "Select program (optional)" : "No active programs for this department", optionsLoading || !departmentId || Boolean(selectedCourse?.program_id))}
-          <label className="space-y-1.5 text-sm font-semibold">Student year<select value={yearLevel || ""} onChange={e => setYearLevel(Number(e.target.value))} className={fieldClass}><option value="">Any year</option>{Array.from({ length: 10 }, (_, i) => <option key={i + 1} value={i + 1}>Year {i + 1}</option>)}</select></label>
+          <label className="space-y-1.5 text-sm font-semibold">{t("Student year")}<select value={yearLevel || ""} onChange={e => setYearLevel(Number(e.target.value))} className={fieldClass}><option value="">{t("Any year")}</option>{Array.from({ length: 10 }, (_, i) => <option key={i + 1} value={i + 1}>Year {i + 1}</option>)}</select></label>
           {select("3. Subject / Course", form.course_id, value => { const course = courses.find(item => item.id === value); setForm(current => ({ ...current, course_id: value })); setProgramId(course?.program_id ?? 0); }, departmentCourses.map(c => ({ id: c.id, label: `${c.course_code} — ${c.name}` })), !departmentId ? "Select department first" : departmentCourses.length ? "Select course" : "No active courses for this department", optionsLoading || !departmentId)}
           {select("4–5. Academic year / Semester", form.semester_id, value => { const semester = semesters.find(item => item.id === value); setForm(current => ({ ...current, semester_id: value })); setDateRange({ start: semester?.start_date ?? semester?.academic_year?.start_date ?? "", end: semester?.end_date ?? semester?.academic_year?.end_date ?? "" }); }, semesters.map(s => ({ id: s.id, label: `${s.academic_year?.name ?? "Academic year"} · ${s.name}` })), optionsLoading ? "Loading available semesters…" : semesters.length ? "Select active/upcoming semester" : "No active or upcoming semesters available", optionsLoading)}
-          <Input label="6. Section" placeholder="e.g. A or 01" required maxLength={30} value={form.section_code} onChange={e => setForm({ ...form, section_code: e.target.value.toUpperCase() })}/>
+          <Input label={t("6. Section")} placeholder={t("e.g. A or 01")} required maxLength={30} value={form.section_code} onChange={e => setForm({ ...form, section_code: e.target.value.toUpperCase() })}/>
         </>}
         {(mode === "edit" || step === 1) && <>
           {select("7. Assigned teacher", teacherId, setTeacherId, departmentTeachers.map(t => ({ id: t.id, label: `${t.user?.name ?? t.teacher_code} (${t.teacher_code})` })), !departmentId ? "Select department first" : departmentTeachers.length ? "Select active teacher" : "No active teachers for this department", optionsLoading || !departmentId)}
-          <Input label="8. Maximum student capacity" type="number" min={1} max={500} required value={String(form.capacity)} onChange={e => setForm({ ...form, capacity: Number(e.target.value) })}/>
+          <Input label={t("8. Maximum student capacity")} type="number" min={1} max={500} required value={String(form.capacity)} onChange={e => setForm({ ...form, capacity: Number(e.target.value) })}/>
         </>}
         {(mode === "edit" || step === 2) && <>
           {select("9. Building", selectedBuilding, setSelectedBuilding, buildings.map(b => ({ id: b.id, label: `${b.code ?? ""} ${b.name}`.trim() })), "Select building")}
           {select("10. Floor", selectedFloor, setSelectedFloor, floors.map(f => ({ id: f.id, label: f.name })), "Select floor", !selectedBuilding)}
           <div className="space-y-3 sm:col-span-2">
-            <div className="flex items-center justify-between"><h3 className="text-sm font-semibold">12. Weekly timetable</h3><Button type="button" variant="secondary" size="sm" onClick={() => setScheduleRows(rows => [...rows, { day_of_week: 1, start_time: "08:00", end_time: "09:30", classroom_id: 0 }])}><Plus className="size-4"/>Add session</Button></div>
+            <div className="flex items-center justify-between"><h3 className="text-sm font-semibold">{t("12. Weekly timetable")}</h3><Button type="button" variant="secondary" size="sm" onClick={() => setScheduleRows(rows => [...rows, { day_of_week: 1, start_time: "08:00", end_time: "09:30", classroom_id: 0 }])}><Plus className="size-4"/>{t("Add session")}</Button></div>
             {scheduleRows.map((row, index) => <div key={index} className="grid gap-3 rounded-control border border-hairline p-3 sm:grid-cols-4">
-              <label className="space-y-1 text-xs font-semibold">Day<select className={fieldClass} value={row.day_of_week} onChange={e => setScheduleRows(rows => rows.map((r, i) => i === index ? { ...r, day_of_week: Number(e.target.value) } : r))}>{days.slice(1).map((d, i) => <option key={d} value={i + 1}>{d}</option>)}</select></label>
-              <Input label="Start time" type="time" value={row.start_time} onChange={e => setScheduleRows(rows => rows.map((r, i) => i === index ? { ...r, start_time: e.target.value } : r))}/>
-              <Input label="End time" type="time" value={row.end_time} onChange={e => setScheduleRows(rows => rows.map((r, i) => i === index ? { ...r, end_time: e.target.value } : r))}/>
-              <div className="flex items-end gap-2">{select("11. Classroom", row.classroom_id, value => setScheduleRows(rows => rows.map((r, i) => i === index ? { ...r, classroom_id: value } : r)), rooms.map(room => ({ id: room.id, label: `${room.room_code ?? room.name} · ${room.capacity ?? "?"} seats` })), selectedFloor ? "Select classroom" : "Select building and floor", !selectedFloor)}{scheduleRows.length > 1 && <button type="button" aria-label="Remove schedule row" className="mb-0.5 rounded border border-hairline p-3 text-danger" onClick={() => setScheduleRows(rows => rows.filter((_, i) => i !== index))}><Trash2 className="size-4"/></button>}</div>
+              <label className="space-y-1 text-xs font-semibold">{t("Day")}<select className={fieldClass} value={row.day_of_week} onChange={e => setScheduleRows(rows => rows.map((r, i) => i === index ? { ...r, day_of_week: Number(e.target.value) } : r))}>{days.slice(1).map((d, i) => <option key={d} value={i + 1}>{d}</option>)}</select></label>
+              <Input label={t("Start time")} type="time" value={row.start_time} onChange={e => setScheduleRows(rows => rows.map((r, i) => i === index ? { ...r, start_time: e.target.value } : r))}/>
+              <Input label={t("End time")} type="time" value={row.end_time} onChange={e => setScheduleRows(rows => rows.map((r, i) => i === index ? { ...r, end_time: e.target.value } : r))}/>
+              <div className="flex items-end gap-2">{select("11. Classroom", row.classroom_id, value => setScheduleRows(rows => rows.map((r, i) => i === index ? { ...r, classroom_id: value } : r)), rooms.map(room => ({ id: room.id, label: `${room.room_code ?? room.name} · ${room.capacity ?? "?"} seats` })), selectedFloor ? "Select classroom" : "Select building and floor", !selectedFloor)}{scheduleRows.length > 1 && <button type="button" aria-label={t("Remove schedule row")} className="mb-0.5 rounded border border-hairline p-3 text-danger" onClick={() => setScheduleRows(rows => rows.filter((_, i) => i !== index))}><Trash2 className="size-4"/></button>}</div>
               {row.classroom_id > 0 && selectedRoom(row.classroom_id) && <p className="text-xs text-muted sm:col-span-4">Room capacity: {selectedRoom(row.classroom_id)?.capacity} seats</p>}
             </div>)}
           </div>
-          <Input label="13. Class start date" type="date" required value={dateRange.start} onChange={e => setDateRange(v => ({ ...v, start: e.target.value }))}/>
-          <Input label="Class end date" type="date" required value={dateRange.end} onChange={e => setDateRange(v => ({ ...v, end: e.target.value }))}/>
+          <Input label={t("13. Class start date")} type="date" required value={dateRange.start} onChange={e => setDateRange(v => ({ ...v, start: e.target.value }))}/>
+          <Input label={t("Class end date")} type="date" required value={dateRange.end} onChange={e => setDateRange(v => ({ ...v, end: e.target.value }))}/>
         </>}
         {(mode === "edit" || step === 3) && <>
-          <div className="rounded-control bg-canvas-subtle p-4 text-sm sm:col-span-2"><h3 className="font-semibold">Review class setup</h3><p className="mt-2 text-muted">{courses.find(c => c.id === form.course_id)?.name ?? "Course not selected"} · {form.section_code || "Section not set"}</p><p className="text-muted">{semesters.find(s => s.id === form.semester_id)?.name ?? "Semester not selected"} · Capacity {form.capacity}</p><p className="text-muted">{departmentTeachers.find(t => t.id === teacherId)?.user?.name ?? "Teacher not selected"} · {scheduleRows.length} weekly session(s)</p><p className="text-muted">Date range: {dateRange.start || "—"} to {dateRange.end || "—"}</p></div>
+          <div className="rounded-control bg-canvas-subtle p-4 text-sm sm:col-span-2"><h3 className="font-semibold">{t("Review class setup")}</h3><p className="mt-2 text-muted">{courses.find(c => c.id === form.course_id)?.name ?? "Course not selected"} · {form.section_code || "Section not set"}</p><p className="text-muted">{semesters.find(s => s.id === form.semester_id)?.name ?? "Semester not selected"} · Capacity {form.capacity}</p><p className="text-muted">{departmentTeachers.find(t => t.id === teacherId)?.user?.name ?? "Teacher not selected"} · {scheduleRows.length} weekly session(s)</p><p className="text-muted">Date range: {dateRange.start || "—"} to {dateRange.end || "—"}</p></div>
         </>}
-        {mode === "edit" && <label className="space-y-1.5 text-sm font-semibold sm:col-span-2">Status<select value={form.status} onChange={e => setForm({ ...form, status: e.target.value as "active" | "inactive" })} className={fieldClass}><option value="active">Active</option><option value="inactive">Inactive</option></select></label>}
+        {mode === "edit" && <label className="space-y-1.5 text-sm font-semibold sm:col-span-2">{t("Status")}<select value={form.status} onChange={e => setForm({ ...form, status: e.target.value as "active" | "inactive" })} className={fieldClass}><option value="active">{t("Active")}</option><option value="inactive">{t("Inactive")}</option></select></label>}
         {error && <p role="alert" className="rounded-control bg-danger-soft px-3 py-2 text-sm text-danger sm:col-span-2">{error}</p>}
         <div className="flex justify-between gap-2 border-t border-hairline pt-4 sm:col-span-2">
-          {mode === "create" ? <Button type="button" variant="secondary" disabled={step === 0} onClick={() => setStep(n => Math.max(0, n - 1))}><ArrowLeft className="size-4"/>Previous</Button> : <span/>}
-          <div className="flex gap-2"><Button type="button" variant="secondary" onClick={() => router.push("/class-sections")}>Cancel</Button>{mode === "create" && step < 3 ? <Button type="button" onClick={() => { setError(""); setStep(n => Math.min(3, n + 1)); }} >Continue<ArrowRight className="size-4"/></Button> : <Button type="submit" loading={saving}><Save className="size-4"/>{mode === "create" ? "Create class" : "Save changes"}</Button>}</div>
+          {mode === "create" ? <Button type="button" variant="secondary" disabled={step === 0} onClick={() => setStep(n => Math.max(0, n - 1))}><ArrowLeft className="size-4"/>{t("Previous")}</Button> : <span/>}
+          <div className="flex gap-2"><Button type="button" variant="secondary" onClick={() => router.push("/class-sections")}>{t("Cancel")}</Button>{mode === "create" && step < 3 ? <Button type="button" onClick={() => { setError(""); setStep(n => Math.min(3, n + 1)); }} >{t("Continue")}<ArrowRight className="size-4"/></Button> : <Button type="submit" loading={saving}><Save className="size-4"/>{mode === "create" ? "Create class" : "Save changes"}</Button>}</div>
         </div>
       </form>
     </Card>}

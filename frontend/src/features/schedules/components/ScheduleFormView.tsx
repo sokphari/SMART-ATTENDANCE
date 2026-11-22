@@ -1,5 +1,7 @@
 "use client";
 
+import { useLocale } from "@/i18n/LocaleProvider";
+
 import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { ArrowLeft, Save } from "lucide-react";
@@ -15,6 +17,7 @@ const DAYS = [{ value: 1, label: "Monday" }, { value: 2, label: "Tuesday" }, { v
 const NOTICE_KEY = "sa_schedule_notice";
 
 export function ScheduleFormView({ mode }: { mode: "create" | "edit" }) {
+  const { t } = useLocale();
   const params = useParams<{ id?: string }>();
   const router = useRouter();
   const id = Number(params?.id);
@@ -120,55 +123,50 @@ export function ScheduleFormView({ mode }: { mode: "create" | "edit" }) {
   }
 
   return <>
-    <PageHeader title={mode === "create" ? "Add timetable schedule" : "Edit timetable schedule"} description="Assign a class section to a weekday, teaching period, and classroom." actions={<Button variant="secondary" size="sm" onClick={() => router.push("/schedules")}><ArrowLeft className="size-4" />Back to timetable</Button>} />
+    <PageHeader title={mode === "create" ? "Add timetable schedule" : "Edit timetable schedule"} description="Assign a class section to a weekday, teaching period, and classroom." actions={<Button variant="secondary" size="sm" onClick={() => router.push("/schedules")}><ArrowLeft className="size-4" />{t("Back to timetable")}</Button>} />
     {loading ? <Card className="p-8 text-sm text-muted">Loading timetable form…</Card> : <Card className="w-full p-5 sm:p-7">
       <form onSubmit={submit} className="grid gap-5 md:grid-cols-2">
-        <label className="space-y-1.5 text-sm font-semibold">Academic semester
-          <select value={semesterId} onChange={(event) => { setSemesterId(event.target.value); window.localStorage.setItem(SELECTED_SEMESTER_KEY, event.target.value); window.localStorage.setItem(MANUAL_SEMESTER_SELECTION_KEY, "true"); setDepartmentId(""); setCourseId(""); setForm((current) => ({ ...current, class_section_id: 0 })); }} className="h-11 w-full rounded-control border border-hairline bg-card px-3 text-sm text-ink">
+        <label className="space-y-1.5 text-sm font-semibold">{t("Academic semester")}<select value={semesterId} onChange={(event) => { setSemesterId(event.target.value); window.localStorage.setItem(SELECTED_SEMESTER_KEY, event.target.value); window.localStorage.setItem(MANUAL_SEMESTER_SELECTION_KEY, "true"); setDepartmentId(""); setCourseId(""); setForm((current) => ({ ...current, class_section_id: 0 })); }} className="h-11 w-full rounded-control border border-hairline bg-card px-3 text-sm text-ink">
             {semesters.map((semester) => <option key={semester.id} value={semester.id}>{semester.name} · {semester.academic_year?.name ?? `${semester.start_date}–${semester.end_date}`}</option>)}
           </select>
         </label>
-        <label className="space-y-1.5 text-sm font-semibold">Department
-          <select value={departmentId} onChange={(event) => { setDepartmentId(event.target.value); setCourseId(""); setForm((current) => ({ ...current, class_section_id: 0 })); }} className="h-11 w-full rounded-control border border-hairline bg-card px-3 text-sm text-ink"><option value="">All departments</option>{departmentOptions.map((department) => <option key={department.id} value={department.id}>{department.name}</option>)}</select>
+        <label className="space-y-1.5 text-sm font-semibold">{t("Department")}<select value={departmentId} onChange={(event) => { setDepartmentId(event.target.value); setCourseId(""); setForm((current) => ({ ...current, class_section_id: 0 })); }} className="h-11 w-full rounded-control border border-hairline bg-card px-3 text-sm text-ink"><option value="">{t("All departments")}</option>{departmentOptions.map((department) => <option key={department.id} value={department.id}>{department.name}</option>)}</select>
         </label>
-        <label className="space-y-1.5 text-sm font-semibold">Course
-          <select value={courseId} onChange={(event) => { setCourseId(event.target.value); setForm((current) => ({ ...current, class_section_id: 0 })); }} className="h-11 w-full rounded-control border border-hairline bg-card px-3 text-sm text-ink"><option value="">All courses</option>{courseOptions.map((course) => <option key={course.id} value={course.id}>{course.course_code} · {course.name}</option>)}</select>
+        <label className="space-y-1.5 text-sm font-semibold">{t("Course")}<select value={courseId} onChange={(event) => { setCourseId(event.target.value); setForm((current) => ({ ...current, class_section_id: 0 })); }} className="h-11 w-full rounded-control border border-hairline bg-card px-3 text-sm text-ink"><option value="">{t("All courses")}</option>{courseOptions.map((course) => <option key={course.id} value={course.id}>{course.course_code} · {course.name}</option>)}</select>
         </label>
-        <label className="space-y-1.5 text-sm font-semibold">Class section <span className="text-danger">*</span>
+        <label className="space-y-1.5 text-sm font-semibold">{t("Class section")}<span className="text-danger">*</span>
           <select required value={form.class_section_id || ""} onChange={(event) => setForm({ ...form, class_section_id: Number(event.target.value) })} className="h-11 w-full rounded-control border border-hairline bg-card px-3 text-sm text-ink">
-            <option value="">Select a section</option>{visibleSections.map((section) => <option key={section.id} value={section.id}>{section.course?.course_code} — {section.course?.name} · Section {section.section_code}</option>)}
+            <option value="">{t("Select a section")}</option>{visibleSections.map((section) => <option key={section.id} value={section.id}>{section.course?.course_code} — {section.course?.name} · Section {section.section_code}</option>)}
           </select>
         </label>
         <div className="rounded-control border border-hairline bg-canvas p-3 text-sm md:col-span-2">
-          <p className="font-semibold">Section information</p>
+          <p className="font-semibold">{t("Section information")}</p>
           <p className="mt-1 text-muted">{selectedSection?.course?.department?.name ?? "Department not available"} · {selectedSection?.teachers?.map((teacher) => teacher.name).join(", ") || "No teacher assigned"}</p>
           {mode === "create" && selectedSection?.teachers?.length ? <p className={`mt-2 text-xs font-semibold ${teacherAvailability === "available" ? "text-success" : teacherAvailability === "conflict" ? "text-danger" : "text-muted"}`}>
             {teacherAvailability === "checking" ? "Checking assigned teacher availability…" : teacherAvailability === "available" ? "Assigned teachers are available for the selected period and weekdays." : teacherAvailability === "conflict" ? "At least one assigned teacher has a timetable conflict in the selected period or weekday." : teacherAvailability === "unavailable" ? "Teacher availability could not be verified. Server-side conflict checks will still run when you save." : "Choose a configured period to check teacher availability."}
           </p> : null}
         </div>
-        <label className="space-y-1.5 text-sm font-semibold">Classroom <span className="text-danger">*</span>
+        <label className="space-y-1.5 text-sm font-semibold">{t("Classroom")}<span className="text-danger">*</span>
           <select required value={form.classroom_id || ""} onChange={(event) => setForm({ ...form, classroom_id: Number(event.target.value) })} className="h-11 w-full rounded-control border border-hairline bg-card px-3 text-sm text-ink">
-            <option value="">Select a classroom</option>{classrooms.map((room) => <option key={room.id} value={room.id}>{room.room_code}{room.building ? ` · ${room.building}` : ""}</option>)}
+            <option value="">{t("Select a classroom")}</option>{classrooms.map((room) => <option key={room.id} value={room.id}>{room.room_code}{room.building ? ` · ${room.building}` : ""}</option>)}
           </select>
         </label>
-        <label className="space-y-1.5 text-sm font-semibold">Teaching period / time slot
-          <select value={form.time_slot_id ?? ""} onChange={(event) => {
+        <label className="space-y-1.5 text-sm font-semibold">{t("Teaching period / time slot")}<select value={form.time_slot_id ?? ""} onChange={(event) => {
             const value = Number(event.target.value) || null;
             const slot = config?.periods.flatMap((period) => period.time_slots).find((item) => item.id === value);
             setForm({ ...form, time_slot_id: value, ...(slot ? { start_time: slot.starts_at, end_time: slot.ends_at } : {}) });
           }} className="h-11 w-full rounded-control border border-hairline bg-card px-3 text-sm text-ink">
-            <option value="">Custom time</option>{config?.periods.filter((period) => period.is_active).map((period) => <optgroup key={period.id} label={period.name}>{period.time_slots.filter((slot) => slot.is_active && !slot.is_break).map((slot) => <option key={slot.id} value={slot.id}>{slot.name} · {slot.starts_at}–{slot.ends_at}</option>)}</optgroup>)}
+            <option value="">{t("Custom time")}</option>{config?.periods.filter((period) => period.is_active).map((period) => <optgroup key={period.id} label={period.name}>{period.time_slots.filter((slot) => slot.is_active && !slot.is_break).map((slot) => <option key={slot.id} value={slot.id}>{slot.name} · {slot.starts_at}–{slot.ends_at}</option>)}</optgroup>)}
           </select>
           {selectedSlot && <span className="block text-xs font-normal text-muted">{selectedSlot.period.name} session · times follow the configured timetable.</span>}
         </label>
-        {mode === "create" ? <fieldset className="space-y-2 md:col-span-2"><legend className="text-sm font-semibold">Weekdays <span className="text-danger">*</span></legend><div className="flex flex-wrap gap-2">{DAYS.map((day) => <label key={day.value} className="flex min-h-11 cursor-pointer items-center gap-2 rounded-control border border-hairline px-3 text-sm"><input type="checkbox" checked={form.days_of_week?.includes(day.value) ?? false} onChange={() => toggleDay(day.value)} />{day.label}</label>)}</div><p className="text-xs text-muted">One recurring timetable entry will be created for each selected day.</p></fieldset> : <label className="space-y-1.5 text-sm font-semibold">Weekday
-          <select value={form.day_of_week} onChange={(event) => setForm({ ...form, day_of_week: Number(event.target.value) })} className="h-11 w-full rounded-control border border-hairline bg-card px-3 text-sm text-ink">{DAYS.map((day) => <option key={day.value} value={day.value}>{day.label}</option>)}</select>
+        {mode === "create" ? <fieldset className="space-y-2 md:col-span-2"><legend className="text-sm font-semibold">{t("Weekdays")}<span className="text-danger">*</span></legend><div className="flex flex-wrap gap-2">{DAYS.map((day) => <label key={day.value} className="flex min-h-11 cursor-pointer items-center gap-2 rounded-control border border-hairline px-3 text-sm"><input type="checkbox" checked={form.days_of_week?.includes(day.value) ?? false} onChange={() => toggleDay(day.value)} />{day.label}</label>)}</div><p className="text-xs text-muted">{t("One recurring timetable entry will be created for each selected day.")}</p></fieldset> : <label className="space-y-1.5 text-sm font-semibold">{t("Weekday")}<select value={form.day_of_week} onChange={(event) => setForm({ ...form, day_of_week: Number(event.target.value) })} className="h-11 w-full rounded-control border border-hairline bg-card px-3 text-sm text-ink">{DAYS.map((day) => <option key={day.value} value={day.value}>{day.label}</option>)}</select>
         </label>}
-        {!form.time_slot_id && <div className="grid grid-cols-2 gap-3"><Input label="Start time" type="time" required value={form.start_time?.slice(0, 5)} onChange={(event) => setForm({ ...form, start_time: event.target.value })} /><Input label="End time" type="time" required value={form.end_time?.slice(0, 5)} onChange={(event) => setForm({ ...form, end_time: event.target.value })} /></div>}
-        <Input label="Effective from" type="date" value={form.effective_from ?? ""} min={selectedSection?.semester?.start_date} max={selectedSection?.semester?.end_date} onChange={(event) => setForm({ ...form, effective_from: event.target.value })} />
-        <Input label="Effective until" type="date" value={form.effective_until ?? ""} min={form.effective_from || selectedSection?.semester?.start_date} max={selectedSection?.semester?.end_date} onChange={(event) => setForm({ ...form, effective_until: event.target.value })} />
+        {!form.time_slot_id && <div className="grid grid-cols-2 gap-3"><Input label={t("Start time")} type="time" required value={form.start_time?.slice(0, 5)} onChange={(event) => setForm({ ...form, start_time: event.target.value })} /><Input label={t("End time")} type="time" required value={form.end_time?.slice(0, 5)} onChange={(event) => setForm({ ...form, end_time: event.target.value })} /></div>}
+        <Input label={t("Effective from")} type="date" value={form.effective_from ?? ""} min={selectedSection?.semester?.start_date} max={selectedSection?.semester?.end_date} onChange={(event) => setForm({ ...form, effective_from: event.target.value })} />
+        <Input label={t("Effective until")} type="date" value={form.effective_until ?? ""} min={form.effective_from || selectedSection?.semester?.start_date} max={selectedSection?.semester?.end_date} onChange={(event) => setForm({ ...form, effective_until: event.target.value })} />
         {error && <p role="alert" className="rounded-control bg-danger-soft px-3 py-2 text-sm text-danger md:col-span-2">{error}</p>}
-        <div className="flex justify-end gap-2 border-t border-hairline pt-4 md:col-span-2"><Button type="button" variant="secondary" onClick={() => router.push("/schedules")}>Cancel</Button><Button type="submit" loading={saving}><Save className="size-4" />{mode === "create" ? "Save schedule" : "Save changes"}</Button></div>
+        <div className="flex justify-end gap-2 border-t border-hairline pt-4 md:col-span-2"><Button type="button" variant="secondary" onClick={() => router.push("/schedules")}>{t("Cancel")}</Button><Button type="submit" loading={saving}><Save className="size-4" />{mode === "create" ? "Save schedule" : "Save changes"}</Button></div>
       </form>
     </Card>}
   </>;

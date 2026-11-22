@@ -3,11 +3,30 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useLocale } from "@/i18n/LocaleProvider";
-import { ArrowRight, BookOpen, Building2, CalendarDays, Clock3, ClipboardCheck, MapPin, Search, Users } from "lucide-react";
+import {
+  ArrowRight,
+  BookOpen,
+  Building2,
+  CalendarDays,
+  Clock3,
+  ClipboardCheck,
+  MapPin,
+  Search,
+  Users,
+} from "lucide-react";
 import { getAllMyClassSections } from "../api";
 import type { TeacherClassSection } from "../types";
 
-const DAYS = ["", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
+const DAYS = [
+  "",
+  "Monday",
+  "Tuesday",
+  "Wednesday",
+  "Thursday",
+  "Friday",
+  "Saturday",
+  "Sunday",
+];
 
 export function TeacherClassesView() {
   const { t } = useLocale();
@@ -42,7 +61,7 @@ export function TeacherClassesView() {
   return (
     <div className="w-full space-y-6">
       <header>
-        <p className="text-sm font-semibold text-brand-600">{t("Teacher workspace")}</p>
+
         <h1 className="mt-1 font-display text-3xl font-extrabold tracking-tight">
           {t("My classes")}
         </h1>
@@ -92,10 +111,7 @@ export function TeacherClassesView() {
               ? "No classes match your search"
               : "No assigned classes yet"}
           </p>
-          <p className="mt-1 text-sm text-muted">
-            Your administrator can assign class sections to your teacher
-            account.
-          </p>
+          <p className="mt-1 text-sm text-muted">{t("Your administrator can assign class sections to your teacher account.")}</p>
         </div>
       ) : (
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
@@ -131,7 +147,10 @@ export function TeacherClassesView() {
               <div className="mt-4 flex items-center justify-between border-t border-hairline pt-4 text-sm">
                 <span className="inline-flex items-center gap-1.5 text-muted">
                   <CalendarDays className="size-4 text-brand-600" />
-                  {section.semester.name}{section.semester.academic_year ? ` · ${section.semester.academic_year}` : ""}
+                  {section.semester.name}
+                  {section.semester.academic_year
+                    ? ` · ${section.semester.academic_year}`
+                    : ""}
                 </span>
                 <span className="inline-flex items-center gap-1.5 font-semibold">
                   <Users className="size-4 text-brand-600" />
@@ -139,36 +158,49 @@ export function TeacherClassesView() {
                 </span>
               </div>
               <div className="mt-3 space-y-2 border-t border-hairline pt-3 text-sm">
-                {(section.schedules ?? []).length ? section.schedules!.map((schedule) => (
-                  <div key={schedule.id} className="rounded-control bg-canvas/70 px-3 py-2.5">
-                    <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
-                      <span className="inline-flex items-center gap-2 font-semibold">
-                        <Clock3 className="size-4 shrink-0 text-brand-600" />
-                        {t(DAYS[schedule.day_of_week] ?? "Schedule")} {schedule.start_time.slice(0, 5)}–{schedule.end_time.slice(0, 5)}
-                      </span>
-                      {schedule.time_slot?.period?.name && (
-                        <span className="rounded-pill bg-brand-50 px-2 py-0.5 text-xs font-semibold text-brand-700 dark:bg-brand-500/15 dark:text-brand-300">
-                          {schedule.time_slot.period.name}
+                {(section.schedules ?? []).length ? (
+                  section.schedules!.map((schedule) => (
+                    <div
+                      key={schedule.id}
+                      className="rounded-control bg-canvas/70 px-3 py-2.5"
+                    >
+                      <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
+                        <span className="inline-flex items-center gap-2 font-semibold">
+                          <Clock3 className="size-4 shrink-0 text-brand-600" />
+                          {t(DAYS[schedule.day_of_week] ?? "Schedule")}{" "}
+                          {schedule.start_time.slice(0, 5)}–
+                          {schedule.end_time.slice(0, 5)}
                         </span>
-                      )}
-                    </div>
-                    <div className="mt-1.5 flex flex-wrap gap-x-3 gap-y-1 text-xs text-muted">
-                      <span className="inline-flex items-center gap-1.5">
-                        <MapPin className="size-3.5" />
-                        {schedule.classroom?.room_code ?? t("Room not assigned")}
-                      </span>
-                      {schedule.classroom?.building && (
+                        {schedule.time_slot?.period?.name && (
+                          <span className="rounded-pill bg-brand-50 px-2 py-0.5 text-xs font-semibold text-brand-700 dark:bg-brand-500/15 dark:text-brand-300">
+                            {schedule.time_slot.period.name}
+                          </span>
+                        )}
+                      </div>
+                      <div className="mt-1.5 flex flex-wrap gap-x-3 gap-y-1 text-xs text-muted">
                         <span className="inline-flex items-center gap-1.5">
-                          <Building2 className="size-3.5" />{schedule.classroom.building}
+                          <MapPin className="size-3.5" />
+                          {schedule.classroom?.room_code ??
+                            t("Room not assigned")}
                         </span>
-                      )}
-                      {schedule.classroom?.floor && (
-                        <span>{t("Floor")} {schedule.classroom.floor}</span>
-                      )}
+                        {schedule.classroom?.building && (
+                          <span className="inline-flex items-center gap-1.5">
+                            <Building2 className="size-3.5" />
+                            {schedule.classroom.building}
+                          </span>
+                        )}
+                        {schedule.classroom?.floor && (
+                          <span>
+                            {t("Floor")} {schedule.classroom.floor}
+                          </span>
+                        )}
+                      </div>
                     </div>
-                  </div>
-                )) : (
-                  <p className="rounded-control bg-canvas/70 px-3 py-2.5 text-xs text-muted">{t("No schedule assigned")}</p>
+                  ))
+                ) : (
+                  <p className="rounded-control bg-canvas/70 px-3 py-2.5 text-xs text-muted">
+                    {t("No schedule assigned")}
+                  </p>
                 )}
               </div>
               <Link
@@ -194,17 +226,13 @@ export function TeacherClassesView() {
               disabled={page <= 1}
               onClick={() => setPage((current) => current - 1)}
               className="min-h-10 rounded-control border border-hairline px-3 font-semibold disabled:opacity-50"
-            >
-              Previous
-            </button>
+            >{t("Previous")}</button>
             <button
               type="button"
               disabled={page >= lastPage}
               onClick={() => setPage((current) => current + 1)}
               className="min-h-10 rounded-control border border-hairline px-3 font-semibold disabled:opacity-50"
-            >
-              Next
-            </button>
+            >{t("Next")}</button>
           </div>
         </div>
       )}

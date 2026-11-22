@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { BrandIcon, BrandLogo } from "@/components/ui/BrandLogo";
-import { NAV_SECTIONS, TEACHER_NAV_SECTIONS } from "@/config/nav";
+import { ADMIN_NAV_SECTIONS, NAV_SECTIONS, TEACHER_NAV_SECTIONS } from "@/config/nav";
 import { getInitials } from "@/lib/utils/name";
 import type { AuthUser } from "@/types/auth";
 import { cx } from "@/lib/utils/cx";
@@ -23,7 +23,9 @@ export function Sidebar({ collapsed, user, teacherModules = [] }: SidebarProps) 
         ...section,
         items: section.items.filter((item) => item.permissionKey && teacherModules.includes(item.permissionKey)),
       })).filter((section) => section.items.length > 0)
-    : NAV_SECTIONS;
+    : user?.role?.toLowerCase() === "admin"
+      ? ADMIN_NAV_SECTIONS
+      : NAV_SECTIONS;
 
   const isActive = (href: string) =>
     pathname === href || pathname.startsWith(`${href}/`);
@@ -44,7 +46,7 @@ export function Sidebar({ collapsed, user, teacherModules = [] }: SidebarProps) 
         <Link
           href="/dashboard"
           className="flex items-center gap-3 rounded-control"
-          aria-label="Smart Attendance home"
+          aria-label={t("Smart Attendance home")}
         >
           {collapsed ? <BrandIcon size={36} /> : <BrandLogo iconSize={36} />}
         </Link>

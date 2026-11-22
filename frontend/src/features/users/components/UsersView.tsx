@@ -135,34 +135,32 @@ export function UsersView() {
   return (
     <>
       <PageHeader
-        title="Users & accounts"
+        title={t("Users & accounts")}
         description="Manage login accounts and access status. Teacher accounts are created with their teacher profile."
         actions={
           <Button onClick={() => router.push("/teachers/create")}>
-            <Plus className="size-4" />
-            Create teacher account
-          </Button>
+            <Plus className="size-4" />{t("Create teacher account")}</Button>
         }
       />
       <div className="mb-5 grid gap-3 sm:grid-cols-3">
         <Card className="flex min-h-24 items-center gap-4 p-5">
           <Users className="size-6 text-brand-600" />
           <div>
-            <p className="text-sm text-muted">Matching accounts</p>
+            <p className="text-sm text-muted">{t("Matching accounts")}</p>
             <p className="font-display text-2xl font-bold">{total}</p>
           </div>
         </Card>
         <Card className="flex min-h-24 items-center gap-4 p-5">
           <UserRound className="size-6 text-success" />
           <div>
-            <p className="text-sm text-muted">Active on this page</p>
+            <p className="text-sm text-muted">{t("Active on this page")}</p>
             <p className="font-display text-2xl font-bold">{activeCount}</p>
           </div>
         </Card>
         <Card className="flex min-h-24 items-center gap-4 p-5">
           <ShieldCheck className="size-6 text-brand-600" />
           <div>
-            <p className="text-sm text-muted">Current role filter</p>
+            <p className="text-sm text-muted">{t("Current role filter")}</p>
             <p className="font-display text-lg font-bold capitalize">
               {role || "All roles"}
             </p>
@@ -184,9 +182,7 @@ export function UsersView() {
           className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-control bg-danger-soft px-4 py-3 text-sm text-danger"
         >
           <span>{error}</span>
-          <Button variant="secondary" size="sm" onClick={() => void load()}>
-            Try again
-          </Button>
+          <Button variant="secondary" size="sm" onClick={() => void load()}>{t("Try again")}</Button>
         </div>
       )}
 
@@ -204,7 +200,7 @@ export function UsersView() {
             <p className="flex-1 text-sm font-semibold text-ink">{statusNotice.message}</p>
             <button
               type="button"
-              aria-label="Dismiss status notification"
+              aria-label={t("Dismiss status notification")}
               className="rounded-control p-1 text-muted hover:bg-canvas hover:text-ink"
               onClick={() => setStatusNotice(null)}
             >
@@ -218,14 +214,14 @@ export function UsersView() {
         <Card className="mb-5 p-5 sm:p-6">
           <form onSubmit={save} className="grid gap-4 sm:grid-cols-2">
             <div className="sm:col-span-2">
-              <h2 className="font-display text-lg font-bold">Manage account</h2>
+              <h2 className="font-display text-lg font-bold">{t("Manage account")}</h2>
               <p className="mt-1 text-sm text-muted">
                 Update sign-in details for {editing.name}.
               </p>
             </div>
             <Input
-              aria-label="Account name"
-              placeholder="Full name"
+              aria-label={t("Account name")}
+              placeholder={t("Full name")}
               value={form.name}
               onChange={(event) =>
                 setForm({ ...form, name: event.target.value })
@@ -233,9 +229,9 @@ export function UsersView() {
               required
             />
             <Input
-              aria-label="Email address"
+              aria-label={t("Email address")}
               type="email"
-              placeholder="name@example.com"
+              placeholder={t("name@example.com")}
               value={form.email}
               onChange={(event) =>
                 setForm({ ...form, email: event.target.value })
@@ -245,10 +241,10 @@ export function UsersView() {
             <div className="relative">
               <KeyRound className="absolute top-3.5 left-3 size-4 text-muted" />
               <Input
-                aria-label="New password"
+                aria-label={t("New password")}
                 type="password"
                 autoComplete="new-password"
-                placeholder="New password (leave blank to keep current)"
+                placeholder={t("New password (leave blank to keep current)")}
                 value={form.password}
                 onChange={(event) =>
                   setForm({ ...form, password: event.target.value })
@@ -258,29 +254,25 @@ export function UsersView() {
               />
             </div>
             <select
-              aria-label="Account status"
+              aria-label={t("Account status")}
               value={form.status}
               onChange={(event) =>
                 setForm({ ...form, status: event.target.value })
               }
               className="h-11 rounded-control border border-hairline bg-card px-3 text-sm text-ink"
             >
-              <option value="active">Active</option>
-              <option value="inactive">Inactive</option>
-              <option value="suspended">Suspended</option>
+              <option value="active">{t("Active")}</option>
+              <option value="inactive">{t("Inactive")}</option>
+              <option value="suspended">{t("Suspended")}</option>
             </select>
             <div className="flex justify-end gap-2 sm:col-span-2">
               <Button
                 type="button"
                 variant="secondary"
                 onClick={() => setEditing(null)}
-              >
-                Cancel
-              </Button>
+              >{t("Cancel")}</Button>
               <Button type="submit" loading={saving}>
-                <Pencil className="size-4" />
-                Save account
-              </Button>
+                <Pencil className="size-4" />{t("Save account")}</Button>
             </div>
           </form>
         </Card>
@@ -291,8 +283,8 @@ export function UsersView() {
           <div className="relative min-w-0 flex-1">
             <Search className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted" />
             <Input
-              aria-label="Search accounts"
-              placeholder="Search by name or email"
+              aria-label={t("Search accounts")}
+              placeholder={t("Search by name or email")}
               value={search}
               onChange={(event) => {
                 setSearch(event.target.value);
@@ -302,7 +294,7 @@ export function UsersView() {
             />
           </div>
           <select
-            aria-label="Filter by role"
+            aria-label={t("Filter by role")}
             value={role}
             onChange={(event) => {
               setRole(event.target.value);
@@ -310,12 +302,12 @@ export function UsersView() {
             }}
             className="h-11 rounded-control border border-hairline bg-card px-3 text-sm text-ink"
           >
-            <option value="">All roles</option>
-            <option value="teacher">Teachers</option>
-            <option value="admin">Administrators</option>
-            <option value="student">Students</option>
+            <option value="">{t("All roles")}</option>
+            <option value="teacher">{t("Teachers")}</option>
+            <option value="admin">{t("Administrators")}</option>
+            <option value="student">{t("Students")}</option>
           </select>
-          <StatusFilter value={status} onChange={(value) => { setStatus(value); setPage(1); }} label="Filter by status" options={[{ value: "active" }, { value: "inactive" }, { value: "suspended" }]} />
+          <StatusFilter value={status} onChange={(value) => { setStatus(value); setPage(1); }} label={t("Filter by status")} options={[{ value: "active" }, { value: "inactive" }, { value: "suspended" }]} />
         </div>
         <div className="overflow-x-auto">
           <table className="w-full min-w-[760px] text-left text-sm">
@@ -337,9 +329,7 @@ export function UsersView() {
                 </tr>
               ) : users.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="px-5 py-12 text-center text-muted">
-                    No accounts match these filters.
-                  </td>
+                  <td colSpan={5} className="px-5 py-12 text-center text-muted">{t("No accounts match these filters.")}</td>
                 </tr>
               ) : (
                 users.map((user) => (
@@ -371,7 +361,7 @@ export function UsersView() {
                             size="icon"
                             onClick={() => router.push(`/teachers/${user.teacher_id}`)}
                             aria-label={`View teacher details for ${user.name}`}
-                            title="View teacher details"
+                            title={t("View teacher details")}
                           >
                             <Eye className="size-4" />
                           </Button>
@@ -419,17 +409,13 @@ export function UsersView() {
               size="sm"
               disabled={page <= 1 || loading}
               onClick={() => setPage((value) => value - 1)}
-            >
-              Previous
-            </Button>
+            >{t("Previous")}</Button>
             <Button
               variant="secondary"
               size="sm"
               disabled={page >= lastPage || loading}
               onClick={() => setPage((value) => value + 1)}
-            >
-              Next
-            </Button>
+            >{t("Next")}</Button>
           </div>
         </div>
       </Card>

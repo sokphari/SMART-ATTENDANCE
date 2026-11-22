@@ -14,6 +14,7 @@ import {
   Layers,
   ScrollText,
   ShieldCheck,
+  Settings,
   Users,
   UserRound,
   type LucideIcon,
@@ -244,6 +245,28 @@ export const NAV_SECTIONS: NavSection[] = [
       ].includes(item.href),
     ),
   },
+];
+
+export const ADMIN_ACCOUNT_NAV_ITEMS: NavItem[] = [
+  {
+    label: "My profile",
+    href: "/profile",
+    icon: UserRound,
+    description: "View and update your administrator account details.",
+    endpoint: "/api/v1/auth/me",
+  },
+  {
+    label: "Settings",
+    href: "/settings",
+    icon: Settings,
+    description: "Manage system attendance and timetable policies.",
+    endpoint: "/api/v1/admin/class-schedules/configuration",
+  },
+];
+
+export const ADMIN_NAV_SECTIONS: NavSection[] = [
+  ...NAV_SECTIONS,
+  { label: "Account", items: ADMIN_ACCOUNT_NAV_ITEMS },
 ];
 
 export const MOBILE_TABS: NavItem[] = ALL_NAV_ITEMS.filter((item) =>

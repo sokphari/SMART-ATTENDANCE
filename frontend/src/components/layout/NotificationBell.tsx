@@ -16,6 +16,7 @@ import {
   ShieldAlert,
 } from "lucide-react";
 import { apiFetch } from "@/lib/api/client";
+import { useLocale } from "@/i18n/LocaleProvider";
 import type {
   NotificationCategory,
   NotificationItem,
@@ -25,6 +26,7 @@ import type {
 const LOCAL_STORAGE_READ_KEY = "smart_attendance_last_read_notif";
 
 export function NotificationBell() {
+  const { t } = useLocale();
   const [open, setOpen] = useState(false);
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
   const [category, setCategory] = useState<NotificationCategory>("all");
@@ -133,10 +135,10 @@ export function NotificationBell() {
       <button
         type="button"
         onClick={handleToggle}
-        aria-label="Notifications"
+        aria-label={t("Notifications")}
         aria-haspopup="true"
         aria-expanded={open}
-        title="Alerts and login notifications"
+        title={t("Alerts and login notifications")}
         className={`relative flex size-9 cursor-pointer items-center justify-center rounded-control border border-hairline bg-card text-slate-500 transition-colors duration-200 hover:bg-brand-50 hover:text-brand-700 ${
           open ? "bg-brand-50 text-brand-700 ring-2 ring-brand-500/30" : ""
         }`}
@@ -164,7 +166,7 @@ export function NotificationBell() {
       {open && (
         <div
           role="region"
-          aria-label="Notification center"
+          aria-label={t("Notification center")}
           className="absolute right-0 z-50 mt-2 w-80 sm:w-96 rounded-2xl border border-hairline bg-card/95 p-0 shadow-2xl backdrop-blur-xl animate-in fade-in zoom-in-95 duration-150"
         >
           {/* Header */}
@@ -174,9 +176,7 @@ export function NotificationBell() {
                 <Bell className="size-4" />
               </span>
               <div>
-                <h3 className="font-display text-sm font-bold text-slate-900 dark:text-white leading-tight">
-                  Notifications
-                </h3>
+                <h3 className="font-display text-sm font-bold text-slate-900 dark:text-white leading-tight">{t("Notifications")}</h3>
                 <p className="text-[11px] text-slate-500">
                   {unreadCount > 0
                     ? `${unreadCount} unread update${unreadCount > 1 ? "s" : ""}`
@@ -189,7 +189,7 @@ export function NotificationBell() {
               <button
                 type="button"
                 onClick={fetchNotifications}
-                title="Refresh notifications"
+                title={t("Refresh notifications")}
                 className="flex size-7 items-center justify-center rounded-md text-slate-400 hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-800 dark:hover:text-slate-200 transition-colors"
               >
                 <RotateCw
@@ -202,9 +202,7 @@ export function NotificationBell() {
                   onClick={markAllAsRead}
                   className="flex items-center gap-1 rounded-md px-2 py-1 text-[11px] font-semibold text-brand-600 hover:bg-brand-50 dark:text-brand-400 dark:hover:bg-brand-950/40 transition-colors"
                 >
-                  <CheckCheck className="size-3.5" />
-                  Mark read
-                </button>
+                  <CheckCheck className="size-3.5" />{t("Mark read")}</button>
               )}
             </div>
           </div>
@@ -219,9 +217,7 @@ export function NotificationBell() {
                   ? "bg-brand-500 text-white shadow-xs font-semibold"
                   : "text-slate-500 hover:bg-slate-200/50 dark:hover:bg-slate-800"
               }`}
-            >
-              All
-            </button>
+            >{t("All")}</button>
             <button
               type="button"
               onClick={() => setCategory("auth")}
@@ -230,9 +226,7 @@ export function NotificationBell() {
                   ? "bg-brand-500 text-white shadow-xs font-semibold"
                   : "text-slate-500 hover:bg-slate-200/50 dark:hover:bg-slate-800"
               }`}
-            >
-              Sign-ins & Security
-            </button>
+            >{t("Sign-ins & Security")}</button>
             <button
               type="button"
               onClick={() => setCategory("attendance")}
@@ -241,26 +235,20 @@ export function NotificationBell() {
                   ? "bg-brand-500 text-white shadow-xs font-semibold"
                   : "text-slate-500 hover:bg-slate-200/50 dark:hover:bg-slate-800"
               }`}
-            >
-              Attendance
-            </button>
+            >{t("Attendance")}</button>
           </div>
 
           {/* List Content */}
           <div className="max-h-80 overflow-y-auto divide-y divide-hairline">
             {loadError && notifications.length === 0 ? (
               <div className="px-4 py-8 text-center">
-                <p className="text-sm font-semibold text-slate-700 dark:text-slate-300">
-                  Notifications could not be loaded
-                </p>
+                <p className="text-sm font-semibold text-slate-700 dark:text-slate-300">{t("Notifications could not be loaded")}</p>
                 <p className="mt-1 text-xs text-slate-500">{loadError}</p>
                 <button
                   type="button"
                   onClick={() => void fetchNotifications()}
                   className="mt-3 rounded-lg bg-brand-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-brand-700"
-                >
-                  Try again
-                </button>
+                >{t("Try again")}</button>
               </div>
             ) : isLoading && notifications.length === 0 ? (
               <div className="px-4 py-10 text-center text-sm text-slate-500">
@@ -271,13 +259,8 @@ export function NotificationBell() {
                 <span className="flex size-10 items-center justify-center rounded-full bg-slate-100 text-slate-400 dark:bg-slate-800 dark:text-slate-500 mb-2">
                   <CheckCircle2 className="size-5" />
                 </span>
-                <p className="text-sm font-semibold text-slate-700 dark:text-slate-300">
-                  No notifications to show
-                </p>
-                <p className="text-xs text-slate-400 max-w-xs mt-0.5">
-                  Sign-in activity, failed login alerts, and attendance events
-                  will appear here in real-time.
-                </p>
+                <p className="text-sm font-semibold text-slate-700 dark:text-slate-300">{t("No notifications to show")}</p>
+                <p className="text-xs text-slate-400 max-w-xs mt-0.5">{t("Sign-in activity, failed login alerts, and attendance events will appear here in real-time.")}</p>
               </div>
             ) : (
               filteredNotifications.map((notif) => {
@@ -373,7 +356,7 @@ export function NotificationBell() {
               onClick={() => setOpen(false)}
               className="inline-flex items-center gap-1 text-xs font-semibold text-brand-600 hover:text-brand-700 dark:text-brand-400 dark:hover:text-brand-300 transition-colors"
             >
-              <span>View full audit log stream</span>
+              <span>{t("View full audit log stream")}</span>
               <ExternalLink className="size-3" />
             </Link>
           </div>

@@ -194,19 +194,15 @@ useEffect(() => {
   return (
     <>
       <PageHeader
-        title="Students"
+        title={t("Students")}
         description="Manage student records, profiles, departments, and account status."
         actions={
           <div className="flex flex-wrap gap-2">
-            {canManage && <Button variant="secondary" size="sm" onClick={() => setQrOpen(true)}><QrCode className="size-4" /> QR registration</Button>}
+            {canManage && <Button variant="secondary" size="sm" onClick={() => setQrOpen(true)}><QrCode className="size-4" />{t("QR registration")}</Button>}
             <Button variant="secondary" size="sm" onClick={exportCsv}>
-              <ArrowDownToLine className="size-4" />
-              Export current page
-            </Button>
+              <ArrowDownToLine className="size-4" />{t("Export current page")}</Button>
             <Button size="sm" onClick={() => router.push("/students/create")}>
-              <Plus className="size-4" />
-              Create student
-            </Button>
+              <Plus className="size-4" />{t("Create student")}</Button>
           </div>
         }
       />
@@ -217,7 +213,7 @@ useEffect(() => {
             <GraduationCap className="size-7" />
           </span>
           <div>
-            <p className="text-sm font-medium text-muted">Matching students</p>
+            <p className="text-sm font-medium text-muted">{t("Matching students")}</p>
             <p className="font-display mt-1 text-3xl leading-none font-bold">
               {total}
             </p>
@@ -228,9 +224,7 @@ useEffect(() => {
             <UserRound className="size-7" />
           </span>
           <div>
-            <p className="text-sm font-medium text-muted">
-              Active on this page
-            </p>
+            <p className="text-sm font-medium text-muted">{t("Active on this page")}</p>
             <p className="font-display mt-1 text-3xl leading-none font-bold">
               {activeCount}
             </p>
@@ -241,7 +235,7 @@ useEffect(() => {
             <BookOpen className="size-7" />
           </span>
           <div>
-            <p className="text-sm font-medium text-muted">Departments</p>
+            <p className="text-sm font-medium text-muted">{t("Departments")}</p>
             <p className="font-display mt-1 text-3xl leading-none font-bold">
               {departments.length}
             </p>
@@ -254,8 +248,8 @@ useEffect(() => {
           <div className="relative min-w-0 flex-1">
             <Search className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted" />
             <Input
-              aria-label="Search students"
-              placeholder="Search by name or email"
+              aria-label={t("Search students")}
+              placeholder={t("Search by name or email")}
               value={search}
               onChange={(event) => {
                 setSearch(event.target.value);
@@ -265,7 +259,7 @@ useEffect(() => {
             />
           </div>
           <select
-            aria-label="Filter by department"
+            aria-label={t("Filter by department")}
             value={departmentId}
             onChange={(event) => {
               setDepartmentId(event.target.value);
@@ -273,16 +267,16 @@ useEffect(() => {
             }}
             className="h-11 rounded-control border border-hairline bg-card px-3 text-sm text-ink"
           >
-            <option value="">All departments</option>
+            <option value="">{t("All departments")}</option>
             {departments.map((department) => (
               <option key={department.id} value={department.id}>
                 {department.name}
               </option>
             ))}
           </select>
-          <StatusFilter value={status} onChange={(value) => { setStatus(value); setPage(1); }} label="Filter by status" options={[{ value: "active" }, { value: "inactive" }, { value: "suspended" }]} />
+          <StatusFilter value={status} onChange={(value) => { setStatus(value); setPage(1); }} label={t("Filter by status")} options={[{ value: "active" }, { value: "inactive" }, { value: "suspended" }]} />
           <select
-            aria-label="Filter by gender"
+            aria-label={t("Filter by gender")}
             value={gender}
             onChange={(event) => {
               setGender(event.target.value);
@@ -290,11 +284,11 @@ useEffect(() => {
             }}
             className="h-11 rounded-control border border-hairline bg-card px-3 text-sm text-ink"
           >
-            <option value="">All genders</option>
-            <option value="male">Male</option>
-            <option value="female">Female</option>
-            <option value="other">Other</option>
-            <option value="prefer_not_to_say">Prefer not to say</option>
+            <option value="">{t("All genders")}</option>
+            <option value="male">{t("Male")}</option>
+            <option value="female">{t("Female")}</option>
+            <option value="other">{t("Other")}</option>
+            <option value="prefer_not_to_say">{t("Prefer not to say")}</option>
           </select>
         </div>
         {error && (
@@ -315,9 +309,7 @@ useEffect(() => {
               type="button"
               className="ml-3 underline"
               onClick={() => setFeedback(null)}
-            >
-              Dismiss
-            </button>
+            >{t("Dismiss")}</button>
           </p>
         )}
         {canManage && (
@@ -354,9 +346,7 @@ useEffect(() => {
                 </tr>
               ) : students.length === 0 ? (
                 <tr>
-                  <td colSpan={8} className="px-5 py-12 text-center text-muted">
-                    No students match these filters.
-                  </td>
+                  <td colSpan={8} className="px-5 py-12 text-center text-muted">{t("No students match these filters.")}</td>
                 </tr>
               ) : (
                 students.map((student) => (
@@ -412,7 +402,7 @@ useEffect(() => {
                           <button
                             type="button"
                             aria-label={`View profile for ${student.user?.name ?? "student"}`}
-                            title="View profile"
+                            title={t("View profile")}
                             onClick={() =>
                               router.push(`/students/${student.id}`)
                             }
@@ -423,7 +413,7 @@ useEffect(() => {
                           <button
                             type="button"
                             aria-label={`Edit ${student.user?.name ?? "student"}`}
-                            title="Edit student"
+                            title={t("Edit student")}
                             onClick={() =>
                               router.push(`/students/${student.id}/edit`)
                             }
@@ -458,17 +448,13 @@ useEffect(() => {
               size="sm"
               disabled={page <= 1 || loading}
               onClick={() => setPage((value) => value - 1)}
-            >
-              Previous
-            </Button>
+            >{t("Previous")}</Button>
             <Button
               variant="secondary"
               size="sm"
               disabled={page >= lastPage || loading}
               onClick={() => setPage((value) => value + 1)}
-            >
-              Next
-            </Button>
+            >{t("Next")}</Button>
           </div>
         </div>
       </Card>

@@ -147,14 +147,14 @@ export function ProgramsView() {
   return (
     <>
       <PageHeader
-        title="Programs"
+        title={t("Programs")}
         description="Manage academic programs linked to departments."
       />
 
       {/* Create Program */}
       <Card className="mb-5 grid gap-3 p-4 md:grid-cols-5">
         <select
-          aria-label="Department"
+          aria-label={t("Department")}
           className="h-11 rounded-control border border-hairline bg-card px-3 text-sm"
           value={form.department_id || ""}
           onChange={(e) =>
@@ -164,7 +164,7 @@ export function ProgramsView() {
             }))
           }
         >
-          <option value="">Department</option>
+          <option value="">{t("Department")}</option>
           {departments.map((d) => (
             <option key={d.id} value={d.id}>
               {d.name}
@@ -173,8 +173,8 @@ export function ProgramsView() {
         </select>
 
         <Input
-          aria-label="Program code"
-          placeholder="Program code"
+          aria-label={t("Program code")}
+          placeholder={t("Program code")}
           value={form.code}
           onChange={(e) =>
             setForm((prev) => ({
@@ -185,8 +185,8 @@ export function ProgramsView() {
         />
 
         <Input
-          aria-label="Program name"
-          placeholder="Program name"
+          aria-label={t("Program name")}
+          placeholder={t("Program name")}
           value={form.name}
           onChange={(e) =>
             setForm((prev) => ({
@@ -197,8 +197,8 @@ export function ProgramsView() {
         />
 
         <Input
-          aria-label="Description"
-          placeholder="Description (optional)"
+          aria-label={t("Description")}
+          placeholder={t("Description (optional)")}
           value={form.description}
           onChange={(e) =>
             setForm((prev) => ({
@@ -230,7 +230,7 @@ export function ProgramsView() {
 
             <Input
               className="pl-9"
-              placeholder="Search programs..."
+              placeholder={t("Search programs...")}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />
@@ -299,9 +299,7 @@ export function ProgramsView() {
                   <td
                     colSpan={4}
                     className="p-8 text-center text-muted"
-                  >
-                    No programs found.
-                  </td>
+                  >{t("No programs found.")}</td>
                 </tr>
               )}
             </tbody>

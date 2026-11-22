@@ -31,7 +31,7 @@ class ClassSectionSeeder extends Seeder
             'AF-101', 'CE-101', 'ME-101', 'EL-101', 'MATH-101',
         ];
 
-        $courses = Course::whereIn('course_code', $courseCodes)->pluck('id', 'course_code');
+        $courses = Course::whereIn('course_code', $courseCodes)->get()->keyBy('course_code');
         $count = 0;
 
         foreach ($courseCodes as $code) {
@@ -41,12 +41,13 @@ class ClassSectionSeeder extends Seeder
 
             ClassSection::updateOrCreate(
                 [
-                    'course_id' => $courses[$code],
+                    'course_id' => $courses[$code]->id,
                     'semester_id' => $semester->id,
                     'section_code' => 'A',
                 ],
                 [
                     'capacity' => 35,
+                    'program_id' => $courses[$code]->program_id,
                     'status' => ClassSectionStatus::PendingSetup,
                 ],
             );

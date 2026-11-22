@@ -72,29 +72,22 @@ export function TeacherAttendanceHistoryView() {
     <div className="w-full space-y-6">
       <header className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <p className="text-sm font-semibold text-brand-600">
-            Teacher workspace
-          </p>
-          <h1 className="mt-1 font-display text-3xl font-extrabold tracking-tight">
-            Attendance history
-          </h1>
-          <p className="mt-2 text-sm text-muted">
-            Review attendance records for your assigned classes.
-          </p>
+
+          <h1 className="mt-1 font-display text-3xl font-extrabold tracking-tight">{t("Attendance history")}</h1>
+          <p className="mt-2 text-sm text-muted">{t("Review attendance records for your assigned classes.")}</p>
         </div>
         {/* <Link
           href="/teacher/corrections"
           className="inline-flex h-10 items-center gap-2 rounded-control border border-hairline bg-card px-3 text-sm font-semibold text-brand-700 hover:bg-brand-50"
         >
-          <ClipboardList className="size-4" />My correction requests
-        </Link> */}
+          <ClipboardList className="size-4" />{t("My correction requests")}</Link> */}
       </header>
       <div className="grid gap-4 sm:grid-cols-2">
         <div className="rounded-panel border border-hairline bg-card p-5 shadow-soft">
           <span className="flex size-10 items-center justify-center rounded-control bg-brand-50 text-brand-600 dark:bg-brand-500/15 dark:text-brand-300">
             <History className="size-5" />
           </span>
-          <p className="mt-4 text-sm text-muted">Matching records</p>
+          <p className="mt-4 text-sm text-muted">{t("Matching records")}</p>
           <p className="mt-1 font-display text-3xl font-extrabold">
             {total.toLocaleString()}
           </p>
@@ -103,7 +96,7 @@ export function TeacherAttendanceHistoryView() {
           <span className="flex size-10 items-center justify-center rounded-control bg-indigo-50 text-indigo-600 dark:bg-indigo-500/15 dark:text-indigo-300">
             <CalendarDays className="size-5" />
           </span>
-          <p className="mt-4 text-sm text-muted">Showing page</p>
+          <p className="mt-4 text-sm text-muted">{t("Showing page")}</p>
           <p className="mt-1 font-display text-3xl font-extrabold">
             {page}{" "}
             <span className="text-base font-semibold text-muted">
@@ -116,7 +109,7 @@ export function TeacherAttendanceHistoryView() {
       <section className="rounded-panel border border-hairline bg-card shadow-soft">
         <div className="grid gap-3 border-b border-hairline p-4 sm:grid-cols-2 xl:grid-cols-6">
           <label className="relative sm:col-span-2 xl:col-span-2">
-            <span className="sr-only">Search students</span>
+            <span className="sr-only">{t("Search students")}</span>
             <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted" />
             <input
               value={search}
@@ -124,12 +117,12 @@ export function TeacherAttendanceHistoryView() {
                 setSearch(event.target.value);
                 resetPage();
               }}
-              placeholder="Search student name, code, or email"
+              placeholder={t("Search student name, code, or email")}
               className="h-11 w-full rounded-control border border-hairline bg-card pl-10 pr-3 text-sm outline-none focus:border-brand-400"
             />
           </label>
           <label>
-            <span className="sr-only">Class section</span>
+            <span className="sr-only">{t("Class section")}</span>
             <select
               value={sectionId}
               onChange={(event) => {
@@ -138,7 +131,7 @@ export function TeacherAttendanceHistoryView() {
               }}
               className="h-11 w-full rounded-control border border-hairline bg-card px-3 text-sm"
             >
-              <option value="">All my classes</option>
+              <option value="">{t("All my classes")}</option>
               {sections.map((section) => (
                 <option key={section.id} value={section.id}>
                   {section.course?.course_code} · {section.section_code}
@@ -147,7 +140,7 @@ export function TeacherAttendanceHistoryView() {
             </select>
           </label>
           <label>
-            <span className="sr-only">Attendance status</span>
+            <span className="sr-only">{t("Attendance status")}</span>
             <select
               value={status}
               onChange={(event) => {
@@ -156,17 +149,17 @@ export function TeacherAttendanceHistoryView() {
               }}
               className="h-11 w-full rounded-control border border-hairline bg-card px-3 text-sm"
             >
-              <option value="">All statuses</option>
-              <option value="present">Present</option>
-              <option value="late">Late</option>
-              <option value="absent">Absent</option>
-              <option value="excused">Excused</option>
+              <option value="">{t("All statuses")}</option>
+              <option value="present">{t("Present")}</option>
+              <option value="late">{t("Late")}</option>
+              <option value="absent">{t("Absent")}</option>
+              <option value="excused">{t("Excused")}</option>
             </select>
           </label>
           <label>
-            <span className="sr-only">From date</span>
+            <span className="sr-only">{t("From date")}</span>
             <input
-              aria-label="From date"
+              aria-label={t("From date")}
               type="date"
               value={dateFrom}
               onChange={(event) => {
@@ -177,9 +170,9 @@ export function TeacherAttendanceHistoryView() {
             />
           </label>
           <label>
-            <span className="sr-only">To date</span>
+            <span className="sr-only">{t("To date")}</span>
             <input
-              aria-label="To date"
+              aria-label={t("To date")}
               type="date"
               min={dateFrom || undefined}
               value={dateTo}
@@ -220,9 +213,7 @@ export function TeacherAttendanceHistoryView() {
                 </tr>
               ) : records.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="px-4 py-12 text-center text-muted">
-                    No attendance records match these filters.
-                  </td>
+                  <td colSpan={6} className="px-4 py-12 text-center text-muted">{t("No attendance records match these filters.")}</td>
                 </tr>
               ) : (
                 records.map((record) => (
@@ -282,17 +273,13 @@ export function TeacherAttendanceHistoryView() {
               size="sm"
               disabled={page <= 1 || loading}
               onClick={() => setPage((current) => current - 1)}
-            >
-              Previous
-            </Button>
+            >{t("Previous")}</Button>
             <Button
               variant="secondary"
               size="sm"
               disabled={page >= lastPage || loading}
               onClick={() => setPage((current) => current + 1)}
-            >
-              Next
-            </Button>
+            >{t("Next")}</Button>
           </div>
         </div>
       </section>

@@ -1,5 +1,7 @@
 "use client";
 
+import { useLocale } from "@/i18n/LocaleProvider";
+
 import { forwardRef, useEffect, useLayoutEffect, useRef, useState, type ComponentProps, type ElementType, type KeyboardEvent } from "react";
 import { useRouter } from "next/navigation";
 import { createPortal } from "react-dom";
@@ -18,6 +20,7 @@ type Props = {
 };
 
 export function StudentActionsMenu({ student, canManage, onFeedback, onRefresh }: Props) {
+  const { t } = useLocale();
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [switchOpen, setSwitchOpen] = useState(false);
@@ -130,26 +133,26 @@ export function StudentActionsMenu({ student, canManage, onFeedback, onRefresh }
         <Ellipsis className="size-5" />
       </button>
       {open && typeof document !== "undefined" && createPortal(<>
-        <button type="button" aria-label="Close actions menu" className="fixed inset-0 z-[60] cursor-default" onClick={() => closeMenu(false)} />
+        <button type="button" aria-label={t("Close actions menu")} className="fixed inset-0 z-[60] cursor-default" onClick={() => closeMenu(false)} />
         <div ref={menuRef} id={menuId} role="menu" aria-label={`Student actions for ${student.user?.name ?? student.student_code}`} style={menuPosition ? { top: menuPosition.top, right: menuPosition.right, maxHeight: menuPosition.maxHeight } : { top: 8, right: 8 }} className="fixed z-[70] w-56 overflow-y-auto rounded-panel border border-hairline bg-card p-1.5 shadow-lift">
-          <MenuItem ref={firstItemRef} icon={BookOpen} onClick={() => { closeMenu(false); router.push(`/students/${student.id}/enrollments`); }}>Class Enrollment</MenuItem>
-          {currentEnrollment && <MenuItem icon={ArrowRightLeft} onClick={() => void openSwitchDialog()}>Switch Class</MenuItem>}
-          <MenuItem icon={CalendarClock} onClick={() => { closeMenu(false); router.push(`/students/${student.id}?tab=attendance`); }}>Attendance History</MenuItem>
-          <MenuItem icon={ShieldCheck} onClick={() => { closeMenu(false); router.push(`/students/${student.id}?tab=account`); }}>Manage Account</MenuItem>
+          <MenuItem ref={firstItemRef} icon={BookOpen} onClick={() => { closeMenu(false); router.push(`/students/${student.id}/enrollments`); }}>{t("Class Enrollment")}</MenuItem>
+          {currentEnrollment && <MenuItem icon={ArrowRightLeft} onClick={() => void openSwitchDialog()}>{t("Switch Class")}</MenuItem>}
+          <MenuItem icon={CalendarClock} onClick={() => { closeMenu(false); router.push(`/students/${student.id}?tab=attendance`); }}>{t("Attendance History")}</MenuItem>
+          <MenuItem icon={ShieldCheck} onClick={() => { closeMenu(false); router.push(`/students/${student.id}?tab=account`); }}>{t("Manage Account")}</MenuItem>
           <div className="my-1 border-t border-hairline" />
-          <button type="button" role="menuitem" disabled title="Archive requires a dedicated backend endpoint; DELETE currently only deactivates the account." className="flex min-h-11 w-full cursor-not-allowed items-center gap-3 rounded-control px-3 text-left text-sm font-medium text-muted opacity-55" onClick={() => undefined}><Archive className="size-4" />Archive Student <span className="ml-auto text-[10px]">Unavailable</span></button>
+          <button type="button" role="menuitem" disabled title={t("Archive requires a dedicated backend endpoint; DELETE currently only deactivates the account.")} className="flex min-h-11 w-full cursor-not-allowed items-center gap-3 rounded-control px-3 text-left text-sm font-medium text-muted opacity-55" onClick={() => undefined}><Archive className="size-4" />{t("Archive Student")}<span className="ml-auto text-[10px]">{t("Unavailable")}</span></button>
         </div>
       </>, document.body)}
 
       <dialog ref={switchDialogRef} aria-labelledby={`switch-title-${student.id}`} aria-describedby={`switch-description-${student.id}`} onCancel={(event) => { event.preventDefault(); if (!switchSaving) setSwitchOpen(false); }} onClose={() => { if (switchOpen) setSwitchOpen(false); }} className="m-auto w-[min(92vw,34rem)] rounded-panel border border-hairline bg-card p-0 text-ink shadow-lift backdrop:bg-ink/45">
         <div className="p-6">
-          <h2 id={`switch-title-${student.id}`} className="font-display text-lg font-bold">Switch class</h2>
+          <h2 id={`switch-title-${student.id}`} className="font-display text-lg font-bold">{t("Switch class")}</h2>
           <p id={`switch-description-${student.id}`} className="mt-2 text-sm text-muted">Move {student.user?.name ?? "this student"} to another section of the same course and semester. Their current enrollment will be kept in history as dropped.</p>
-          {currentEnrollment && <div className="mt-4 rounded-control bg-canvas p-3 text-sm"><p className="text-xs font-semibold text-muted">CURRENT CLASS</p><p className="mt-1 font-semibold">{currentEnrollment.section_code ?? "Current section"} · {currentEnrollment.course_name ?? "Course"}</p><p className="mt-0.5 text-xs text-muted">Class ID: {currentEnrollment.class_section_id} · {currentEnrollment.semester_name ?? "Current semester"}</p></div>}
-          <label htmlFor={`switch-target-${student.id}`} className="mt-4 block text-sm font-semibold">New class section ID</label>
-          <input id={`switch-target-${student.id}`} type="number" min="1" step="1" inputMode="numeric" value={targetSectionId} onChange={(event) => setTargetSectionId(event.target.value)} placeholder="Enter the destination class ID" className="mt-2 h-11 w-full rounded-control border border-hairline bg-card px-3 text-sm text-ink focus-visible:outline-2 focus-visible:outline-brand-500" />
+          {currentEnrollment && <div className="mt-4 rounded-control bg-canvas p-3 text-sm"><p className="text-xs font-semibold text-muted">{t("CURRENT CLASS")}</p><p className="mt-1 font-semibold">{currentEnrollment.section_code ?? "Current section"} · {currentEnrollment.course_name ?? "Course"}</p><p className="mt-0.5 text-xs text-muted">Class ID: {currentEnrollment.class_section_id} · {currentEnrollment.semester_name ?? "Current semester"}</p></div>}
+          <label htmlFor={`switch-target-${student.id}`} className="mt-4 block text-sm font-semibold">{t("New class section ID")}</label>
+          <input id={`switch-target-${student.id}`} type="number" min="1" step="1" inputMode="numeric" value={targetSectionId} onChange={(event) => setTargetSectionId(event.target.value)} placeholder={t("Enter the destination class ID")} className="mt-2 h-11 w-full rounded-control border border-hairline bg-card px-3 text-sm text-ink focus-visible:outline-2 focus-visible:outline-brand-500" />
           {targetPreview ? <p className="mt-2 text-xs text-success">{targetPreview.section_code} · {targetPreview.course?.name ?? "Course"}{(targetPreview.schedules ?? []).filter((schedule) => schedule.status === "active").map((schedule) => ` · ${schedule.period ?? "Class"} ${schedule.start_time.slice(0, 5)}–${schedule.end_time.slice(0, 5)}`).join("")} · {targetPreview.capacity - targetPreview.enrolled_count} seats left</p> : targetSectionId && !switchLoading ? <p className="mt-2 text-xs text-muted">The server will verify that this ID belongs to an active section of the same course and semester with available capacity.</p> : null}
-          <div className="mt-6 flex justify-end gap-2"><Button type="button" variant="secondary" disabled={switchSaving} onClick={() => setSwitchOpen(false)}>Cancel</Button><Button type="button" loading={switchSaving} disabled={!Number.isInteger(typedTarget) || typedTarget < 1 || switchSaving} onClick={() => void submitSwitch()}><ArrowRightLeft className="size-4" />Switch class</Button></div>
+          <div className="mt-6 flex justify-end gap-2"><Button type="button" variant="secondary" disabled={switchSaving} onClick={() => setSwitchOpen(false)}>{t("Cancel")}</Button><Button type="button" loading={switchSaving} disabled={!Number.isInteger(typedTarget) || typedTarget < 1 || switchSaving} onClick={() => void submitSwitch()}><ArrowRightLeft className="size-4" />{t("Switch class")}</Button></div>
         </div>
       </dialog>
     </div>

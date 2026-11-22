@@ -4,12 +4,13 @@ namespace Database\Seeders;
 
 use App\Enums\ClassroomStatus;
 use App\Models\Classroom;
+use App\Models\Floor;
 use Illuminate\Database\Seeder;
 
 class ClassroomSeeder extends Seeder
 {
     /**
-     * Seed 10 classrooms with real Phnom Penh university area coordinates.
+     * Seed classrooms with campus coordinates and their building-floor relations.
      */
     public function run(): void
     {
@@ -24,12 +25,26 @@ class ClassroomSeeder extends Seeder
             ['room_code' => 'D101', 'building' => 'Engineering Block', 'floor' => '1', 'latitude' => 11.5558000, 'longitude' => 104.9275000, 'allowed_radius_meters' => 70],
             ['room_code' => 'D102', 'building' => 'Engineering Block', 'floor' => '1', 'latitude' => 11.5559000, 'longitude' => 104.9276000, 'allowed_radius_meters' => 70],
             ['room_code' => 'E101', 'building' => 'Language Centre', 'floor' => '1', 'latitude' => 11.5555000, 'longitude' => 104.9280000, 'allowed_radius_meters' => 45],
+            ['room_code' => 'A101', 'building' => 'Library Annex', 'floor' => '1', 'latitude' => 11.5560000, 'longitude' => 104.9279000, 'allowed_radius_meters' => 50],
         ];
 
         foreach ($classrooms as $data) {
+            $floorId = Floor::query()
+                ->where('name', $data['floor'])
+                ->whereHas('building', fn ($query) => $query->where('name', $data['building']))
+                ->value('id');
+
+            if (! $floorId) {
+                $this->command?->warn("Skipped room {$data['room_code']}: floor {$data['floor']} in {$data['building']} was not found.");
+                continue;
+            }
+
             Classroom::updateOrCreate(
                 ['room_code' => $data['room_code']],
                 [
+                    'floor_id' => $floorId,
+                    'capacity' => 35,
+                    'room_type' => 'classroom',
                     'building' => $data['building'],
                     'floor' => $data['floor'],
                     'latitude' => $data['latitude'],

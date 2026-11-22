@@ -1,5 +1,7 @@
 "use client";
 
+import { useLocale } from "@/i18n/LocaleProvider";
+
 import { useEffect, useState, type FormEvent } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { ArrowLeft, Save } from "lucide-react";
@@ -15,6 +17,7 @@ const blankForm: CourseInput = { department_id: 0, course_code: "", name: "", de
 const NOTICE_KEY = "sa_course_notice";
 
 export function CourseFormView({ mode }: { mode: "create" | "edit" }) {
+  const { t } = useLocale();
   const params = useParams<{ id?: string }>();
   const router = useRouter();
   const id = Number(params.id);
@@ -55,17 +58,17 @@ export function CourseFormView({ mode }: { mode: "create" | "edit" }) {
   }
 
   return <>
-    <PageHeader title={mode === "create" ? "Create course" : "Edit course"} description={mode === "create" ? "Add a course to a department's catalog." : "Update course details and status."} actions={<Button variant="secondary" size="sm" onClick={() => router.push("/courses")}><ArrowLeft className="size-4" />Back to courses</Button>} />
+    <PageHeader title={mode === "create" ? "Create course" : "Edit course"} description={mode === "create" ? "Add a course to a department's catalog." : "Update course details and status."} actions={<Button variant="secondary" size="sm" onClick={() => router.push("/courses")}><ArrowLeft className="size-4" />{t("Back to courses")}</Button>} />
     {loading ? <Card className="w-full p-8 text-sm text-muted">Loading course…</Card> : !form.name && mode === "edit" && error ? <p role="alert" className="rounded-control bg-danger-soft px-4 py-3 text-sm text-danger">{error}</p> : <Card className="w-full p-5 sm:p-7"><form onSubmit={submit} className="grid gap-5 sm:grid-cols-2">
-      <Input label="Course name" placeholder="e.g. Introduction to Programming" required maxLength={150} value={form.name} onChange={(event) => setForm({ ...form, name: event.target.value })} />
-      <Input label="Course code" placeholder="e.g. CS101" required maxLength={50} value={form.course_code} onChange={(event) => setForm({ ...form, course_code: event.target.value.toUpperCase() })} />
-      <label className="space-y-1.5 text-sm font-semibold">Department<select required value={form.department_id || ""} onChange={(event) => setForm({ ...form, department_id: Number(event.target.value), program_id: null })} className="h-11 w-full rounded-control border border-hairline bg-card px-3.5 text-sm font-normal text-ink"><option value="" disabled>Select department</option>{departments.filter((department) => department.status === "active" || department.id === form.department_id).map((department) => <option key={department.id} value={department.id}>{department.name} ({department.code}){department.status === "inactive" ? " · Inactive" : ""}</option>)}</select></label>
-      <label className="space-y-1.5 text-sm font-semibold">Program <span className="font-normal text-muted">(optional)</span><select value={form.program_id ?? ""} onChange={event => setForm({ ...form, program_id: event.target.value ? Number(event.target.value) : null })} className="h-11 w-full rounded-control border border-hairline bg-card px-3.5 text-sm font-normal text-ink"><option value="">No program</option>{programs.filter(p => p.department_id === form.department_id).map(p => <option key={p.id} value={p.id}>{p.name} ({p.code})</option>)}</select></label>
-      <Input label="Credits" type="number" min={1} max={30} required value={form.credits} onChange={(event) => setForm({ ...form, credits: Number(event.target.value) })} />
-      <label className="space-y-1.5 text-sm font-semibold sm:col-span-2">Description <span className="font-normal text-muted">(optional)</span><textarea rows={4} placeholder="Briefly describe the course" value={form.description ?? ""} onChange={(event) => setForm({ ...form, description: event.target.value })} className="w-full rounded-control border border-hairline bg-card px-3.5 py-3 text-sm font-normal text-ink outline-none placeholder:text-slate-400 focus-visible:ring-4 focus-visible:ring-brand-100" /></label>
-      {mode === "edit" && <label className="space-y-1.5 text-sm font-semibold">Status<select value={form.status} onChange={(event) => setForm({ ...form, status: event.target.value as "active" | "inactive" })} className="h-11 w-full rounded-control border border-hairline bg-card px-3.5 text-sm font-normal text-ink"><option value="active">Active</option><option value="inactive">Inactive</option></select></label>}
+      <Input label={t("Course name")} placeholder={t("e.g. Introduction to Programming")} required maxLength={150} value={form.name} onChange={(event) => setForm({ ...form, name: event.target.value })} />
+      <Input label={t("Course code")} placeholder={t("e.g. CS101")} required maxLength={50} value={form.course_code} onChange={(event) => setForm({ ...form, course_code: event.target.value.toUpperCase() })} />
+      <label className="space-y-1.5 text-sm font-semibold">{t("Department")}<select required value={form.department_id || ""} onChange={(event) => setForm({ ...form, department_id: Number(event.target.value), program_id: null })} className="h-11 w-full rounded-control border border-hairline bg-card px-3.5 text-sm font-normal text-ink"><option value="" disabled>{t("Select department")}</option>{departments.filter((department) => department.status === "active" || department.id === form.department_id).map((department) => <option key={department.id} value={department.id}>{department.name} ({department.code}){department.status === "inactive" ? " · Inactive" : ""}</option>)}</select></label>
+      <label className="space-y-1.5 text-sm font-semibold">{t("Program")}<span className="font-normal text-muted">(optional)</span><select value={form.program_id ?? ""} onChange={event => setForm({ ...form, program_id: event.target.value ? Number(event.target.value) : null })} className="h-11 w-full rounded-control border border-hairline bg-card px-3.5 text-sm font-normal text-ink"><option value="">{t("No program")}</option>{programs.filter(p => p.department_id === form.department_id).map(p => <option key={p.id} value={p.id}>{p.name} ({p.code})</option>)}</select></label>
+      <Input label={t("Credits")} type="number" min={1} max={30} required value={form.credits} onChange={(event) => setForm({ ...form, credits: Number(event.target.value) })} />
+      <label className="space-y-1.5 text-sm font-semibold sm:col-span-2">{t("Description")}<span className="font-normal text-muted">(optional)</span><textarea rows={4} placeholder={t("Briefly describe the course")} value={form.description ?? ""} onChange={(event) => setForm({ ...form, description: event.target.value })} className="w-full rounded-control border border-hairline bg-card px-3.5 py-3 text-sm font-normal text-ink outline-none placeholder:text-slate-400 focus-visible:ring-4 focus-visible:ring-brand-100" /></label>
+      {mode === "edit" && <label className="space-y-1.5 text-sm font-semibold">{t("Status")}<select value={form.status} onChange={(event) => setForm({ ...form, status: event.target.value as "active" | "inactive" })} className="h-11 w-full rounded-control border border-hairline bg-card px-3.5 text-sm font-normal text-ink"><option value="active">{t("Active")}</option><option value="inactive">{t("Inactive")}</option></select></label>}
       {error && <p role="alert" className="rounded-control bg-danger-soft px-3 py-2 text-sm text-danger sm:col-span-2">{error}</p>}
-      <div className="flex justify-end gap-2 border-t border-hairline pt-4 sm:col-span-2"><Button type="button" variant="secondary" onClick={() => router.push("/courses")}>Cancel</Button><Button type="submit" loading={saving}><Save className="size-4" />{mode === "create" ? "Create course" : "Save changes"}</Button></div>
+      <div className="flex justify-end gap-2 border-t border-hairline pt-4 sm:col-span-2"><Button type="button" variant="secondary" onClick={() => router.push("/courses")}>{t("Cancel")}</Button><Button type="submit" loading={saving}><Save className="size-4" />{mode === "create" ? "Create course" : "Save changes"}</Button></div>
     </form></Card>}
   </>;
 }

@@ -126,7 +126,6 @@ export function TeacherTimetableView() {
   return <div className="w-full space-y-5">
     <div>
       <header>
-        <p className="text-xs font-bold uppercase tracking-wide text-brand-600">{t("Teacher workspace")}</p>
         <h1 className="mt-1 font-display text-3xl font-extrabold tracking-tight">{t("My timetable")}</h1>
         <p className="mt-1 text-sm text-muted">{t("Your assigned teaching schedule, shown in Asia/Phnom_Penh.")}</p>
       </header>

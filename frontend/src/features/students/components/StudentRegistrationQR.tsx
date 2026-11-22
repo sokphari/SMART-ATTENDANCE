@@ -1,6 +1,8 @@
 
 "use client";
 
+import { useLocale } from "@/i18n/LocaleProvider";
+
 import { useEffect, useRef, useState } from "react";
 import { QRCodeSVG } from "qrcode.react";
 import {
@@ -36,6 +38,7 @@ export function StudentRegistrationQR({
   onGenerate,
   onRegistered,
 }: Props) {
+  const { t } = useLocale();
   const dialogRef = useRef<HTMLDialogElement>(null);
 
   const [registration, setRegistration] =
@@ -206,19 +209,15 @@ export function StudentRegistrationQR({
             <h2
               id="registration-qr-title"
               className="font-display text-lg font-bold"
-            >
-              Student QR Registration
-            </h2>
-            <p className="mt-1 text-sm text-muted">
-              Generate a one-time student registration link.
-            </p>
+            >{t("Student QR Registration")}</h2>
+            <p className="mt-1 text-sm text-muted">{t("Generate a one-time student registration link.")}</p>
           </div>
 
           <button
             type="button"
             onClick={onClose}
             disabled={loading}
-            aria-label="Close registration dialog"
+            aria-label={t("Close registration dialog")}
             className="rounded-control p-2 text-muted hover:bg-canvas"
           >
             <X className="size-4" />
@@ -233,7 +232,7 @@ export function StudentRegistrationQR({
               <div className="rounded-2xl bg-white p-5">
                 <QRCodeSVG
                   value={registration.url}
-                  title="One-time student registration QR code"
+                  title={t("One-time student registration QR code")}
                   size={220}
                   level="H"
                   marginSize={0}
@@ -242,12 +241,8 @@ export function StudentRegistrationQR({
             </div>
 
             <div className="text-center">
-              <p className="text-sm font-semibold">
-                Scan to register
-              </p>
-              <p className="mt-1 text-xs text-muted">
-                One successful registration per QR code
-              </p>
+              <p className="text-sm font-semibold">{t("Scan to register")}</p>
+              <p className="mt-1 text-xs text-muted">{t("One successful registration per QR code")}</p>
               <p className="mt-2 text-xs font-medium text-brand-600">
                 Expires in {displayTime}
               </p>
@@ -282,9 +277,7 @@ export function StudentRegistrationQR({
                   )
                 }
               >
-                <ExternalLink className="size-4" />
-                Open form
-              </Button>
+                <ExternalLink className="size-4" />{t("Open form")}</Button>
             </div>
           </>
         ) : (
@@ -318,8 +311,7 @@ export function StudentRegistrationQR({
 
         {registration && status === "active" && !expired && (
           <Button type="button" variant="danger" className="w-full" disabled={revoking} loading={revoking} onClick={() => void revoke()}>
-            <Ban className="size-4" /> Revoke registration link
-          </Button>
+            <Ban className="size-4" />{t("Revoke registration link")}</Button>
         )}
 
         <Button
