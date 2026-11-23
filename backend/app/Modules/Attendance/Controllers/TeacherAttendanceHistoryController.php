@@ -7,13 +7,14 @@ use App\Http\Controllers\Controller;
 use App\Models\Teacher;
 use App\Modules\Attendance\Resources\AttendanceResource;
 use App\Modules\Attendance\Services\AttendanceServices;
+use App\Modules\Reports\Services\ReportService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 
 class TeacherAttendanceHistoryController extends Controller
 {
-    public function __construct(private readonly AttendanceServices $attendance) {}
+    public function __construct(private readonly AttendanceServices $attendance, private readonly ReportService $reports) {}
 
     public function index(Request $request): AnonymousResourceCollection
     {
@@ -39,9 +40,26 @@ class TeacherAttendanceHistoryController extends Controller
             'date_to' => ['sometimes', 'nullable', 'date', 'after_or_equal:date_from'],
         ]);
 
-        return response()->json([
-            'data' => $this->attendance->reportForTeacher($this->teacher($request), $filters),
-        ]);
+        $report = $this->reports->overview($filters, $this->teacher($request));
+        $summary = $report['summary'];
+        return response()->json(['data' => [
+            'total' => $summary['attendance_records'],
+            'opportunities' => $summary['opportunities'],
+            'unrecorded' => $summary['unrecorded'],
+            'by_status' => array_intersect_key($summary, array_flip(['present', 'late', 'absent', 'excused'])),
+            'attendance_rate' => $summary['attendance_rate'],
+            'by_section' => array_map(static fn (array $row): array => [
+                'class_section_id' => $row['class_section_id'],
+                'section_code' => $row['section_code'],
+                'course_code' => $row['course_code'],
+                'total' => $row['attendance_records'],
+                'opportunities' => $row['opportunities'],
+                'unrecorded' => $row['unrecorded'],
+                'present' => $row['present'], 'late' => $row['late'], 'absent' => $row['absent'],
+                'excused' => $row['excused'], 'attendance_rate' => $row['attendance_rate'],
+            ], $report['by_section']),
+            'attendance_trend' => $report['attendance_trend'],
+        ]]);
     }
 
     private function teacher(Request $request): Teacher

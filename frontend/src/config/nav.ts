@@ -1,6 +1,8 @@
 import {
   BarChart3,
   BookOpen,
+  ClipboardCheck,
+  FileSpreadsheet,
   Building2,
   Blocks,
   CalendarClock,
@@ -63,10 +65,10 @@ export const ALL_NAV_ITEMS: NavItem[] = [
     endpoint: "/api/v1/admin/departments",
   },
   {
-    label: "Courses",
+    label: "Subjects",
     href: "/courses",
     icon: BookOpen,
-    description: "The full course catalog, organized by department.",
+    description: "Manage the course catalog used as semester subjects.",
     endpoint: "/api/v1/admin/courses",
   },
   { label: "Programs", href: "/programs", icon: GraduationCap, description: "Programs and academic paths by department.", endpoint: "/api/v1/admin/programs" },
@@ -99,6 +101,8 @@ export const ALL_NAV_ITEMS: NavItem[] = [
     description: "Weekly timetables with conflict validation.",
     endpoint: "/api/v1/admin/class-schedules",
   },
+  { label: "Gradebook", href: "/gradebook", icon: ClipboardCheck, description: "Enter and review subject assessment grades." },
+  { label: "Semester Results", href: "/semester-results", icon: FileSpreadsheet, description: "Review, approve, publish, and export semester results." },
   {
     label: "Attendance",
     href: "/attendance",
@@ -167,6 +171,7 @@ export const TEACHER_NAV_ITEMS: NavItem[] = [
     endpoint: "/api/v1/teacher/class-sections",
     permissionKey: "classes",
   },
+  { label: "Gradebook", href: "/teacher/gradebook", icon: ClipboardCheck, description: "Enter assessment scores for your assigned subjects.", permissionKey: "grades" },
   {
     label: "Live Attendance",
     href: "/teacher/attendance-sessions",
@@ -209,10 +214,14 @@ export const TEACHER_NAV_ITEMS: NavItem[] = [
   },
 ];
 
+export const STUDENT_NAV_ITEMS: NavItem[] = [
+  { label: "Semester Results", href: "/student/results", icon: FileSpreadsheet, description: "View your published semester results." },
+];
+
 export const TEACHER_NAV_SECTIONS: NavSection[] = [
   { label: "Overview", items: TEACHER_NAV_ITEMS.slice(0, 1) },
-  { label: "Teaching", items: TEACHER_NAV_ITEMS.slice(1, 7) },
-  { label: "Account", items: TEACHER_NAV_ITEMS.slice(7) },
+  { label: "Teaching", items: TEACHER_NAV_ITEMS.slice(1, 8) },
+  { label: "Account", items: TEACHER_NAV_ITEMS.slice(8) },
 ];
 
 export const NAV_SECTIONS: NavSection[] = [
@@ -229,7 +238,7 @@ export const NAV_SECTIONS: NavSection[] = [
   {
     label: "Academics",
     items: ALL_NAV_ITEMS.filter((item) =>
-      ["/departments", "/courses", "/programs", "/buildings", "/academic-years", "/semesters", "/class-sections", "/schedules"].includes(
+      ["/departments", "/courses", "/programs", "/buildings", "/academic-years", "/semesters", "/class-sections", "/schedules", "/gradebook", "/semester-results"].includes(
         item.href,
       ),
     ),
@@ -245,6 +254,10 @@ export const NAV_SECTIONS: NavSection[] = [
       ].includes(item.href),
     ),
   },
+];
+
+export const STUDENT_NAV_SECTIONS: NavSection[] = [
+  { label: "Academics", items: STUDENT_NAV_ITEMS },
 ];
 
 export const ADMIN_ACCOUNT_NAV_ITEMS: NavItem[] = [

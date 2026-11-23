@@ -11,6 +11,7 @@ class RoleModuleCatalog
         'attendance_sessions' => 'Attendance sessions',
         'attendance_history' => 'Attendance history',
         'attendance_reports' => 'Attendance reports',
+        'grades' => 'Gradebook',
         'corrections' => 'Corrections',
         'profile' => 'My profile',
     ];

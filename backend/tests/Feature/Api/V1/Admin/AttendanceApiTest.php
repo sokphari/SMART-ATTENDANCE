@@ -6,6 +6,7 @@ use App\Enums\AttendanceStatus;
 use App\Models\Attendance;
 use App\Models\AttendanceSession;
 use App\Models\ClassSection;
+use App\Models\Enrollment;
 use App\Models\Student;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -103,8 +104,16 @@ class AttendanceApiTest extends TestCase
         $classSection = ClassSection::factory()->create(['section_code' => 'A']);
         $session = AttendanceSession::factory()->create([
             'class_section_id' => $classSection->id,
+            'status' => \App\Enums\AttendanceSessionStatus::Closed,
         ]);
         $students = Student::factory()->count(3)->create();
+        foreach ($students as $student) {
+            Enrollment::factory()->create([
+                'class_section_id' => $classSection->id,
+                'student_id' => $student->id,
+                'enrollment_date' => now()->subDay()->toDateString(),
+            ]);
+        }
 
         Attendance::factory()->create([
             'attendance_session_id' => $session->id,
@@ -124,6 +133,7 @@ class AttendanceApiTest extends TestCase
         $otherSection = ClassSection::factory()->create();
         $otherSession = AttendanceSession::factory()->create([
             'class_section_id' => $otherSection->id,
+            'status' => \App\Enums\AttendanceSessionStatus::Closed,
         ]);
         Attendance::factory()->absent()->create([
             'attendance_session_id' => $otherSession->id,
@@ -150,7 +160,7 @@ class AttendanceApiTest extends TestCase
         $this->getJson('/api/v1/admin/reports/attendance')
             ->assertOk()
             ->assertJsonPath('data.total', 0)
-            ->assertJsonPath('data.attendance_rate', 0)
+            ->assertJsonPath('data.attendance_rate', null)
             ->assertJsonCount(0, 'data.by_section');
     }
 }

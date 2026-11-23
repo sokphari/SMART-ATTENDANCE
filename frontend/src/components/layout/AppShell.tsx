@@ -67,8 +67,12 @@ export function AppShell({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (!ready || !user) return;
     const isTeacher = user.role?.toLowerCase() === "teacher";
+    const isStudent = user.role?.toLowerCase() === "student";
+    const isStudentPath = pathname.startsWith("/student/");
     if (isTeacher && !isTeacherPath) router.replace("/teacher/dashboard");
-    if (!isTeacher && isTeacherPath) router.replace("/dashboard");
+    if (isStudent && !isStudentPath) router.replace("/student/results");
+    if (!isTeacher && !isStudent && isTeacherPath) router.replace("/dashboard");
+    if (!isStudent && isStudentPath) router.replace(isTeacher ? "/teacher/dashboard" : "/dashboard");
     if (isTeacher) {
       const currentModule = TEACHER_NAV_ITEMS.find((item) => pathname === item.href || pathname.startsWith(`${item.href}/`));
       if (currentModule?.permissionKey && !teacherModules.includes(currentModule.permissionKey)) {
@@ -134,7 +138,9 @@ export function AppShell({ children }: { children: ReactNode }) {
     return <div className="flex min-h-dvh items-center justify-center bg-canvas px-5"><div className="max-w-lg rounded-panel border border-hairline bg-card p-8 text-center shadow-soft"><h1 className="font-display text-xl font-bold">{t("Teacher access is disabled")}</h1><p className="mt-2 text-sm leading-relaxed text-muted">{t("An administrator has turned off all teacher modules. Contact your administrator to restore access.")}</p><button type="button" onClick={() => void handleLogout()} className="mt-5 rounded-control bg-brand-600 px-4 py-2 text-sm font-semibold text-white hover:bg-brand-700">{t("Sign out")}</button></div></div>;
   }
 
-  if (ready && user && !isTeacher && !isAdmin) {
+  const isStudent = user?.role?.toLowerCase() === "student";
+  const isStudentPath = pathname.startsWith("/student/");
+  if (ready && user && !isTeacher && !isAdmin && !isStudent) {
     return (
       <div className="flex min-h-dvh items-center justify-center bg-canvas px-5">
         <div className="max-w-lg rounded-panel border border-hairline bg-card p-8 text-center shadow-soft">
@@ -149,7 +155,6 @@ export function AppShell({ children }: { children: ReactNode }) {
       </div>
     );
   }
-
   return (
     <div className="min-h-dvh">
       <Sidebar collapsed={collapsed} user={user} teacherModules={teacherModules} />

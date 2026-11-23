@@ -21,7 +21,7 @@ import {
 } from "lucide-react";
 import { findNavItem } from "@/config/nav";
 import type { AuthUser } from "@/types/auth";
-import { BackendStatus } from "@/components/shared/BackendStatus";
+import { SystemHealth } from "@/components/shared/SystemHealth";
 import { NotificationBell } from "@/components/layout/NotificationBell";
 import { LanguageSwitcher } from "@/components/shared/LanguageSwitcher";
 import { useLocale } from "@/i18n/LocaleProvider";
@@ -204,7 +204,7 @@ export function Topbar({
           </Link>
         )}
         <LanguageSwitcher compact />
-        <BackendStatus />
+        {isAdmin && <SystemHealth />}
         <button
           type="button"
           onClick={onToggleTheme}

@@ -22,7 +22,7 @@ class RolePermissionApiTest extends TestCase
         $this->putJson('/api/v1/admin/role-permissions/teacher', ['permissions' => ['classes' => false]])->assertForbidden();
 
         Sanctum::actingAs(User::factory()->admin()->create());
-        $this->getJson('/api/v1/admin/role-permissions')->assertOk()->assertJsonCount(7, 'data.teacher');
+        $this->getJson('/api/v1/admin/role-permissions')->assertOk()->assertJsonCount(8, 'data.teacher');
         $this->putJson('/api/v1/admin/role-permissions/teacher', [
             'permissions' => ['classes' => false, 'attendance_sessions' => true],
         ])->assertOk()->assertJsonPath('data.teacher.1.enabled', false);

@@ -4,7 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { LayoutGrid, X } from "lucide-react";
-import { ADMIN_ACCOUNT_NAV_ITEMS, ALL_NAV_ITEMS, MOBILE_TABS, TEACHER_NAV_ITEMS } from "@/config/nav";
+import { ADMIN_ACCOUNT_NAV_ITEMS, ALL_NAV_ITEMS, MOBILE_TABS, STUDENT_NAV_ITEMS, TEACHER_NAV_ITEMS } from "@/config/nav";
 import { cx } from "@/lib/utils/cx";
 import { useLocale } from "@/i18n/LocaleProvider";
 
@@ -14,9 +14,10 @@ export function BottomTabBar({ role, teacherModules = [] }: { role: string | nul
   const [moreOpen, setMoreOpen] = useState(false);
   const isTeacher = role?.toLowerCase() === "teacher";
   const isAdmin = role?.toLowerCase() === "admin";
+  const isStudent = role?.toLowerCase() === "student";
   const allowedTeacherItems = TEACHER_NAV_ITEMS.filter((item) => item.permissionKey && teacherModules.includes(item.permissionKey));
-  const tabs = isTeacher ? allowedTeacherItems.slice(0, 3) : MOBILE_TABS;
-  const moreItems = isTeacher ? allowedTeacherItems : isAdmin ? [...ALL_NAV_ITEMS, ...ADMIN_ACCOUNT_NAV_ITEMS] : ALL_NAV_ITEMS;
+  const tabs = isTeacher ? allowedTeacherItems.slice(0, 3) : isStudent ? STUDENT_NAV_ITEMS : MOBILE_TABS;
+  const moreItems = isTeacher ? allowedTeacherItems : isStudent ? STUDENT_NAV_ITEMS : isAdmin ? [...ALL_NAV_ITEMS, ...ADMIN_ACCOUNT_NAV_ITEMS] : ALL_NAV_ITEMS;
 
   const isActive = (href: string) =>
     pathname === href || pathname.startsWith(`${href}/`);
@@ -71,7 +72,7 @@ export function BottomTabBar({ role, teacherModules = [] }: { role: string | nul
         className="fixed inset-x-0 bottom-0 z-40 border-t border-hairline bg-card/90 backdrop-blur-lg lg:hidden"
         style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
       >
-        <div className={`mx-auto grid max-w-lg ${isTeacher ? "grid-cols-3" : "grid-cols-5"}`}>
+        <div className={`mx-auto grid max-w-lg ${isTeacher ? "grid-cols-3" : isStudent ? "grid-cols-1" : "grid-cols-5"}`}>
           {tabs.map((tab) => {
             const active = isActive(tab.href);
 
@@ -92,7 +93,7 @@ export function BottomTabBar({ role, teacherModules = [] }: { role: string | nul
               </Link>
             );
           })}
-          {(!isTeacher || allowedTeacherItems.length > tabs.length) && <button
+          {((!isTeacher && !isStudent) || (isTeacher && allowedTeacherItems.length > tabs.length)) && <button
             type="button"
             onClick={() => setMoreOpen(true)}
             className="flex cursor-pointer flex-col items-center gap-1 py-2.5 text-[11px] font-bold text-slate-500 transition-colors duration-200"

@@ -2,7 +2,7 @@
 
 import { Breadcrumb } from "@/components/ui/Breadcrumb";
 import { useLocale } from "@/i18n/LocaleProvider";
-import { ALL_NAV_ITEMS, TEACHER_NAV_ITEMS } from "@/config/nav";
+import { ALL_NAV_ITEMS, STUDENT_NAV_ITEMS, TEACHER_NAV_ITEMS } from "@/config/nav";
 import { buildBreadcrumbs } from "@/lib/navigation/breadcrumbs";
 
 type AppBreadcrumbsProps = {
@@ -20,7 +20,7 @@ export function AppBreadcrumbs({ pathname, role }: AppBreadcrumbsProps) {
 
   const teacherArea = role?.toLowerCase() === "teacher";
   const rootHref = teacherArea ? "/teacher/dashboard" : "/dashboard";
-  const items = teacherArea ? TEACHER_NAV_ITEMS : ALL_NAV_ITEMS;
+  const items = teacherArea ? TEACHER_NAV_ITEMS : role?.toLowerCase() === "student" ? STUDENT_NAV_ITEMS : ALL_NAV_ITEMS;
   const breadcrumbs = buildBreadcrumbs(pathname, rootHref, items);
 
   return <Breadcrumb items={breadcrumbs.map((item) => ({ ...item, label: t(item.label) }))} className="mb-3" />;

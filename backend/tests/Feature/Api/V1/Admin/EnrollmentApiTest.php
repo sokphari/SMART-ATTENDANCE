@@ -65,7 +65,7 @@ class EnrollmentApiTest extends TestCase
     {
         $this->actingAsAdmin();
         $classSection = ClassSection::factory()->create(['capacity' => 10]);
-        $student = Student::factory()->create();
+        $student = Student::factory()->create(['department_id' => $classSection->course->department_id]);
 
         $this->postJson('/api/v1/admin/enrollments', [
             'class_section_id' => $classSection->id,
@@ -174,7 +174,8 @@ class EnrollmentApiTest extends TestCase
         $semester = Semester::factory()->create();
         $source = ClassSection::factory()->create(['course_id' => $course->id, 'semester_id' => $semester->id]);
         $target = ClassSection::factory()->create(['course_id' => $course->id, 'semester_id' => $semester->id]);
-        $enrollment = Enrollment::factory()->create(['class_section_id' => $source->id]);
+        $student = Student::factory()->create(['department_id' => $course->department_id]);
+        $enrollment = Enrollment::factory()->create(['class_section_id' => $source->id, 'student_id' => $student->id]);
 
         $response = $this->postJson("/api/v1/admin/enrollments/{$enrollment->id}/transfer", [
             'target_class_section_id' => $target->id,

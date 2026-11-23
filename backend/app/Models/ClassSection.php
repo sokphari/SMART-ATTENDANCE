@@ -74,6 +74,21 @@ class ClassSection extends Model
         return $this->hasMany(ClassSchedule::class);
     }
 
+    public function attendanceSessions(): HasMany
+    {
+        return $this->hasMany(AttendanceSession::class);
+    }
+
+    public function subjectGrades(): HasMany
+    {
+        return $this->hasMany(SubjectGrade::class);
+    }
+
+    public function resultPublication(): \Illuminate\Database\Eloquent\Relations\HasOne
+    {
+        return $this->hasOne(SemesterResultPublication::class);
+    }
+
     public function isActive(): bool
     {
         return $this->status === ClassSectionStatus::Active;

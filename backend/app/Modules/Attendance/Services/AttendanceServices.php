@@ -95,7 +95,7 @@ class AttendanceServices
             )
             ->when(
                 $filters['status'] ?? null,
-                fn ($query, string $status) => $query->where('status', $status)
+                fn ($query, string $status) => $query->where('attendances.status', $status)
             )
             ->when(
                 $filters['date_from'] ?? null,
