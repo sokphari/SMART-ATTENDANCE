@@ -45,7 +45,7 @@ export type SectionOption = {
   semester?: { id: number; name: string; start_date: string; end_date: string; academic_year?: { name: string } };
   teachers?: { id: number; name: string; code?: string }[];
 };
-export type SemesterOption = { id: number; name: string; status: string; start_date: string; end_date: string; academic_year?: { name: string } | null };
+export type SemesterOption = { id: number; name: string; status: string; start_date: string; end_date: string; academic_year?: { name: string; status?: string } | null };
 export type TimetableConfig = {
   timezone: string;
   weekdays: number[];

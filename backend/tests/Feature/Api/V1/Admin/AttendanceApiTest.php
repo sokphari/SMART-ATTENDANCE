@@ -86,6 +86,20 @@ class AttendanceApiTest extends TestCase
             ->assertJsonPath('data.0.id', $present->id);
     }
 
+    public function test_admin_can_filter_attendance_by_selected_semester(): void
+    {
+        $this->actingAsAdmin();
+        $section = ClassSection::factory()->create(['section_code' => 'A']);
+        $session = AttendanceSession::factory()->create(['class_section_id' => $section->id]);
+        $matching = Attendance::factory()->create(['attendance_session_id' => $session->id]);
+        Attendance::factory()->create();
+
+        $this->getJson('/api/v1/admin/attendance?semester_id='.$section->semester_id)
+            ->assertOk()
+            ->assertJsonCount(1, 'data')
+            ->assertJsonPath('data.0.id', $matching->id);
+    }
+
     public function test_guest_cannot_view_attendance_report(): void
     {
         $this->getJson('/api/v1/admin/reports/attendance')->assertUnauthorized();

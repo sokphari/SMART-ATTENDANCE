@@ -9,9 +9,9 @@ export function fetchAttendanceRecords(params: URLSearchParams) {
   );
 }
 
-export function fetchClassSectionsOptions() {
+export function fetchClassSectionsOptions(semesterId?: number) {
   return apiFetch<Paginated<SectionOption>>(
-    "/api/v1/admin/class-sections?status=active&per_page=100",
+    `/api/v1/admin/class-sections?status=active&per_page=100${semesterId ? `&semester_id=${semesterId}` : ""}`,
   );
 }
 

@@ -18,6 +18,7 @@ class AttendanceController extends Controller
             $request->only([
                 'search',
                 'class_section_id',
+                'semester_id',
                 'attendance_session_id',
                 'student_id',
                 'status',

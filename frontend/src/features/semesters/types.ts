@@ -5,7 +5,7 @@ export type Semester = {
   name: string;
   start_date: string;
   end_date: string;
-  status: "upcoming" | "active" | "completed";
+  status: "upcoming" | "active" | "completed" | "archived";
   created_at: string;
   updated_at: string;
 };

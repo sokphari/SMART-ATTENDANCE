@@ -19,6 +19,8 @@ import {
   Settings,
   Users,
   UserRound,
+  Zap,
+  BriefcaseBusiness,
   type LucideIcon,
 } from "lucide-react";
 
@@ -34,6 +36,8 @@ export type NavItem = {
 export type NavSection = {
   label: string;
   items: NavItem[];
+  icon?: LucideIcon;
+  collapsible?: boolean;
 };
 
 export const ALL_NAV_ITEMS: NavItem[] = [
@@ -219,45 +223,22 @@ export const STUDENT_NAV_ITEMS: NavItem[] = [
 ];
 
 export const TEACHER_NAV_SECTIONS: NavSection[] = [
-  { label: "Overview", items: TEACHER_NAV_ITEMS.slice(0, 1) },
-  { label: "Teaching", items: TEACHER_NAV_ITEMS.slice(1, 8) },
-  { label: "Account", items: TEACHER_NAV_ITEMS.slice(8) },
+  { label: "Quick Access", icon: Zap, collapsible: false, items: TEACHER_NAV_ITEMS.filter((item) => ["/teacher/dashboard", "/teacher/classes", "/teacher/attendance-sessions", "/teacher/timetable", "/teacher/gradebook", "/teacher/reports/attendance"].includes(item.href)) },
+  { label: "Teaching", icon: BookOpen, items: TEACHER_NAV_ITEMS.filter((item) => ["/teacher/attendance-history", "/teacher/corrections"].includes(item.href)) },
+  { label: "Account", icon: UserRound, items: TEACHER_NAV_ITEMS.filter((item) => item.href === "/teacher/profile") },
 ];
 
+const itemsAt = (hrefs: string[]) => ALL_NAV_ITEMS.filter((item) => hrefs.includes(item.href));
+
 export const NAV_SECTIONS: NavSection[] = [
-  {
-    label: "Overview",
-    items: ALL_NAV_ITEMS.filter((item) => item.href === "/dashboard"),
-  },
-  {
-    label: "People",
-    items: ALL_NAV_ITEMS.filter((item) =>
-      ["/students", "/teachers", "/users", "/roles-permissions"].includes(item.href),
-    ),
-  },
-  {
-    label: "Academics",
-    items: ALL_NAV_ITEMS.filter((item) =>
-      ["/departments", "/courses", "/programs", "/buildings", "/academic-years", "/semesters", "/class-sections", "/schedules", "/gradebook", "/semester-results"].includes(
-        item.href,
-      ),
-    ),
-  },
-  {
-    label: "Attendance",
-    items: ALL_NAV_ITEMS.filter((item) =>
-      [
-        "/attendance",
-        "/corrections",
-        "/reports",
-        "/audit-logs",
-      ].includes(item.href),
-    ),
-  },
+  { label: "Quick Access", icon: Zap, collapsible: false, items: itemsAt(["/dashboard", "/attendance", "/students", "/schedules", "/gradebook", "/reports", "/semester-results"]) },
+  { label: "People", icon: Users, items: itemsAt(["/teachers", "/users", "/roles-permissions"]) },
+  { label: "Academics", icon: GraduationCap, items: itemsAt(["/departments", "/courses", "/programs", "/buildings", "/academic-years", "/semesters", "/class-sections"]) },
+  { label: "Management", icon: BriefcaseBusiness, items: itemsAt(["/corrections", "/audit-logs"]) },
 ];
 
 export const STUDENT_NAV_SECTIONS: NavSection[] = [
-  { label: "Academics", items: STUDENT_NAV_ITEMS },
+  { label: "Quick Access", icon: Zap, collapsible: false, items: STUDENT_NAV_ITEMS },
 ];
 
 export const ADMIN_ACCOUNT_NAV_ITEMS: NavItem[] = [
@@ -279,12 +260,10 @@ export const ADMIN_ACCOUNT_NAV_ITEMS: NavItem[] = [
 
 export const ADMIN_NAV_SECTIONS: NavSection[] = [
   ...NAV_SECTIONS,
-  { label: "Account", items: ADMIN_ACCOUNT_NAV_ITEMS },
+  { label: "Account", icon: UserRound, items: ADMIN_ACCOUNT_NAV_ITEMS },
 ];
 
-export const MOBILE_TABS: NavItem[] = ALL_NAV_ITEMS.filter((item) =>
-  ["/dashboard", "/students", "/attendance", "/reports"].includes(item.href),
-);
+export const MOBILE_TABS: NavItem[] = itemsAt(["/dashboard", "/attendance", "/students", "/schedules", "/reports"]);
 
 export function findNavItem(pathname: string): NavItem | undefined {
   return ALL_NAV_ITEMS.find(

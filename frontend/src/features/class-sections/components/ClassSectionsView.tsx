@@ -27,6 +27,7 @@ import { ApiError } from "@/lib/api/client";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { PageHeader } from "@/components/ui/PageHeader";
+import { selectGlobalSemester } from "@/features/schedules/api";
 import { StatusFilter, StatusSwitch } from "@/components/ui/status";
 import {
   fetchClassSections,
@@ -139,6 +140,17 @@ export function ClassSectionsView() {
   useEffect(() => {
     void loadSections();
   }, [loadSections]);
+
+  useEffect(() => {
+    const syncSemester = (event: Event) => {
+      const detail = (event as CustomEvent<{ semesterId?: number | null }>).detail;
+      if (!detail || !Object.prototype.hasOwnProperty.call(detail, "semesterId")) return;
+      setSemesterId(detail.semesterId ? String(detail.semesterId) : "");
+      setPage(1);
+    };
+    window.addEventListener("sa-semester-change", syncSemester);
+    return () => window.removeEventListener("sa-semester-change", syncSemester);
+  }, []);
 
   useEffect(() => {
     fetchSemestersOptions()
@@ -319,7 +331,9 @@ export function ClassSectionsView() {
               aria-label={t("Filter by semester")}
               value={semesterId}
               onChange={(e) => {
-                setSemesterId(e.target.value);
+                const value = e.target.value;
+                setSemesterId(value);
+                selectGlobalSemester(value ? Number(value) : null);
                 setPage(1);
               }}
               className="h-10 rounded-xl border border-hairline bg-canvas/60 px-3 text-xs font-medium text-ink transition-colors focus:border-brand-500 focus:bg-card focus:outline-hidden"

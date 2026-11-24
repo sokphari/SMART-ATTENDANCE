@@ -15,19 +15,23 @@ const SCHEDULES_URL = "/api/v1/admin/class-schedules";
 export const SELECTED_SEMESTER_KEY = "sa_selected_semester_id";
 export const MANUAL_SEMESTER_SELECTION_KEY = "sa_selected_semester_manual";
 
+export function selectGlobalSemester(semesterId: number | null): void {
+  window.localStorage.setItem(MANUAL_SEMESTER_SELECTION_KEY, "true");
+  if (semesterId) window.localStorage.setItem(SELECTED_SEMESTER_KEY, String(semesterId));
+  else window.localStorage.removeItem(SELECTED_SEMESTER_KEY);
+  window.dispatchEvent(new CustomEvent("sa-semester-change", { detail: { semesterId } }));
+}
+
 export function chooseInitialSemester(semesters: SemesterOption[]): SemesterOption | undefined {
   const storedId = window.localStorage.getItem(SELECTED_SEMESTER_KEY);
   const wasManuallySelected = window.localStorage.getItem(MANUAL_SEMESTER_SELECTION_KEY) === "true";
-  const stored = wasManuallySelected ? semesters.find((semester) => String(semester.id) === storedId) : undefined;
+  if (wasManuallySelected) {
+    // Preserve an explicit user's choice. If it is no longer available, leave
+    // the selector empty so the user can choose again instead of substituting.
+    return storedId ? semesters.find((semester) => String(semester.id) === storedId) : undefined;
+  }
   const active = semesters.find((semester) => semester.status === "active");
-
-  // Don't restore a completed term on a fresh page load. Doing so can pair an
-  // old semester with today's week and make the timetable appear to lose rows.
-  if (stored && (stored.status === "active" || stored.status === "upcoming")) return stored;
-
-  return active
-    ?? semesters.find((semester) => semester.status === "upcoming")
-    ?? semesters[0];
+  return active ?? semesters.find((semester) => semester.status === "upcoming");
 }
 
 export function fetchSchedules(params: URLSearchParams) {
@@ -44,8 +48,30 @@ export function fetchTimetableSummary(params: URLSearchParams) {
   return apiFetch<{ data: TimetableSummary }>(`${SCHEDULES_URL}/summary?${params.toString()}`);
 }
 
-export function fetchSemesterOptions() {
-  return apiFetch<Paginated<SemesterOption>>("/api/v1/admin/semesters?per_page=100");
+export async function fetchSemesterOptions() {
+  const semesters: SemesterOption[] = [];
+  let page = 1;
+  let lastPage = 1;
+  do {
+    const result = await apiFetch<Paginated<SemesterOption>>(`/api/v1/admin/semesters?per_page=100&page=${page}`);
+    semesters.push(...result.data);
+    lastPage = result.meta?.last_page ?? page;
+    page += 1;
+  } while (page <= lastPage);
+
+  // Keep every configured term, even empty terms, but exclude archived or
+  // malformed records from normal operational selection.
+  return {
+    data: semesters.filter((semester) =>
+      Number.isInteger(semester.id)
+      && semester.id > 0
+      && Boolean(semester.name)
+      && Boolean(semester.start_date)
+      && Boolean(semester.end_date)
+      && semester.academic_year?.status !== "archived"
+      && ["active", "upcoming", "completed"].includes(semester.status),
+    ),
+  };
 }
 
 export function fetchTeacherWorkload(teacherId: number, semesterId: number) {

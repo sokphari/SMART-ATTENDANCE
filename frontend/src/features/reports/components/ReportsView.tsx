@@ -5,6 +5,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Activity, AlertCircle, BarChart3, CalendarDays, Check, ChevronLeft, ChevronRight, Clock3, Download, RefreshCw, Users, UserX } from "lucide-react";
 import { ApiError } from "@/lib/api/client";
 import { fetchStudents } from "@/features/students/api";
+import { selectGlobalSemester } from "@/features/schedules/api";
 import { getAllMyClassSections, getMyClassRoster } from "@/features/teacher-portal/api";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
@@ -70,6 +71,18 @@ export function ReportsView({ role = "admin" }: { role?: ReportsRole }) {
       void getMyClassRoster(Number(sectionId)).then((result) => setStudents(result.data.map((student) => ({ id: student.id, student_code: student.student_code, user: { name: student.name, email: student.email ?? undefined } })))).catch(() => setStudents([]));
     } else if (role === "teacher") setStudents([]);
   }, [role, sectionId]);
+
+  useEffect(() => {
+    if (role !== "admin") return;
+    const syncSemester = (event: Event) => {
+      const detail = (event as CustomEvent<{ semesterId?: number | null }>).detail;
+      if (!detail || !Object.prototype.hasOwnProperty.call(detail, "semesterId")) return;
+      setSemesterId(detail.semesterId ? String(detail.semesterId) : "");
+      setPage(1);
+    };
+    window.addEventListener("sa-semester-change", syncSemester);
+    return () => window.removeEventListener("sa-semester-change", syncSemester);
+  }, [role]);
 
   const filters = useMemo(() => {
     const params = new URLSearchParams({ per_page: "25", page: String(page) });
@@ -169,7 +182,7 @@ export function ReportsView({ role = "admin" }: { role?: ReportsRole }) {
 
     <Card className="p-4">
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-6">
-        {(role === "admin") && <label className="text-xs font-semibold text-muted">{t("Semester")}<select value={semesterId} onChange={(e) => setSemesterId(e.target.value)} className={selectClass}><option value="">{t("All semesters")}</option>{semesters.map((item) => <option key={item.id} value={item.id}>{item.name} {item.academic_year?.name ? `· ${item.academic_year.name}` : ""}</option>)}</select></label>}
+        {(role === "admin") && <label className="text-xs font-semibold text-muted">{t("Semester")}<select value={semesterId} onChange={(e) => { setSemesterId(e.target.value); selectGlobalSemester(e.target.value ? Number(e.target.value) : null); }} className={selectClass}><option value="">{t("All semesters")}</option>{semesters.map((item) => <option key={item.id} value={item.id}>{item.name} {item.academic_year?.name ? `· ${item.academic_year.name}` : ""}</option>)}</select></label>}
         {(view === "class" || view === "student" || view === "daily" || view === "weekly" || view === "monthly") && <label className="text-xs font-semibold text-muted">{t("Class section")}<select value={sectionId} onChange={(e) => setSectionId(e.target.value)} className={selectClass}><option value="">{role === "teacher" ? t("All my classes") : t("All sections")}</option>{sections.map((item) => <option key={item.id} value={item.id}>{item.course?.course_code} · {item.section_code}</option>)}</select></label>}
         {view === "student" && <label className="text-xs font-semibold text-muted">{t("Student")}<select value={studentId} onChange={(e) => setStudentId(e.target.value)} className={selectClass}><option value="">{t("Select a student")}</option>{students.map((item) => <option key={item.id} value={item.id}>{item.user?.name ?? item.student_code} {item.student_code ? `· ${item.student_code}` : ""}</option>)}</select></label>}
         {(view === "overview" || view === "daily" || view === "student" || view === "class") && <>

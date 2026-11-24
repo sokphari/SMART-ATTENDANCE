@@ -7,6 +7,7 @@ enum AcademicPeriodStatus: string
     case Upcoming = 'upcoming';
     case Active = 'active';
     case Completed = 'completed';
+    case Archived = 'archived';
 
     /**
      * @return array<int, string>
@@ -22,6 +23,7 @@ enum AcademicPeriodStatus: string
             self::Upcoming => 'Upcoming',
             self::Active => 'Active',
             self::Completed => 'Completed',
+            self::Archived => 'Archived',
         };
     }
 }

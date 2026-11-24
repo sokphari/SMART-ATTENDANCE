@@ -34,6 +34,7 @@ export function AttendanceView() {
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState("");
   const [sectionId, setSectionId] = useState("");
+  const [semesterId, setSemesterId] = useState("");
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
   const [page, setPage] = useState(1);
@@ -51,6 +52,7 @@ export function AttendanceView() {
     if (search.trim()) params.set("search", search.trim());
     if (status) params.set("status", status);
     if (sectionId) params.set("class_section_id", sectionId);
+    if (semesterId) params.set("semester_id", semesterId);
     if (dateFrom) params.set("date_from", dateFrom);
     if (dateTo) params.set("date_to", dateTo);
 
@@ -70,7 +72,7 @@ export function AttendanceView() {
     } finally {
       if (requestId === requestSequence.current) setLoading(false);
     }
-  }, [dateFrom, dateTo, page, search, sectionId, status]);
+  }, [dateFrom, dateTo, page, search, sectionId, semesterId, status]);
 
   useEffect(() => {
     void loadAttendance();
@@ -80,9 +82,21 @@ export function AttendanceView() {
   }, [loadAttendance]);
 
   useEffect(() => {
-    fetchClassSectionsOptions()
+    fetchClassSectionsOptions(semesterId ? Number(semesterId) : undefined)
       .then((res) => setSections(res.data))
       .catch(() => setSections([]));
+  }, [semesterId]);
+
+  useEffect(() => {
+    const syncSemester = (event: Event) => {
+      const detail = (event as CustomEvent<{ semesterId?: number | null }>).detail;
+      if (!detail || !Object.prototype.hasOwnProperty.call(detail, "semesterId")) return;
+      setSemesterId(detail.semesterId ? String(detail.semesterId) : "");
+      setSectionId("");
+      setPage(1);
+    };
+    window.addEventListener("sa-semester-change", syncSemester);
+    return () => window.removeEventListener("sa-semester-change", syncSemester);
   }, []);
 
   const counts = useMemo(() => {

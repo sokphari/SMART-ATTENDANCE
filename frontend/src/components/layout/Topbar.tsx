@@ -26,7 +26,7 @@ import { NotificationBell } from "@/components/layout/NotificationBell";
 import { LanguageSwitcher } from "@/components/shared/LanguageSwitcher";
 import { useLocale } from "@/i18n/LocaleProvider";
 import { getInitials } from "@/lib/utils/name";
-import { chooseInitialSemester, fetchSemesterOptions, MANUAL_SEMESTER_SELECTION_KEY, SELECTED_SEMESTER_KEY } from "@/features/schedules/api";
+import { chooseInitialSemester, fetchSemesterOptions, MANUAL_SEMESTER_SELECTION_KEY, SELECTED_SEMESTER_KEY, selectGlobalSemester } from "@/features/schedules/api";
 import type { SemesterOption } from "@/features/schedules/types";
 
 type TopbarProps = {
@@ -56,6 +56,10 @@ export function Topbar({
   const searchRef = useRef<HTMLInputElement>(null);
   const [semesters, setSemesters] = useState<SemesterOption[]>([]);
   const [selectedSemesterId, setSelectedSemesterId] = useState("");
+  const [semesterLoading, setSemesterLoading] = useState(false);
+  const [semesterError, setSemesterError] = useState("");
+  const [invalidSemesterSelection, setInvalidSemesterSelection] = useState(false);
+  const [semesterReload, setSemesterReload] = useState(0);
 
   const [isFullscreen, setIsFullscreen] = useState(false);
 
@@ -95,18 +99,63 @@ export function Topbar({
   }, [toggleFullscreen]);
 
   useEffect(() => {
-    if (isTeacher) return;
+    if (!isAdmin) {
+      setSemesters([]);
+      setSelectedSemesterId("");
+      return;
+    }
+
+    let cancelled = false;
+    setSemesterLoading(true);
+    setSemesterError("");
     fetchSemesterOptions().then(({ data }) => {
+      if (cancelled) return;
       setSemesters(data);
+      const storedId = window.localStorage.getItem(SELECTED_SEMESTER_KEY);
+      const wasManuallySelected = window.localStorage.getItem(MANUAL_SEMESTER_SELECTION_KEY) === "true";
       const chosen = chooseInitialSemester(data);
+
+      if (wasManuallySelected && (!storedId || !chosen)) {
+        // Keep the user on an explicit empty state when their saved term was
+        // removed, archived, or is no longer authorized. Never silently pick another.
+        window.localStorage.removeItem(SELECTED_SEMESTER_KEY);
+        setSelectedSemesterId("");
+        setInvalidSemesterSelection(Boolean(storedId));
+        window.dispatchEvent(new CustomEvent("sa-semester-change", { detail: { semesterId: null, invalid: Boolean(storedId) } }));
+        return;
+      }
+
+      setInvalidSemesterSelection(false);
       if (chosen) {
         const value = String(chosen.id);
         setSelectedSemesterId(value);
         window.localStorage.setItem(SELECTED_SEMESTER_KEY, value);
         window.dispatchEvent(new CustomEvent("sa-semester-change", { detail: { semesterId: Number(value) } }));
+      } else {
+        setSelectedSemesterId("");
+        window.localStorage.removeItem(SELECTED_SEMESTER_KEY);
+        window.dispatchEvent(new CustomEvent("sa-semester-change", { detail: { semesterId: null } }));
       }
-    }).catch(() => setSemesters([]));
-  }, [isTeacher]);
+    }).catch((caught) => {
+      if (cancelled) return;
+      setSemesters([]);
+      setSemesterError(caught instanceof Error ? caught.message : t("Could not load semesters."));
+    }).finally(() => {
+      if (!cancelled) setSemesterLoading(false);
+    });
+
+    return () => { cancelled = true; };
+  }, [isAdmin, semesterReload, t]);
+
+  useEffect(() => {
+    const syncSelectedSemester = (event: Event) => {
+      const detail = (event as CustomEvent<{ semesterId?: number | null }>).detail;
+      if (!detail || !Object.prototype.hasOwnProperty.call(detail, "semesterId")) return;
+      setSelectedSemesterId(detail.semesterId ? String(detail.semesterId) : "");
+    };
+    window.addEventListener("sa-semester-change", syncSelectedSemester);
+    return () => window.removeEventListener("sa-semester-change", syncSelectedSemester);
+  }, []);
 
   useEffect(() => {
     if (!profileOpen) return;
@@ -173,26 +222,34 @@ export function Topbar({
       </div>
 
       <div className="flex items-center gap-3">
-        {!isTeacher && (
+        {isAdmin && (
+          <div className="hidden items-center gap-2 lg:flex">
           <select
             aria-label={t("Academic term")}
             value={selectedSemesterId}
+            disabled={semesterLoading || Boolean(semesterError) || semesters.length === 0}
             onChange={(event) => {
               const value = event.target.value;
               setSelectedSemesterId(value);
-              window.localStorage.setItem(SELECTED_SEMESTER_KEY, value);
-              window.localStorage.setItem(MANUAL_SEMESTER_SELECTION_KEY, "true");
-              window.dispatchEvent(new CustomEvent("sa-semester-change", { detail: { semesterId: Number(value) } }));
+              setInvalidSemesterSelection(false);
+              selectGlobalSemester(value ? Number(value) : null);
             }}
-            className="hidden h-9 rounded-control border border-hairline bg-card px-2 text-xs font-semibold text-muted outline-none lg:block"
+            className="h-9 max-w-56 rounded-control border border-hairline bg-card px-2 text-xs font-semibold text-muted outline-none focus-visible:ring-2 focus-visible:ring-brand-500 disabled:cursor-not-allowed disabled:opacity-60"
           >
-            {semesters.length === 0 && <option value="">{t("No semesters")}</option>}
+            <option value="">{semesterLoading ? t("Loading semesters…") : semesterError ? t("Semester list unavailable") : semesters.length === 0 ? t("No semester available") : t("Select a semester")}</option>
             {semesters.map((semester) => (
               <option key={semester.id} value={semester.id}>
                 {semester.name} · {semester.academic_year?.name ?? `${semester.start_date}–${semester.end_date}`}
               </option>
             ))}
           </select>
+          {semesterError && <>
+            <button type="button" title={semesterError} onClick={() => setSemesterReload((value) => value + 1)} className="text-xs font-semibold text-danger hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500">{t("Retry")}</button>
+            <span role="alert" className="sr-only">{semesterError}</span>
+          </>}
+          {!semesterLoading && !semesterError && semesters.length === 0 && <Link href="/semesters/create" className="text-xs font-semibold text-brand-600 hover:underline">{t("Set up")}</Link>}
+          {invalidSemesterSelection && <span role="status" className="max-w-44 text-[11px] leading-tight text-warning">{t("The previously selected semester is unavailable. Please choose another.")}</span>}
+          </div>
         )}
         {!isTeacher && (
           <Link

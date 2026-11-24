@@ -8,6 +8,7 @@ import { Card } from "@/components/ui/Card";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { ApiError } from "@/lib/api/client";
 import { useLocale } from "@/i18n/LocaleProvider";
+import { SELECTED_SEMESTER_KEY } from "@/features/schedules/api";
 import { getGradebook, getGradeSections, saveGrade, type GradeRow, type GradeSection } from "../api";
 
 type Draft = { activities: string; midterm: string; final: string };
@@ -16,6 +17,7 @@ export function GradebookView({ teacher = false }: { teacher?: boolean }) {
   const { t } = useLocale();
   const [sections, setSections] = useState<GradeSection[]>([]);
   const [sectionId, setSectionId] = useState<number | null>(null);
+  const [semesterId, setSemesterId] = useState("");
   const [rows, setRows] = useState<GradeRow[]>([]);
   const [drafts, setDrafts] = useState<Record<number, Draft>>({});
   const [loading, setLoading] = useState(true);
@@ -33,12 +35,21 @@ export function GradebookView({ teacher = false }: { teacher?: boolean }) {
   };
 
   const load = useCallback(async () => {
+    if (!teacher && !semesterId) {
+      setSections([]);
+      setSectionId(null);
+      setGradeRows([]);
+      setLoading(false);
+      return;
+    }
     setLoading(true);
     setError("");
     try {
-      const response = await getGradeSections(teacher);
+      const response = await getGradeSections(teacher, !teacher ? Number(semesterId) : undefined);
       setSections(response.data);
-      const id = sectionId ?? response.data[0]?.id ?? null;
+      const id = (sectionId && response.data.some((section) => section.id === sectionId) ? sectionId : null)
+        ?? response.data[0]?.id
+        ?? null;
       setSectionId(id);
       if (id) setGradeRows((await getGradebook(id, teacher)).data);
       else setGradeRows([]);
@@ -47,9 +58,23 @@ export function GradebookView({ teacher = false }: { teacher?: boolean }) {
     } finally {
       setLoading(false);
     }
-  }, [sectionId, teacher, t]);
+  }, [sectionId, semesterId, teacher, t]);
 
   useEffect(() => { void load(); }, [load]);
+
+  useEffect(() => {
+    if (teacher) return;
+    const stored = window.localStorage.getItem(SELECTED_SEMESTER_KEY) ?? "";
+    setSemesterId(stored);
+    const syncSemester = (event: Event) => {
+      const detail = (event as CustomEvent<{ semesterId?: number | null }>).detail;
+      if (!detail || !Object.prototype.hasOwnProperty.call(detail, "semesterId")) return;
+      setSemesterId(detail.semesterId ? String(detail.semesterId) : "");
+      setSectionId(null);
+    };
+    window.addEventListener("sa-semester-change", syncSemester);
+    return () => window.removeEventListener("sa-semester-change", syncSemester);
+  }, [teacher]);
 
   const chooseSection = async (id: number) => {
     setSectionId(id);

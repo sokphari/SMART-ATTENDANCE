@@ -52,7 +52,7 @@ class AttendanceServices
     }
 
     /**
-     * @param  array{search?: string|null, class_section_id?: int|string|null, attendance_session_id?: int|string|null, student_id?: int|string|null, status?: string|null, date_from?: string|null, date_to?: string|null, per_page?: int|string|null}  $filters
+     * @param  array{search?: string|null, class_section_id?: int|string|null, semester_id?: int|string|null, attendance_session_id?: int|string|null, student_id?: int|string|null, status?: string|null, date_from?: string|null, date_to?: string|null, per_page?: int|string|null}  $filters
      */
     public function paginate(array $filters = []): LengthAwarePaginator
     {
@@ -87,6 +87,13 @@ class AttendanceServices
                 fn ($query, $classSectionId) => $query->whereHas(
                     'attendanceSession',
                     fn ($query) => $query->where('class_section_id', $classSectionId)
+                )
+            )
+            ->when(
+                $filters['semester_id'] ?? null,
+                fn ($query, $semesterId) => $query->whereHas(
+                    'attendanceSession.classSection',
+                    fn ($query) => $query->where('semester_id', $semesterId)
                 )
             )
             ->when(

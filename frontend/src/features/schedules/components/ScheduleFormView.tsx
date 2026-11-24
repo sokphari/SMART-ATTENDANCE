@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Input } from "@/components/ui/Input";
 import { PageHeader } from "@/components/ui/PageHeader";
-import { chooseInitialSemester, createSchedule, fetchClassroomOptions, fetchSchedule, fetchSectionOptions, fetchSemesterOptions, fetchTeacherWorkload, fetchTimetableConfiguration, MANUAL_SEMESTER_SELECTION_KEY, SELECTED_SEMESTER_KEY, updateSchedule } from "../api";
+import { chooseInitialSemester, createSchedule, fetchClassroomOptions, fetchSchedule, fetchSectionOptions, fetchSemesterOptions, fetchTeacherWorkload, fetchTimetableConfiguration, SELECTED_SEMESTER_KEY, selectGlobalSemester, updateSchedule } from "../api";
 import type { ClassroomOption, ClassScheduleInput, SectionOption, SemesterOption, TeacherWorkload, TimetableConfig } from "../types";
 
 const DAYS = [{ value: 1, label: "Monday" }, { value: 2, label: "Tuesday" }, { value: 3, label: "Wednesday" }, { value: 4, label: "Thursday" }, { value: 5, label: "Friday" }];
@@ -71,6 +71,21 @@ export function ScheduleFormView({ mode }: { mode: "create" | "edit" }) {
   }, [semesterId, mode]);
 
   useEffect(() => {
+    if (mode !== "create") return;
+    const syncSemester = (event: Event) => {
+      const detail = (event as CustomEvent<{ semesterId?: number | null }>).detail;
+      if (!detail || !Object.prototype.hasOwnProperty.call(detail, "semesterId")) return;
+      const nextId = detail.semesterId ? String(detail.semesterId) : "";
+      setSemesterId(nextId);
+      setForm((current) => ({ ...current, class_section_id: 0 }));
+      setDepartmentId("");
+      setCourseId("");
+    };
+    window.addEventListener("sa-semester-change", syncSemester);
+    return () => window.removeEventListener("sa-semester-change", syncSemester);
+  }, [mode]);
+
+  useEffect(() => {
     if (mode !== "create" || !selectedSection?.teachers?.length || !semesterId) { setTeacherWorkloads([]); return; }
     let current = true;
     setCheckingTeacherAvailability(true);
@@ -126,7 +141,7 @@ export function ScheduleFormView({ mode }: { mode: "create" | "edit" }) {
     <PageHeader title={mode === "create" ? "Add timetable schedule" : "Edit timetable schedule"} description="Assign a class section to a weekday, teaching period, and classroom." actions={<Button variant="secondary" size="sm" onClick={() => router.push("/schedules")}><ArrowLeft className="size-4" />{t("Back to timetable")}</Button>} />
     {loading ? <Card className="p-8 text-sm text-muted">Loading timetable form…</Card> : <Card className="w-full p-5 sm:p-7">
       <form onSubmit={submit} className="grid gap-5 md:grid-cols-2">
-        <label className="space-y-1.5 text-sm font-semibold">{t("Academic semester")}<select value={semesterId} onChange={(event) => { setSemesterId(event.target.value); window.localStorage.setItem(SELECTED_SEMESTER_KEY, event.target.value); window.localStorage.setItem(MANUAL_SEMESTER_SELECTION_KEY, "true"); setDepartmentId(""); setCourseId(""); setForm((current) => ({ ...current, class_section_id: 0 })); }} className="h-11 w-full rounded-control border border-hairline bg-card px-3 text-sm text-ink">
+        <label className="space-y-1.5 text-sm font-semibold">{t("Academic semester")}<select value={semesterId} onChange={(event) => { setSemesterId(event.target.value); selectGlobalSemester(event.target.value ? Number(event.target.value) : null); setDepartmentId(""); setCourseId(""); setForm((current) => ({ ...current, class_section_id: 0 })); }} className="h-11 w-full rounded-control border border-hairline bg-card px-3 text-sm text-ink">
             {semesters.map((semester) => <option key={semester.id} value={semester.id}>{semester.name} · {semester.academic_year?.name ?? `${semester.start_date}–${semester.end_date}`}</option>)}
           </select>
         </label>

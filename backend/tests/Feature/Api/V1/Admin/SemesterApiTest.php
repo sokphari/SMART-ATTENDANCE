@@ -74,6 +74,30 @@ class SemesterApiTest extends TestCase
             ]);
     }
 
+    public function test_semester_options_include_configured_empty_semesters_for_each_valid_status(): void
+    {
+        $this->actingAsAdmin();
+        $year = $this->createYear();
+        $semesters = collect([
+            ['name' => 'Fall term', 'status' => AcademicPeriodStatus::Completed],
+            ['name' => 'Spring term', 'status' => AcademicPeriodStatus::Active],
+            ['name' => 'Summer term', 'status' => AcademicPeriodStatus::Upcoming],
+            ['name' => 'Archived term', 'status' => AcademicPeriodStatus::Archived],
+        ])->map(fn (array $term) => Semester::factory()->create([
+            'academic_year_id' => $year->id,
+            'name' => $term['name'],
+            'status' => $term['status'],
+        ]));
+
+        $response = $this->getJson('/api/v1/admin/semesters?per_page=100')->assertOk();
+
+        $this->assertSame(
+            $semesters->pluck('id')->sort()->values()->all(),
+            collect($response->json('data'))->pluck('id')->sort()->values()->all(),
+        );
+        $this->assertSame(4, $response->json('meta.total'));
+    }
+
     public function test_admin_can_create_semester(): void
     {
         $this->actingAsAdmin();

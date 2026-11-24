@@ -9,6 +9,7 @@ const SHARED: Record<string, StatusDefinition> = {
   pending_setup: { label: "Setup needed", tone: "warning", icon: "info" },
   upcoming: { label: "Upcoming", tone: "info", icon: "calendar" },
   completed: { label: "Completed", tone: "neutral", icon: "check" },
+  archived: { label: "Archived", tone: "neutral", icon: "pause" },
   cancelled: { label: "Cancelled", tone: "danger", icon: "close" },
   scheduled: { label: "Scheduled", tone: "info", icon: "calendar" },
   open: { label: "Open", tone: "success", icon: "play" },

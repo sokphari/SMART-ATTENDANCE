@@ -205,7 +205,9 @@ export function SchedulesView() {
         setWeekStart((current) => weekForSemester(chosen, current));
         window.localStorage.setItem("sa_selected_semester_id", id);
       } else {
-        setError("No semesters are available. Create an academic year and semester first.");
+        setError(data.length === 0
+          ? t("No semester is available. Create an academic year and semester first.")
+          : t("Select a semester in the header to view the timetable."));
       }
       setSemesterReady(true);
     }).catch((caught) => {
@@ -257,12 +259,24 @@ export function SchedulesView() {
 
   useEffect(() => {
     const sync = (event: Event) => {
-      const detail = (event as CustomEvent<{ semesterId?: number }>).detail;
-      if (detail?.semesterId) {
+      const detail = (event as CustomEvent<{ semesterId?: number | null }>).detail;
+      if (detail && Object.prototype.hasOwnProperty.call(detail, "semesterId")) {
+        if (!detail.semesterId) {
+          setSemesterId("");
+          setItems([]);
+          setTotal(0);
+          setLastPage(1);
+          setSummary(null);
+          setSemesterReady(true);
+          setError(t("Select a semester in the header to view the timetable."));
+          setPage(1);
+          return;
+        }
         const id = String(detail.semesterId);
         const semester = semesterOptions.find((option) => option.id === detail.semesterId);
         setSemesterId(id);
         setSemesterReady(true);
+        setError("");
         if (semester) setWeekStart((current) => weekForSemester(semester, current));
         setPage(1);
       }

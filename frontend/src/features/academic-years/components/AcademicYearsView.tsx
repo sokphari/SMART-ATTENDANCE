@@ -125,7 +125,7 @@ export function AcademicYearsView() {
               setPage(1);
             }}
             label={t("Filter academic year status")}
-            options={[{ value: "upcoming" }, { value: "active" }, { value: "completed" }]}
+            options={[{ value: "upcoming" }, { value: "active" }, { value: "completed" }, { value: "archived" }]}
             className="h-11"
           />
         </div>
