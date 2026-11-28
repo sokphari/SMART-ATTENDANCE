@@ -10,7 +10,7 @@ export function getTeacherProfile() {
   return apiFetch<ApiResource<TeacherProfile>>("/api/v1/teacher/profile");
 }
 
-export function updateTeacherProfile(payload: { name: string; email: string; phone: string | null }) {
+export function updateTeacherProfile(payload: { name: string; email: string; phone: string | null; gender: "male" | "female" | null }) {
   return apiFetch<ApiResource<TeacherProfile>>("/api/v1/teacher/profile", {
     method: "PATCH",
     body: payload,

@@ -15,7 +15,6 @@ import { Button } from "@/components/ui/Button";
 import { StatusBadge } from "@/components/ui/status";
 import { ApiError } from "@/lib/api/client";
 import { updateStoredUser } from "@/lib/api/session";
-import { getInitials } from "@/lib/utils/name";
 import {
   getMyClassSections,
   getTeacherProfile,
@@ -23,6 +22,7 @@ import {
 } from "../api";
 import type { TeacherProfile } from "../types";
 import { useLocale } from "@/i18n/LocaleProvider";
+import { ProfileAvatarUpload } from "@/components/shared/ProfileAvatarUpload";
 
 export function TeacherProfileView() {
   const { t } = useLocale();
@@ -33,7 +33,7 @@ export function TeacherProfileView() {
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [form, setForm] = useState({ name: "", email: "", phone: "" });
+  const [form, setForm] = useState<{ name: string; email: string; phone: string; gender: "male" | "female" | "" }>({ name: "", email: "", phone: "", gender: "" });
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
   useEffect(() => {
@@ -45,6 +45,7 @@ export function TeacherProfileView() {
           name: profileResponse.data.user.name,
           email: profileResponse.data.user.email,
           phone: profileResponse.data.phone ?? "",
+          gender: profileResponse.data.gender ?? "",
         });
       })
       .catch((caught: unknown) =>
@@ -63,6 +64,7 @@ export function TeacherProfileView() {
       name: profile.user.name,
       email: profile.user.email,
       phone: profile.phone ?? "",
+      gender: profile.gender ?? "",
     });
     setFieldErrors({});
     setError(null);
@@ -76,6 +78,7 @@ export function TeacherProfileView() {
       name: profile.user.name,
       email: profile.user.email,
       phone: profile.phone ?? "",
+      gender: profile.gender ?? "",
     });
     setFieldErrors({});
     setEditing(false);
@@ -92,6 +95,7 @@ export function TeacherProfileView() {
         name: form.name.trim(),
         email: form.email.trim(),
         phone: form.phone.trim() || null,
+        gender: form.gender || null,
       });
       const updated = response.data;
       setProfile(updated);
@@ -99,6 +103,7 @@ export function TeacherProfileView() {
         name: updated.user.name,
         email: updated.user.email,
         phone: updated.phone ?? "",
+        gender: updated.gender ?? "",
       });
       setEditing(false);
       setNotice("Your profile has been updated.");
@@ -200,9 +205,7 @@ export function TeacherProfileView() {
         </p>
       )}
       <section className="flex flex-wrap items-center gap-5 rounded-panel border border-hairline bg-card p-6 shadow-soft sm:p-8">
-        <span className="flex size-16 items-center justify-center rounded-full bg-gradient-to-br from-brand-500 to-indigo-600 font-display text-xl font-bold text-white">
-          {getInitials(profile.user.name)}
-        </span>
+        <ProfileAvatarUpload name={profile.user.name} avatarUrl={profile.user.avatar_url} onChange={(avatar_url) => setProfile((current) => current ? { ...current, user: { ...current.user, avatar_url } } : current)} />
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
             <h2 className="font-display text-2xl font-extrabold">
@@ -295,6 +298,7 @@ export function TeacherProfileView() {
                   </span>
                 )}
               </label>
+              <label className="block text-sm font-semibold">{t("Gender")}<select value={form.gender} onChange={(event) => setForm((current) => ({ ...current, gender: event.target.value as "male" | "female" | "" }))} className={inputClass}><option value="">{t("Select gender")}</option><option value="male">{t("Male")}</option><option value="female">{t("Female")}</option></select></label>
               <div className="flex flex-wrap justify-end gap-3 pt-2">
                 <Button
                   type="button"
@@ -323,6 +327,7 @@ export function TeacherProfileView() {
                 value={profile.phone || "Not provided"}
                 icon={Phone}
               />
+              <div className="flex items-center justify-between gap-3 py-3"><span className="text-sm text-muted">{t("Gender")}</span><span className={`rounded-pill px-3 py-1 text-xs font-semibold ${profile.gender === "male" ? "bg-blue-100 text-blue-800 dark:bg-blue-500/15 dark:text-blue-300" : profile.gender === "female" ? "bg-pink-100 text-pink-800 dark:bg-pink-500/15 dark:text-pink-300" : "bg-canvas text-muted"}`}>{profile.gender ? t(profile.gender === "male" ? "Male" : "Female") : "—"}</span></div>
               {detailRows.map((item) => (
                 <DetailRow key={item.label} {...item} />
               ))}

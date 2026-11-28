@@ -71,12 +71,14 @@ class TeacherApiTest extends TestCase
             'department_id' => $department->id,
             'teacher_code' => 'tch-2001',
             'phone' => '098765432',
+            'gender' => 'female',
             'role' => UserRole::Admin->value,
         ])->assertCreated()
             ->assertJsonPath('data.teacher_code', 'TCH-2001')
             ->assertJsonPath('data.user.email', 'vibol@example.com')
             ->assertJsonPath('data.user.role', UserRole::Teacher->value)
             ->assertJsonPath('data.department.id', $department->id);
+        $this->assertDatabaseHas('teachers', ['teacher_code' => 'TCH-2001', 'gender' => 'female']);
 
         $this->assertDatabaseHas('users', [
             'email' => 'vibol@example.com',

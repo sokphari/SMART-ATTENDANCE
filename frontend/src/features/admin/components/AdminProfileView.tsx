@@ -12,6 +12,7 @@ import { ApiError } from "@/lib/api/client";
 import { updateStoredUser } from "@/lib/api/session";
 import { getCurrentUser, type AuthProfile } from "@/features/auth/api";
 import { updateUser } from "@/features/users/api";
+import { ProfileAvatarUpload } from "@/components/shared/ProfileAvatarUpload";
 
 export function AdminProfileView() {
   const { t } = useLocale();
@@ -73,6 +74,7 @@ export function AdminProfileView() {
       ) : profile ? (
         <div className="grid w-full gap-5 xl:grid-cols-[minmax(0,1.5fr)_minmax(280px,0.8fr)]">
           <Card className="p-5 sm:p-7">
+            <div className="mb-6 border-b border-hairline pb-5"><h2 className="font-display text-lg font-bold">{t("Profile photo")}</h2><p className="mt-1 text-sm text-muted">{t("Upload a photo for your account. It is stored securely and resized automatically.")}</p><div className="mt-4"><ProfileAvatarUpload name={profile.name} avatarUrl={profile.avatar_url} onChange={(avatar_url) => setProfile((current) => current ? { ...current, avatar_url } : current)} /></div></div>
             <div className="mb-6 flex items-center gap-3 border-b border-hairline pb-5">
               <span className="flex size-12 items-center justify-center rounded-panel bg-brand-50 text-brand-600 dark:bg-brand-500/15 dark:text-brand-300"><UserRound className="size-6" /></span>
               <div><h2 className="font-display text-lg font-bold">{t("Account information")}</h2><p className="text-sm text-muted">{t("Update your name, email, or password.")}</p></div>

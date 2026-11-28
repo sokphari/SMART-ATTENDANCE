@@ -67,6 +67,7 @@ class TeacherServices
                 'department_id' => $data['department_id'],
                 'teacher_code' => $data['teacher_code'],
                 'phone' => $data['phone'] ?? null,
+                'gender' => $data['gender'] ?? null,
                 'qualifications' => $data['qualifications'] ?? null,
             ]);
 
@@ -92,7 +93,7 @@ class TeacherServices
 
             $profileData = array_intersect_key(
                 $data,
-                array_flip(['department_id', 'teacher_code', 'phone', 'qualifications'])
+                array_flip(['department_id', 'teacher_code', 'phone', 'gender', 'qualifications'])
             );
 
             if ($profileData !== []) {
@@ -112,6 +113,7 @@ class TeacherServices
                 'name' => $user->name,
                 'email' => $user->email,
                 'phone' => $teacher->phone,
+                'gender' => $teacher->gender,
             ];
 
             $userData = array_intersect_key($data, array_flip(['name', 'email']));
@@ -125,6 +127,10 @@ class TeacherServices
                 $teacher->phone = $data['phone'];
                 $teacher->save();
             }
+            if (array_key_exists('gender', $data)) {
+                $teacher->gender = $data['gender'];
+                $teacher->save();
+            }
 
             $this->auditLogs->record(
                 'teacher.profile_updated',
@@ -135,6 +141,7 @@ class TeacherServices
                     'name' => $user->name,
                     'email' => $user->email,
                     'phone' => $teacher->phone,
+                    'gender' => $teacher->gender,
                 ]
             );
 

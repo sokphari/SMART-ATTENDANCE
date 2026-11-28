@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import {
   AlertCircle,
   BarChart3,
+  CheckCircle2,
   Eye,
   EyeOff,
   MapPin,
@@ -48,6 +49,7 @@ export function LoginForm() {
   const [rememberMe, setRememberMe] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<ApiError | null>(null);
+  const [success, setSuccess] = useState(false);
 
   useEffect(() => {
     if (getToken()) {
@@ -67,6 +69,7 @@ export function LoginForm() {
     event.preventDefault();
     setLoading(true);
     setError(null);
+    setSuccess(false);
 
     try {
       if (typeof window !== "undefined") {
@@ -80,15 +83,28 @@ export function LoginForm() {
       const payload = await login(email, password);
       setSession(payload.token, payload.data);
       await setAuthCookie(payload.token, rememberMe);
-      router.replace(payload.data.role?.toLowerCase() === "student" && hasPendingStudentScan()
+      const role = payload.data.role?.toLowerCase();
+      const destination = role === "student" && hasPendingStudentScan()
         ? "/student/scan"
-        : payload.data.role?.toLowerCase() === "teacher" ? "/teacher/dashboard" : "/dashboard");
+        : role === "teacher" ? "/teacher/dashboard" : "/dashboard";
+      setSuccess(true);
+      await new Promise((resolve) => window.setTimeout(resolve, 700));
+      router.replace(destination);
     } catch (caught) {
-      setError(
-        caught instanceof ApiError
-          ? caught
-          : new ApiError(t("Something went wrong. Please try again."), 0),
-      );
+      if (
+        caught instanceof ApiError &&
+        caught.status >= 500 &&
+        ![502, 503, 504].includes(caught.status)
+      ) {
+        // Never expose Laravel/PHP stack or filesystem details on the sign-in page.
+        setError(new ApiError(t("Unable to sign in right now. Please try again shortly."), caught.status));
+      } else {
+        setError(
+          caught instanceof ApiError
+            ? caught
+            : new ApiError(t("Something went wrong. Please try again."), 0),
+        );
+      }
     } finally {
       setLoading(false);
     }
@@ -168,6 +184,13 @@ export function LoginForm() {
                     </p>
                   )}
                 </div>
+              </div>
+            )}
+
+            {success && (
+              <div role="status" aria-live="polite" className="mt-6 flex items-center gap-3 rounded-control border border-emerald-200 bg-emerald-50 p-3.5 text-sm font-semibold text-emerald-800 dark:border-emerald-900/70 dark:bg-emerald-950/40 dark:text-emerald-300">
+                <CheckCircle2 className="size-5 shrink-0" />
+                <span>{t("Signed in successfully. Redirecting to your dashboard…")}</span>
               </div>
             )}
 

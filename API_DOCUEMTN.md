@@ -119,7 +119,7 @@ POST /teacher/attendance-sessions returns 201 with data containing the session. 
 {"class_section_id":1,"class_schedule_id":1,"classroom_id":1,"session_date":"2026-11-24","starts_at":"2026-11-24T08:00:00+07:00","late_after":"2026-11-24T08:15:00+07:00","closes_at":"2026-11-24T10:00:00+07:00"}
 Supply at least a classroom or class schedule. late_after >= starts_at, closes_at >= late_after. Use an assigned section. Session list filters: status, class_section_id, date_from, date_to, per_page.
 Manual attendance
-GET /teacher/attendance-sessions/{id}/attendance?status=unmarked&per_page=50 accepts optional status, search, per_page (1–100). Returns paginated resource collection plus summary.
+GET /teacher/attendance-sessions/{id}/attendance?status=unmarked&per_page=50 accepts optional status, search, per_page (1–100). Returns paginated                                                                            resource collection plus summary.
 
 POST /teacher/attendance-sessions/{id}/attendance/manual:
 {"records":[{"student_id":101,"status":"present"},{"student_id":102,"status":"excused","remarks":"Approved leave"}]}

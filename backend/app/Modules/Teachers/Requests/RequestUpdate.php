@@ -65,6 +65,7 @@ class RequestUpdate extends FormRequest
                 Rule::unique('teachers', 'teacher_code')->ignore($teacherId),
             ],
             'phone' => ['sometimes', 'nullable', 'string', 'max:30'],
+            'gender' => ['sometimes', 'nullable', 'in:male,female'],
             'qualifications' => ['sometimes', 'nullable', 'string', 'max:5000'],
         ];
     }

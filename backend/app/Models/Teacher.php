@@ -20,6 +20,7 @@ class Teacher extends Model
         'department_id',
         'teacher_code',
         'phone',
+        'gender',
         'qualifications',
     ];
 

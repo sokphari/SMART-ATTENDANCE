@@ -15,7 +15,13 @@ class AdminUserSeeder extends Seeder
     public function run(): void
     {
         $email = env('ADMIN_EMAIL', 'admin@example.com');
-        $password = env('ADMIN_PASSWORD', 'password');
+        $password = (string) env('ADMIN_PASSWORD', '');
+
+        if (strlen($password) < 16 || in_array(strtolower($password), ['password', 'admin', 'changeme', 'replace-with-a-unique-random-password-at-least-16-characters'], true)) {
+            $this->command?->warn('Admin account was not seeded. Set ADMIN_PASSWORD to a unique random value of at least 16 characters, then run db:seed again.');
+
+            return;
+        }
 
         User::updateOrCreate(
             ['email' => $email],

@@ -22,6 +22,7 @@ class TeacherResource extends JsonResource
             'department' => new DepartmentResource($this->whenLoaded('department')),
             'teacher_code' => $this->teacher_code,
             'phone' => $this->phone,
+            'gender' => $this->gender,
             'qualifications' => $this->qualifications,
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,

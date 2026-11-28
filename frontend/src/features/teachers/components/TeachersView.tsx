@@ -222,6 +222,7 @@ export function TeachersView() {
               <tr>
                 <th className="px-5 py-3">{t("Teacher")}</th>
                 <th className="px-5 py-3">{t("Department")}</th>
+                <th className="px-5 py-3">{t("Gender")}</th>
                 <th className="px-5 py-3">{t("Phone")}</th>
                 <th className="px-5 py-3">{t("Status")}</th>
                 <th scope="col" className="px-5 py-3 text-right">{t("Actions")}</th>
@@ -230,13 +231,13 @@ export function TeachersView() {
             <tbody className="divide-y divide-hairline">
               {loading ? (
                 <tr>
-                  <td colSpan={5} className="px-5 py-12 text-center text-muted">
+                  <td colSpan={6} className="px-5 py-12 text-center text-muted">
                     Loading teachers…
                   </td>
                 </tr>
               ) : items.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="px-5 py-12 text-center text-muted">{t("No teachers match these filters.")}</td>
+                  <td colSpan={6} className="px-5 py-12 text-center text-muted">{t("No teachers match these filters.")}</td>
                 </tr>
               ) : (
                 items.map((teacher) => (
@@ -259,6 +260,7 @@ export function TeachersView() {
                     <td className="px-5 py-4">
                       {teacher.department?.name ?? "—"}
                     </td>
+                    <td className="px-5 py-4">{teacher.gender ? <span className={`inline-flex rounded-pill px-2.5 py-1 text-xs font-semibold ${teacher.gender === "male" ? "bg-blue-100 text-blue-800 dark:bg-blue-500/15 dark:text-blue-300" : "bg-pink-100 text-pink-800 dark:bg-pink-500/15 dark:text-pink-300"}`}>{t(teacher.gender === "male" ? "Male" : "Female")}</span> : "—"}</td>
                     <td className="px-5 py-4">{teacher.phone || "—"}</td>
                     <td className="px-5 py-4">
                       <TeacherStatusToggle

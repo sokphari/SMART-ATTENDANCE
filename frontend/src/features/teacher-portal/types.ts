@@ -157,6 +157,7 @@ export type TeacherProfile = {
   id: number;
   teacher_code: string;
   phone: string | null;
+  gender: "male" | "female" | null;
   department: { id: number; name: string; code: string } | null;
   user: {
     id: number;
@@ -164,6 +165,7 @@ export type TeacherProfile = {
     email: string;
     role: string | null;
     status: string | null;
+    avatar_url: string | null;
     email_verified_at: string | null;
     created_at: string;
     updated_at: string;

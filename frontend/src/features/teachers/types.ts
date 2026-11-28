@@ -1,11 +1,12 @@
 export type Teacher = {
   id: number;
   user_id: number;
-  user: { id: number; name: string; email: string; status: string } | null;
+  user: { id: number; name: string; email: string; status: string; avatar_url?: string | null } | null;
   department_id: number;
   department: { id: number; name: string; code: string } | null;
   teacher_code: string;
   phone: string | null;
+  gender: "male" | "female" | null;
   qualifications?: string | null;
   created_at: string;
   updated_at: string;
@@ -19,6 +20,7 @@ export type TeacherInput = {
   department_id: number;
   teacher_code: string;
   phone?: string;
+  gender?: "male" | "female" | null;
   qualifications?: string | null;
 };
 

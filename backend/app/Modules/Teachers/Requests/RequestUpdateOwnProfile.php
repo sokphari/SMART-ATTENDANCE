@@ -44,6 +44,7 @@ class RequestUpdateOwnProfile extends FormRequest
                 Rule::unique('users', 'email')->ignore($this->user()->id),
             ],
             'phone' => ['sometimes', 'nullable', 'string', 'max:30'],
+            'gender' => ['sometimes', 'nullable', 'in:male,female'],
         ];
     }
 }
