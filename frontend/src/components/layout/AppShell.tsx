@@ -42,7 +42,7 @@ export function AppShell({ children }: { children: ReactNode }) {
     setUser(storedUser);
     setCollapsed(window.localStorage.getItem(SIDEBAR_KEY) === "1");
     const storedTheme = window.localStorage.getItem(THEME_KEY);
-    const useDarkMode = storedTheme === "dark";
+    const useDarkMode = storedTheme === null ? true : storedTheme === "dark";
     document.documentElement.classList.toggle("dark", useDarkMode);
     setDarkMode(useDarkMode);
     if (storedUser?.role?.toLowerCase() === "teacher") {

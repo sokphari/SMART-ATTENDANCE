@@ -11,15 +11,16 @@ export type BreakdownRow = {
 type BreakdownCardProps = {
   title: string;
   total: number;
+  totalLabel: string;
   rows: BreakdownRow[];
 };
 
-export function BreakdownCard({ title, total, rows }: BreakdownCardProps) {
+export function BreakdownCard({ title, total, totalLabel, rows }: BreakdownCardProps) {
   return (
     <Card className="p-6">
       <div className="flex items-center justify-between">
         <h3 className="font-display font-bold">{title}</h3>
-        <Badge tone="brand">{total.toLocaleString()} total</Badge>
+        <Badge tone="brand">{total.toLocaleString()} {totalLabel}</Badge>
       </div>
       <div className="mt-5 space-y-4">
         {rows.map((row) => {
@@ -39,7 +40,7 @@ export function BreakdownCard({ title, total, rows }: BreakdownCardProps) {
                   </span>
                 </span>
               </div>
-              <div className="h-1.5 rounded-pill bg-slate-100">
+              <div className="h-1.5 rounded-pill bg-slate-200 dark:bg-slate-800">
                 <div
                   className={`h-full rounded-pill transition-all duration-500 ${row.bar}`}
                   style={{ width: `${pct}%` }}

@@ -52,15 +52,34 @@ export function LoginForm() {
   const [success, setSuccess] = useState(false);
 
   useEffect(() => {
+    let queryEmail: string | null = null;
+    if (typeof window !== "undefined") {
+      const url = new URL(window.location.href);
+      queryEmail = url.searchParams.get("email");
+      const hadLoginParams = ["email", "password", "remember"].some((key) =>
+        url.searchParams.has(key),
+      );
+      if (hadLoginParams) {
+        url.searchParams.delete("email");
+        url.searchParams.delete("password");
+        url.searchParams.delete("remember");
+        window.history.replaceState(
+          window.history.state,
+          "",
+          `${url.pathname}${url.search}${url.hash}`,
+        );
+      }
+    }
+
     if (getToken()) {
       router.replace(getStoredUser()?.role?.toLowerCase() === "student" && hasPendingStudentScan()
         ? "/student/scan"
         : getStoredUser()?.role?.toLowerCase() === "teacher" ? "/teacher/dashboard" : "/dashboard");
     } else if (typeof window !== "undefined") {
       const savedEmail = localStorage.getItem("smart_attendance_remember_email");
-      if (savedEmail) {
-        setEmail(savedEmail);
-        setRememberMe(true);
+      if (queryEmail || savedEmail) {
+        setEmail(queryEmail ?? savedEmail ?? "");
+        setRememberMe(!queryEmail && Boolean(savedEmail));
       }
     }
   }, [router]);

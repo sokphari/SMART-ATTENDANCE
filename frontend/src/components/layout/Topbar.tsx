@@ -266,46 +266,23 @@ export function Topbar({
           type="button"
           onClick={onToggleTheme}
           aria-label={t(darkMode ? "Switch to light mode" : "Switch to dark mode")}
-          role="switch"
-          aria-checked={darkMode}
-          title={t(darkMode ? "Dark mode on" : "Light mode on")}
-          className={`relative flex h-9 w-16 shrink-0 cursor-pointer items-center rounded-pill p-1 transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2 ${darkMode ? "bg-brand-600" : "bg-slate-300"}`}
+          aria-pressed={darkMode}
+          title={t(darkMode ? "Switch to light mode" : "Switch to dark mode")}
+          className="hidden h-9 items-center gap-1 rounded-pill border border-hairline bg-canvas p-1 transition-colors hover:border-brand-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 sm:flex"
         >
-          <Sun aria-hidden="true" className={`absolute left-1.5 size-3.5 ${darkMode ? "text-white/70" : "text-amber-700"}`} />
-          <Moon aria-hidden="true" className={`absolute right-1.5 size-3.5 ${darkMode ? "text-white/70" : "text-slate-600"}`} />
-          <span className={`z-10 flex size-7 items-center justify-center rounded-pill bg-white text-slate-700 shadow-sm transition-transform duration-200 ${darkMode ? "translate-x-7" : "translate-x-0"}`}>
-            {darkMode ? <Moon aria-hidden="true" className="size-3.5" /> : <Sun aria-hidden="true" className="size-3.5 text-amber-500" />}
-          </span>
+          <span className={`flex size-7 items-center justify-center rounded-pill transition-colors ${!darkMode ? "bg-brand-600 text-white" : "text-muted"}`}><Sun className="size-4" /></span>
+          <span className={`flex size-7 items-center justify-center rounded-pill transition-colors ${darkMode ? "bg-brand-600 text-white" : "text-muted"}`}><Moon className="size-4" /></span>
         </button>
-
-        {/* Fullscreen Toggle */}
         <button
           type="button"
-          onClick={() => void toggleFullscreen()}
           aria-label={t(isFullscreen ? "Exit fullscreen" : "Enter fullscreen")}
+          title={t(isFullscreen ? "Exit fullscreen" : "Enter fullscreen")}
           aria-pressed={isFullscreen}
-          title={
-            isFullscreen
-              ? "Exit fullscreen (Esc)"
-              : "Fullscreen (Ctrl + Shift + F)"
-          }
-          className="
-          flex size-9 cursor-pointer items-center justify-center
-          rounded-control border border-hairline
-          bg-card text-slate-500
-          transition-colors duration-200
-          hover:bg-brand-50 hover:text-brand-700
-          focus-visible:outline-none
-          focus-visible:ring-2 focus-visible:ring-brand-500
-        "
+          onClick={() => void toggleFullscreen()}
+          className="hidden size-9 items-center justify-center rounded-control border border-hairline bg-card text-muted transition-colors hover:bg-canvas hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 sm:flex"
         >
-          {isFullscreen ? (
-            <Minimize className="size-4" />
-          ) : (
-            <Maximize className="size-4" />
-          )}
+          {isFullscreen ? <Minimize className="size-4" /> : <Maximize className="size-4" />}
         </button>
-
         {canViewNotifications && <NotificationBell />}
         {user && (
           <div className="relative">

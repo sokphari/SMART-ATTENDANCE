@@ -9,7 +9,6 @@ import {
   STUDENT_NAV_SECTIONS,
   TEACHER_NAV_SECTIONS,
 } from "@/config/nav";
-import { getInitials } from "@/lib/utils/name";
 import type { AuthUser } from "@/types/auth";
 import { cx } from "@/lib/utils/cx";
 import { useLocale } from "@/i18n/LocaleProvider";
@@ -252,29 +251,6 @@ export function Sidebar({
         })}
       </nav>
 
-      <div className="shrink-0 border-t border-hairline p-3">
-        {collapsed ? (
-          <div className="flex flex-col items-center gap-2">
-            <span className="flex size-9 items-center justify-center rounded-pill bg-brand-600 text-[11px] font-bold text-white">
-              {user ? getInitials(user.name) : "?"}
-            </span>
-          </div>
-        ) : (
-          user && (
-            <div className="flex items-center gap-3 rounded-panel bg-canvas p-2.5">
-              <span className="flex size-9 shrink-0 items-center justify-center rounded-pill bg-brand-600 text-[11px] font-bold text-white">
-                {getInitials(user.name)}
-              </span>
-              <div className="min-w-0 flex-1">
-                <p className="truncate text-sm font-bold">{user.name}</p>
-                <p className="truncate text-xs font-medium text-muted capitalize">
-                  {t(user.role ?? "user")}
-                </p>
-              </div>
-            </div>
-          )
-        )}
-      </div>
     </aside>
   );
 }
